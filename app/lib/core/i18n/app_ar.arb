@@ -1279,6 +1279,18 @@
   "@childScreenTimePolicyUnavailable": {
     "description": "SCR-FAT-032 fail-closed when Local KV refused"
   },
+  "childScreenTimeEarnedExtensionNotice": "الدقائق المكتسبة تمدد وقت الشاشة اليومي تلقائياً",
+  "@childScreenTimeEarnedExtensionNotice": {
+    "description": "SCR: child screen time — notice when earned minutes extend limit is enabled"
+  },
+  "childScreenTimeEmptyTitle": "لا توجد حدود زمنية محددة",
+  "@childScreenTimeEmptyTitle": {
+    "description": "SCR: child screen time — empty state title"
+  },
+  "childScreenTimeEmptyMessage": "لم يتم ضبط أي نوافذ زمنية أو حد يومي لهذا الحساب بعد.",
+  "@childScreenTimeEmptyMessage": {
+    "description": "SCR: child screen time — empty state message"
+  },
   "childScreenTimeSleep": "نوم",
   "@childScreenTimeSleep": {
     "description": "SCR-FAT-032 sleep schedule row"
@@ -1328,6 +1340,10 @@
     "description": "SCR-FAT-032 Ruling B helper under overflow switch"
   },
   "childScreenTimeWalletsHeading": "محافظ التطبيقات",
+  "childScreenTimeBalanceStale": "الأرقام المعروضة قديمة: آخر قراءة ناجحة من الخادم",
+  "@childScreenTimeBalanceStale": {
+    "description": "SCR-FAT-032 note when the shown balance is the last good server reading"
+  },
   "@childScreenTimeWalletsHeading": {
     "description": "SCR-FAT-032 wallets list heading"
   },
@@ -2557,6 +2573,14 @@
       }
     }
   },
+  "attributionRewardMinutesField": "الدقائق",
+  "@attributionRewardMinutesField": {
+    "description": "SCR-FAT-045 accessible label for the parent-set minutes of a reward"
+  },
+  "attributionRewardCountedSoon": "تُحتسب قريباً",
+  "@attributionRewardCountedSoon": {
+    "description": "SCR-FAT-045 reward row value while the server counts the amount; no minute figure"
+  },
   "attributionRewardWalletMinutes": "{minutes} دقيقة لمحفظته",
   "@attributionRewardWalletMinutes": {
     "description": "SCR-FAT-045 wallet minutes reward",
@@ -2587,15 +2611,12 @@
   "@attributionRewardLibraryCta": {
     "description": "SCR-FAT-045 secondary CTA → FAT-046"
   },
-  "attributionRewardAssignedToast": "أُسند لـ{name} — وصله: «والدك جهّز لك تحديًا — {minutes} دقيقة تنتظرك!»",
+  "attributionRewardAssignedToast": "أُسند لـ{name} — وصله التحدي",
   "@attributionRewardAssignedToast": {
     "description": "SCR-FAT-045 assign success toast",
     "placeholders": {
       "name": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -11722,28 +11743,20 @@
   "@quranProgressPlaySemantics": {
     "description": "SCR-FAT-072 play a11y"
   },
-  "quranProgressApproveCta": "اعتماد وصرف المكافأة (+{minutes} د)",
+  "quranProgressApproveCta": "اعتماد الورد",
   "@quranProgressApproveCta": {
-    "description": "SCR-FAT-072 approve CTA minutes-only",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 approve CTA, no minute figure"
   },
   "quranProgressWhisperCta": "همسة 💬",
   "@quranProgressWhisperCta": {
     "description": "SCR-FAT-072 whisper"
   },
-  "quranProgressApproveToast": "تم اعتماد تلاوة {name} وإضافة +{minutes} دقيقة لوقت اللعب",
+  "quranProgressApproveToast": "تم اعتماد تلاوة {name}",
   "@quranProgressApproveToast": {
     "description": "SCR-FAT-072 approve toast",
     "placeholders": {
       "name": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -11756,14 +11769,9 @@
       }
     }
   },
-  "quranProgressApprovedBanner": "⭐ تم اعتماد هذا الورد وصرف مكافأة +{minutes} دقيقة بنجاح",
+  "quranProgressApprovedBanner": "⭐ تم اعتماد هذا الورد — المكافأة تُحتسب قريباً",
   "@quranProgressApprovedBanner": {
-    "description": "SCR-FAT-072 approved banner",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 approved banner, no minute figure"
   },
   "quranProgressPlanHeading": "خطة الورد والمكافأة",
   "@quranProgressPlanHeading": {
@@ -11781,14 +11789,9 @@
   "@quranProgressPlanReward": {
     "description": "SCR-FAT-072 plan row"
   },
-  "quranProgressPlanRewardValue": "+{minutes} دقيقة لعب للمحفظة",
+  "quranProgressPlanRewardValue": "تُحتسب قريباً",
   "@quranProgressPlanRewardValue": {
-    "description": "SCR-FAT-072 reward value minutes-only",
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
+    "description": "SCR-FAT-072 reward value, no minute figure"
   },
   "quranProgressSurahNaba": "النبأ",
   "@quranProgressSurahNaba": {
@@ -15230,15 +15233,12 @@
   "@quranProgressPublishPlanCta": {
     "description": "SCR-FAT-072 publish ward plan CTA (P15-QUR-002)"
   },
-  "quranProgressPublishPlanToast": "أُرسلت خطة الورد — {surah} · مكافأة +{minutes} دقيقة",
+  "quranProgressPublishPlanToast": "أُرسلت خطة الورد — {surah}",
   "@quranProgressPublishPlanToast": {
     "description": "SCR-FAT-072 publish plan toast",
     "placeholders": {
       "surah": {
         "type": "String"
-      },
-      "minutes": {
-        "type": "int"
       }
     }
   },
@@ -15801,6 +15801,18 @@
   "screenTimeServerSchoolMode": "وضع المدرسة",
   "@screenTimeServerSchoolMode": {
       "description": "SCR: screen-time server panel — school mode"
+  },
+  "screenTimeServerEarnedMinutesTitle": "تمديد الحد بالدقائق المكتسبة",
+  "@screenTimeServerEarnedMinutesTitle": {
+      "description": "SCR: screen-time server panel — toggle title for earned minutes limit extension"
+  },
+  "screenTimeServerEarnedMinutesSubtitle": "إضافة الدقائق المكتسبة من الأنشطة والمهام إلى وقت الشاشة اليومي",
+  "@screenTimeServerEarnedMinutesSubtitle": {
+      "description": "SCR: screen-time server panel — toggle subtitle for earned minutes limit extension"
+  },
+  "screenTimeServerEarnedMinutesPreview": "المتبقي = الحد اليومي + المنح + الدقائق المكتسبة − الاستهلاك",
+  "@screenTimeServerEarnedMinutesPreview": {
+      "description": "SCR: screen-time server panel — formula breakdown preview for earned minutes"
   },
   "screenTimeServerSave": "احفظ على الخادم",
   "@screenTimeServerSave": {
@@ -16599,5 +16611,1207 @@
   "deviceModeInviteCodeSemantics": "عندي رمز دعوة — الانضمام إلى عائلة موجودة",
   "@deviceModeInviteCodeSemantics": {
     "description": "Invites by code (owner decision 2026-10-10)"
+  },
+  "nativePairingContinueToProfile": "متابعة إلى ملف الابن",
+  "@nativePairingContinueToProfile": {
+    "description": "CTA button to continue to child profile after pairing"
+  },
+  "childProfileLastSeenNow": "الآن",
+  "@childProfileLastSeenNow": {
+    "description": "Relative time for last seen just now"
+  },
+  "childProfileLastSeenMinutes": "قبل {minutes} د",
+  "@childProfileLastSeenMinutes": {
+    "description": "Relative time in minutes",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileLastSeenHours": "قبل {hours} س",
+  "@childProfileLastSeenHours": {
+    "description": "Relative time in hours",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileLastSeenDays": "قبل {days} يوم",
+  "@childProfileLastSeenDays": {
+    "description": "Relative time in days",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "childProfileFallbackName": "الابن",
+  "@childProfileFallbackName": {
+    "description": "Fallback name for a child"
+  },
+  "childProfileDeleteButton": "حذف ملف الابن",
+  "@childProfileDeleteButton": {
+    "description": "Button to initiate child profile deletion"
+  },
+  "childProfileDeleteConfirmTitle": "حذف ملف الابن",
+  "@childProfileDeleteConfirmTitle": {
+    "description": "SCR-FAT-013 delete child confirm dialog title"
+  },
+  "childProfileDeleteConfirmPrompt": "هذا الإجراء نهائي ولا يمكن التراجع عنه. لتأكيد الحذف، اكتب CONFIRM DELETE أدناه:",
+  "@childProfileDeleteConfirmPrompt": {
+    "description": "SCR-FAT-013 delete child confirmation prompt"
+  },
+  "childProfileDeleteConfirmTokenHint": "CONFIRM DELETE",
+  "@childProfileDeleteConfirmTokenHint": {
+    "description": "SCR-FAT-013 delete child confirm token hint"
+  },
+  "childProfileDeleteConfirmAction": "تأكيد الحذف",
+  "@childProfileDeleteConfirmAction": {
+    "description": "SCR-FAT-013 delete child confirm action button"
+  },
+  "childProfileDeleteSuccessToast": "تم حذف ملف الابن بنجاح",
+  "@childProfileDeleteSuccessToast": {
+    "description": "SCR-FAT-013 delete child success toast"
+  },
+  "childDayBoardEarnedExtendsOn": "الدقائق التي تكسبها من أنشطتك تُضاف إلى وقتك اليومي",
+  "@childDayBoardEarnedExtendsOn": {
+    "description": "Child day board note when earned minutes extend today limit"
+  },
+  "childDayBoardEarnedExtendsOff": "الدقائق التي تكسبها من أنشطتك لا تُضاف إلى وقت اليوم — تُحفظ لك",
+  "@childDayBoardEarnedExtendsOff": {
+    "description": "Child day board note when earned minutes do not extend today limit"
+  },
+  "screenTimeServerLoading": "جارٍ تحميل حالة وقت الشاشة من الخادم…",
+  "@screenTimeServerLoading": {
+    "description": "Screen time server panel loading state"
+  },
+  "screenTimeServerEmpty": "لم تُضبط حدود وقت الشاشة لهذا الطفل بعد — لا شيء مفروض الآن.",
+  "@screenTimeServerEmpty": {
+    "description": "Screen time server panel empty state when no limits are set"
+  },
+  "childDayBoardNoLimit": "بلا حد يومي الآن",
+  "@childDayBoardNoLimit": {
+    "description": "Child day board when no screen time daily limit is set"
+  },
+  "screenTimeServerRetry": "إعادة المحاولة",
+  "@screenTimeServerRetry": {
+    "description": "Retry action on screen time server panel"
+  },
+  "screenTimeServerQuickGrantTitle": "منح وقت إضافي سريع",
+  "@screenTimeServerQuickGrantTitle": {
+    "description": "Title for quick extra minutes grant buttons on server panel"
+  },
+  "screenTimeServerGrant15": "+15 دقيقة",
+  "@screenTimeServerGrant15": {
+    "description": "Quick grant 15 minutes"
+  },
+  "screenTimeServerGrant30": "+30 دقيقة",
+  "@screenTimeServerGrant30": {
+    "description": "Quick grant 30 minutes"
+  },
+  "screenTimeServerGrant60": "+60 دقيقة",
+  "@screenTimeServerGrant60": {
+    "description": "Quick grant 60 minutes"
+  },
+  "screenTimeServerCapInvalid": "يرجى إدخال عدد دقائق بين 0 و 1440",
+  "@screenTimeServerCapInvalid": {
+    "description": "Validation message when screen time daily cap is invalid"
+  },
+  "screenTimeServerTotalLimit": "الحد الكلي: {minutes} دقيقة",
+  "@screenTimeServerTotalLimit": {
+    "description": "Total limit minutes label on screen time server panel",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerProgressLabel": "نسبة استهلاك وقت الشاشة اليومي",
+  "@screenTimeServerProgressLabel": {
+    "description": "Accessibility semantics label for daily screen time consumption progress bar"
+  },
+  "childDayBoardTimeHeroTitle": "وقتك اليوم",
+  "@childDayBoardTimeHeroTitle": {
+    "description": "SCR-CHD-004 daily time hero ring title"
+  },
+  "childDayBoardTimeHeroBase": "الحد الأساسي",
+  "@childDayBoardTimeHeroBase": {
+    "description": "SCR-CHD-004 hero ring legend for the guardian-set daily cap"
+  },
+  "childDayBoardTimeHeroEarned": "دقائق كسبتها",
+  "@childDayBoardTimeHeroEarned": {
+    "description": "SCR-CHD-004 hero ring legend for minutes earned by tasks and activities"
+  },
+  "childDayBoardTimeHeroGrant": "منحة من أهلي",
+  "@childDayBoardTimeHeroGrant": {
+    "description": "SCR-CHD-004 hero ring legend for guardian-granted temporary minutes"
+  },
+  "childDayBoardTimeHeroNoLimit": "وقتك مفتوح اليوم",
+  "@childDayBoardTimeHeroNoLimit": {
+    "description": "SCR-CHD-004 hero ring when the server reports no daily limit"
+  },
+  "childDayBoardTimeHeroLoading": "نقرأ وقتك من الخادم…",
+  "@childDayBoardTimeHeroLoading": {
+    "description": "SCR-CHD-004 hero ring loading state"
+  },
+  "childDayBoardTimeHeroAbundant": "أمامك وقت مريح — استمتع بذكاء",
+  "@childDayBoardTimeHeroAbundant": {
+    "description": "SCR-CHD-004 hero ring calm tone when minutes are plentiful"
+  },
+  "childDayBoardTimeHeroNearEnd": "بقي القليل — أنهِ لعبتك بهدوء",
+  "@childDayBoardTimeHeroNearEnd": {
+    "description": "SCR-CHD-004 hero ring warm tone when the day is nearly spent"
+  },
+  "childDayBoardTimeHeroDepleted": "انتهى وقت اليوم — غداً وقت جديد",
+  "@childDayBoardTimeHeroDepleted": {
+    "description": "SCR-CHD-004 hero ring when the day's minutes are spent"
+  },
+  "childDayBoardTimeHeroWindDown": "اقترب وقت النوم — خفف الشاشة",
+  "@childDayBoardTimeHeroWindDown": {
+    "description": "SCR-CHD-004 hero ring bedtime tone"
+  },
+  "childDayBoardTimeHeroRingSemantics": "حلبة وقت الشاشة: {percent}% مستهلك",
+  "@childDayBoardTimeHeroRingSemantics": {
+    "description": "SCR-CHD-004 hero ring accessibility sentence",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "childDayBoardRoutineTitle": "روتين اليوم",
+  "@childDayBoardRoutineTitle": {
+    "description": "SCR-CHD-004 routine card title"
+  },
+  "childDayBoardRoutineSleep": "وقت النوم 🌙",
+  "@childDayBoardRoutineSleep": {
+    "description": "SCR-CHD-004 routine badge for the sleep window"
+  },
+  "childDayBoardRoutineSchool": "وقت الدوام 🎒",
+  "@childDayBoardRoutineSchool": {
+    "description": "SCR-CHD-004 routine badge for the school window"
+  },
+  "childDayBoardRoutineFree": "وقت اللعب 🎮",
+  "@childDayBoardRoutineFree": {
+    "description": "SCR-CHD-004 routine badge when the child's own time is open"
+  },
+  "childDayBoardRoutineWindDown": "تهدئة قبل النوم",
+  "@childDayBoardRoutineWindDown": {
+    "description": "SCR-CHD-004 routine badge in the minutes before bedtime"
+  },
+  "childDayBoardRoutineHint": "النوم والدوام واللعب حسب جدول عائلتك",
+  "@childDayBoardRoutineHint": {
+    "description": "SCR-CHD-004 routine card hint line"
+  },
+  "childDayBoardTasksTitle": "مهامي ومكافآتي",
+  "@childDayBoardTasksTitle": {
+    "description": "SCR-CHD-004 tasks and rewards card title"
+  },
+  "childDayBoardTasksSubtitle": "أنهِ مهمتك لتربح دقائق",
+  "@childDayBoardTasksSubtitle": {
+    "description": "SCR-CHD-004 tasks card subtitle"
+  },
+  "childDayBoardTasksPoints": "{points} نقطة",
+  "@childDayBoardTasksPoints": {
+    "description": "SCR-CHD-004 reward shown on one task card",
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "childDayBoardTasksStatusPending": "لم تبدأ بعد",
+  "@childDayBoardTasksStatusPending": {
+    "description": "SCR-CHD-004 status of a task nobody has sent"
+  },
+  "childDayBoardTasksStatusClaimed": "أرسلتها — بانتظار أهل",
+  "@childDayBoardTasksStatusClaimed": {
+    "description": "SCR-CHD-004 status of a task awaiting a guardian's answer"
+  },
+  "childDayBoardTasksStatusConfirmed": "موافق عليها",
+  "@childDayBoardTasksStatusConfirmed": {
+    "description": "SCR-CHD-004 status of an approved task"
+  },
+  "childDayBoardTasksStatusDeclined": "ردّها أهل هذه المرة",
+  "@childDayBoardTasksStatusDeclined": {
+    "description": "SCR-CHD-004 status of a declined task"
+  },
+  "childDayBoardTasksStatusArchived": "مؤرشفة",
+  "@childDayBoardTasksStatusArchived": {
+    "description": "SCR-CHD-004 status of a task closed for the day"
+  },
+  "childDayBoardTasksOpenAll": "كل المهام",
+  "@childDayBoardTasksOpenAll": {
+    "description": "SCR-CHD-004 link from the tasks card to the tasks list"
+  },
+  "childDayBoardTasksEmpty": "لا مهام اليوم",
+  "@childDayBoardTasksEmpty": {
+    "description": "SCR-CHD-004 empty state of the tasks card"
+  },
+  "childDayBoardTasksLoading": "نقرأ مهامك…",
+  "@childDayBoardTasksLoading": {
+    "description": "SCR-CHD-004 loading state of the tasks card"
+  },
+  "childDayBoardTasksUnavailable": "لم يُربط خادم المهام بعد",
+  "@childDayBoardTasksUnavailable": {
+    "description": "SCR-CHD-004 state of the tasks card with no server bound"
+  },
+  "childDayBoardTasksRefused": "لم أستطع قراءة مهامك الآن",
+  "@childDayBoardTasksRefused": {
+    "description": "SCR-CHD-004 error state of the tasks card"
+  },
+  "childDayBoardSafetyTitle": "زر الأمان",
+  "@childDayBoardSafetyTitle": {
+    "description": "SCR-CHD-004 safety card title"
+  },
+  "childDayBoardSafetyReady": "جاهز — اضغط مطولاً للنجدة",
+  "@childDayBoardSafetyReady": {
+    "description": "SCR-CHD-004 safety button when it is armed"
+  },
+  "childDayBoardSafetyHold": "اضغط مطولاً 3 ثوانٍ",
+  "@childDayBoardSafetyHold": {
+    "description": "SCR-CHD-004 instruction under the safety button"
+  },
+  "childDayBoardSafetyProgress": "استمر بالضغط — {seconds}",
+  "@childDayBoardSafetyProgress": {
+    "description": "SCR-CHD-004 countdown inside the safety hold",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "childDayBoardSafetyReleased": "أُرسل طلب النجدة",
+  "@childDayBoardSafetyReleased": {
+    "description": "SCR-CHD-004 message once the hold completed"
+  },
+  "childDayBoardSafetySemantics": "زر النجدة — اضغط مطولاً لثلاث ثوانٍ",
+  "@childDayBoardSafetySemantics": {
+    "description": "SCR-CHD-004 accessibility label of the safety button"
+  },
+  "childDayBoardTouchpointsTitle": "عائلتي",
+  "@childDayBoardTouchpointsTitle": {
+    "description": "SCR-CHD-004 family touchpoints card title"
+  },
+  "childDayBoardTouchpointsSubtitle": "اتصال أو رسالة بضغطة واحدة",
+  "@childDayBoardTouchpointsSubtitle": {
+    "description": "SCR-CHD-004 family touchpoints card subtitle"
+  },
+  "childDayBoardTouchpointsFamilyThread": "محادثة العائلة",
+  "@childDayBoardTouchpointsFamilyThread": {
+    "description": "SCR-CHD-004 one-tap touchpoint to the shared family thread"
+  },
+  "childDayBoardTouchpointsAllChats": "كل المحادثات",
+  "@childDayBoardTouchpointsAllChats": {
+    "description": "SCR-CHD-004 one-tap touchpoint to the child's conversation list"
+  },
+  "childDayBoardTouchpointsAskTime": "أطلب دقائق إضافية",
+  "@childDayBoardTouchpointsAskTime": {
+    "description": "SCR-CHD-004 one-tap touchpoint to the time-request screen"
+  },
+  "childDayBoardTouchpointsQuran": "وردي من القرآن",
+  "@childDayBoardTouchpointsQuran": {
+    "description": "SCR-CHD-004 one-tap touchpoint to the child's Qur'an page"
+  },
+  "childDayBoardTouchpointsWallet": "دفتر دقائق",
+  "@childDayBoardTouchpointsWallet": {
+    "description": "SCR-CHD-004 one-tap touchpoint to the child's minutes wallet"
+  },
+  "screenTimeServerExtensionTitle": "تمديد الوقت",
+  "@screenTimeServerExtensionTitle": {
+    "description": "SCR-FAT-032 server panel — quick and custom extension card title"
+  },
+  "screenTimeServerExtensionHint": "تُضاف الدقائق بقرار من الخادم وتصل للطفل عند مزامنته",
+  "@screenTimeServerExtensionHint": {
+    "description": "SCR-FAT-032 server panel — extension card honesty hint"
+  },
+  "screenTimeServerExtensionCustom": "دقائق مخصصة",
+  "@screenTimeServerExtensionCustom": {
+    "description": "SCR-FAT-032 server panel — open the custom extension sheet"
+  },
+  "screenTimeServerExtensionCustomTitle": "كم دقيقة تمنح الآن؟",
+  "@screenTimeServerExtensionCustomTitle": {
+    "description": "SCR-FAT-032 server panel — custom extension sheet title"
+  },
+  "screenTimeServerExtensionCustomHelper": "من 1 إلى 240 دقيقة",
+  "@screenTimeServerExtensionCustomHelper": {
+    "description": "SCR-FAT-032 server panel — custom extension helper text"
+  },
+  "screenTimeServerExtensionCustomConfirm": "امنح على الخادم",
+  "@screenTimeServerExtensionCustomConfirm": {
+    "description": "SCR-FAT-032 server panel — custom extension confirm button"
+  },
+  "screenTimeServerExtensionCustomInvalid": "أدخل عدد دقائق بين 1 و 240",
+  "@screenTimeServerExtensionCustomInvalid": {
+    "description": "SCR-FAT-032 server panel — custom extension validation error"
+  },
+  "screenTimeServerExtensionPending": "الخادم ينفذ التمديد…",
+  "@screenTimeServerExtensionPending": {
+    "description": "SCR-FAT-032 server panel — extension write in flight"
+  },
+  "screenTimeServerLockStateLocked": "الهاتف موقوف الآن بقرارك",
+  "@screenTimeServerLockStateLocked": {
+    "description": "SCR-FAT-032 server panel — lock card when a lock is live"
+  },
+  "screenTimeServerLockStateUnlocked": "الهاتف يعمل ضمن حد اليوم",
+  "@screenTimeServerLockStateUnlocked": {
+    "description": "SCR-FAT-032 server panel — lock card when nothing is stopping the phone"
+  },
+  "screenTimeServerLockSince": "أوقف عند {time}",
+  "@screenTimeServerLockSince": {
+    "description": "SCR-FAT-032 server panel — when the live lock began",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "screenTimeServerLockBusy": "الخادم ينفذ…",
+  "@screenTimeServerLockBusy": {
+    "description": "SCR-FAT-032 server panel — lock write in flight"
+  },
+  "screenTimeServerLockConfirmed": "تم التأكيد من الخادم",
+  "@screenTimeServerLockConfirmed": {
+    "description": "SCR-FAT-032 server panel — confirmed-lock chip"
+  },
+  "screenTimeServerLockReleaseNote": "الإعادة لا تلغي حد اليوم",
+  "@screenTimeServerLockReleaseNote": {
+    "description": "SCR-FAT-032 server panel — release lock note"
+  },
+  "screenTimeServerAppsTitle": "التطبيقات والفئات",
+  "@screenTimeServerAppsTitle": {
+    "description": "SCR-FAT-032 server panel — app rules card title"
+  },
+  "screenTimeServerAppsSubtitle": "قرارك لكل تطبيق يُحفظ على الخادم",
+  "@screenTimeServerAppsSubtitle": {
+    "description": "SCR-FAT-032 server panel — app rules card subtitle"
+  },
+  "screenTimeServerAppsOpen": "أدر التطبيقات",
+  "@screenTimeServerAppsOpen": {
+    "description": "SCR-FAT-032 server panel — open the app rules sheet"
+  },
+  "screenTimeServerAppsRules": "قواعد التطبيقات",
+  "@screenTimeServerAppsRules": {
+    "description": "SCR-FAT-032 server panel — link from the insights card to app rules"
+  },
+  "screenTimeServerAppsClose": "تم",
+  "@screenTimeServerAppsClose": {
+    "description": "SCR-FAT-032 app rules sheet — dismiss control"
+  },
+  "screenTimeServerAppsLoading": "نقرأ تطبيقات الهاتف…",
+  "@screenTimeServerAppsLoading": {
+    "description": "SCR-FAT-032 app rules sheet — loading state"
+  },
+  "screenTimeServerAppsEmpty": "لم يبلّغ الهاتف عن تطبيقات بعد",
+  "@screenTimeServerAppsEmpty": {
+    "description": "SCR-FAT-032 app rules sheet — empty state"
+  },
+  "screenTimeServerAppsDenied": "لا يملك هذا الحساب إدارة تطبيقات هذا الابن",
+  "@screenTimeServerAppsDenied": {
+    "description": "SCR-FAT-032 app rules sheet — refused read"
+  },
+  "screenTimeServerAppsStale": "لم يستجب الخادم — هذه آخر قائمة وصلت",
+  "@screenTimeServerAppsStale": {
+    "description": "SCR-FAT-032 app rules sheet — unreachable state"
+  },
+  "screenTimeServerAppsNoSession": "لا توجد جلسة خادم — لا نغير شيئاً",
+  "@screenTimeServerAppsNoSession": {
+    "description": "SCR-FAT-032 app rules sheet — no session bound"
+  },
+  "screenTimeServerAppAllow": "اسمح",
+  "@screenTimeServerAppAllow": {
+    "description": "SCR-FAT-032 app rules sheet — allow one app"
+  },
+  "screenTimeServerAppBlock": "احجب",
+  "@screenTimeServerAppBlock": {
+    "description": "SCR-FAT-032 app rules sheet — block one app"
+  },
+  "screenTimeServerAppStateAllowed": "مسموح",
+  "@screenTimeServerAppStateAllowed": {
+    "description": "SCR-FAT-032 app rules sheet — the rule the server stores for one app"
+  },
+  "screenTimeServerAppStateBlocked": "محجوب",
+  "@screenTimeServerAppStateBlocked": {
+    "description": "SCR-FAT-032 app rules sheet — a blocked app, stated as the stored rule"
+  },
+  "screenTimeServerAppPending": "بانتظار القرار",
+  "@screenTimeServerAppPending": {
+    "description": "SCR-FAT-032 app rules sheet — a rule nobody has written yet"
+  },
+  "screenTimeServerAppFree": "مسموح دائماً",
+  "@screenTimeServerAppFree": {
+    "description": "SCR-FAT-032 app rules sheet — an app with no limit on it"
+  },
+  "screenTimeServerAppLimitSet": "حد يومي للتطبيق",
+  "@screenTimeServerAppLimitSet": {
+    "description": "SCR-FAT-032 app rules sheet — per-app limit field label"
+  },
+  "screenTimeServerAppLimitValue": "حد {minutes} دقيقة",
+  "@screenTimeServerAppLimitValue": {
+    "description": "SCR-FAT-032 app rules sheet — the stored per-app limit",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerAppUnlimited": "بلا حد لهذا التطبيق",
+  "@screenTimeServerAppUnlimited": {
+    "description": "SCR-FAT-032 app rules sheet — helper under the limit field"
+  },
+  "screenTimeServerAppUsed": "استهلك {minutes} دقيقة",
+  "@screenTimeServerAppUsed": {
+    "description": "SCR-FAT-032 app rules sheet — today's minutes for one app",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerAppUnknown": "التطبيق غير معروف على هذا الهاتف بعد",
+  "@screenTimeServerAppUnknown": {
+    "description": "SCR-FAT-032 app rules sheet — a rule for an app no handset reported"
+  },
+  "screenTimeServerAppSaveError": "رفض الخادم القرار — لم يتغير شيء",
+  "@screenTimeServerAppSaveError": {
+    "description": "SCR-FAT-032 app rules sheet — a write that did not land"
+  },
+  "screenTimeServerCategoryGames": "ألعاب",
+  "@screenTimeServerCategoryGames": {
+    "description": "SCR-FAT-032 app rules sheet — the games category"
+  },
+  "screenTimeServerCategorySocial": "تواصل",
+  "@screenTimeServerCategorySocial": {
+    "description": "SCR-FAT-032 app rules sheet — the social category"
+  },
+  "screenTimeServerCategoryVideo": "فيديو ويوتيوب",
+  "@screenTimeServerCategoryVideo": {
+    "description": "SCR-FAT-032 app rules sheet — the video category"
+  },
+  "screenTimeServerCategoryEducation": "تعليم",
+  "@screenTimeServerCategoryEducation": {
+    "description": "SCR-FAT-032 app rules sheet — the learning category"
+  },
+  "screenTimeServerCategoryOther": "أخرى",
+  "@screenTimeServerCategoryOther": {
+    "description": "SCR-FAT-032 app rules sheet — anything the phone reported without a category"
+  },
+  "screenTimeServerCategoryBlockAll": "احجب الفئة",
+  "@screenTimeServerCategoryBlockAll": {
+    "description": "SCR-FAT-032 app rules sheet — block every app in one category"
+  },
+  "screenTimeServerCategoryAllowAll": "اسمح للفئة",
+  "@screenTimeServerCategoryAllowAll": {
+    "description": "SCR-FAT-032 app rules sheet — allow every app in one category"
+  },
+  "screenTimeServerCategoryApplied": "طبق على {count} تطبيق",
+  "@screenTimeServerCategoryApplied": {
+    "description": "SCR-FAT-032 app rules sheet — how many rules one category action wrote",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerCategoryBudget": "ميزانية الفئة اليومية",
+  "@screenTimeServerCategoryBudget": {
+    "description": "SCR-FAT-032 app rules sheet — per-category minute budget field"
+  },
+  "screenTimeServerCategoryBudgetPending": "ميزانية الفئة تحتاج مساراً جديداً على الخادم",
+  "@screenTimeServerCategoryBudgetPending": {
+    "description": "SCR-FAT-032 app rules sheet — the contract a category budget waits on"
+  },
+  "screenTimeServerInsightsTitle": "تحليل استهلاك اليوم",
+  "@screenTimeServerInsightsTitle": {
+    "description": "SCR-FAT-032 server panel — usage insights card title"
+  },
+  "screenTimeServerInsightsUsed": "المستهلك",
+  "@screenTimeServerInsightsUsed": {
+    "description": "SCR-FAT-032 server panel — minutes used today"
+  },
+  "screenTimeServerInsightsCap": "حد اليوم",
+  "@screenTimeServerInsightsCap": {
+    "description": "SCR-FAT-032 server panel — the cap today's minutes are read against"
+  },
+  "screenTimeServerInsightsGranted": "منح إضافية",
+  "@screenTimeServerInsightsGranted": {
+    "description": "SCR-FAT-032 server panel — minutes a guardian added to the cap"
+  },
+  "screenTimeServerInsightsTop": "أكثر التطبيقات استهلاكاً",
+  "@screenTimeServerInsightsTop": {
+    "description": "SCR-FAT-032 server panel — heading over the per-app bars"
+  },
+  "screenTimeServerInsightsNoUsage": "لا استهلاك مسجلاً اليوم",
+  "@screenTimeServerInsightsNoUsage": {
+    "description": "SCR-FAT-032 server panel — insights when the day is untouched"
+  },
+  "screenTimeServerInsightsOverCap": "تجاوز الاستهلاك حد اليوم",
+  "@screenTimeServerInsightsOverCap": {
+    "description": "SCR-FAT-032 server panel — insights when used minutes exceed what was allowed"
+  },
+  "screenTimeServerInsightsShare": "{percent}% من وقت اليوم",
+  "@screenTimeServerInsightsShare": {
+    "description": "SCR-FAT-032 server panel — one app's share of the day",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "screenTimeServerInsightsHint": "الأرقام كما حسابها الخادم اليوم، على ساعة الجهاز",
+  "@screenTimeServerInsightsHint": {
+    "description": "SCR-FAT-032 server panel — insights footnote"
+  },
+  "screenTimeServerWeekTitle": "جدول الأسبوع",
+  "@screenTimeServerWeekTitle": {
+    "description": "SCR-FAT-032 server panel — week schedule card title"
+  },
+  "screenTimeServerWeekSchoolDays": "أيام وضع المدرسة",
+  "@screenTimeServerWeekSchoolDays": {
+    "description": "SCR-FAT-032 server panel — heading over the school-day chips"
+  },
+  "screenTimeServerWeekWeekend": "عطلة الأسبوع",
+  "@screenTimeServerWeekWeekend": {
+    "description": "SCR-FAT-032 server panel — the weekend group of days"
+  },
+  "screenTimeServerWeekWeekdays": "أيام الدراسة",
+  "@screenTimeServerWeekWeekdays": {
+    "description": "SCR-FAT-032 server panel — the weekday group of days"
+  },
+  "screenTimeServerWeekBedtimeHint": "الخادم يخزن نافذة نوم واحدة لكل الأيام حتى تُبنى نافذة للعطلة",
+  "@screenTimeServerWeekBedtimeHint": {
+    "description": "SCR-FAT-032 server panel — bedtime window explanation"
+  },
+  "screenTimeServerWeekWeekendNote": "نافذة نوم منفصلة للعطلة تحتاج امتداداً في عقد الخادم",
+  "@screenTimeServerWeekWeekendNote": {
+    "description": "SCR-FAT-032 server panel — what the weekend bedtime waits on"
+  },
+  "screenTimeServerWeekSave": "احفظ أيام الأسبوع",
+  "@screenTimeServerWeekSave": {
+    "description": "SCR-FAT-032 server panel — write the school-day set"
+  },
+  "screenTimeServerWeekBedtimeStart": "بداية النوم",
+  "@screenTimeServerWeekBedtimeStart": {
+    "description": "SCR-FAT-032 server panel — pick the bedtime start"
+  },
+  "screenTimeServerWeekBedtimeEnd": "نهاية النوم",
+  "@screenTimeServerWeekBedtimeEnd": {
+    "description": "SCR-FAT-032 server panel — pick the bedtime end"
+  },
+  "screenTimeServerWeekWeekendBedtimeStart": "بداية نوم العطلة",
+  "@screenTimeServerWeekWeekendBedtimeStart": {
+    "description": "SCR-FAT-032 server panel — pick the weekend bedtime start"
+  },
+  "screenTimeServerWeekWeekendBedtimeEnd": "نهاية نوم العطلة",
+  "@screenTimeServerWeekWeekendBedtimeEnd": {
+    "description": "SCR-FAT-032 server panel — pick the weekend bedtime end"
+  },
+  "screenTimeServerDaySat": "السبت",
+  "@screenTimeServerDaySat": {
+    "description": "SCR-FAT-032 server panel — Saturday in the week editor"
+  },
+  "screenTimeServerDaySun": "الأحد",
+  "@screenTimeServerDaySun": {
+    "description": "SCR-FAT-032 server panel — Sunday in the week editor"
+  },
+  "screenTimeServerDayMon": "الاثنين",
+  "@screenTimeServerDayMon": {
+    "description": "SCR-FAT-032 server panel — Monday in the week editor"
+  },
+  "screenTimeServerDayTue": "الثلاثاء",
+  "@screenTimeServerDayTue": {
+    "description": "SCR-FAT-032 server panel — Tuesday in the week editor"
+  },
+  "screenTimeServerDayWed": "الأربعاء",
+  "@screenTimeServerDayWed": {
+    "description": "SCR-FAT-032 server panel — Wednesday in the week editor"
+  },
+  "screenTimeServerDayThu": "الخميس",
+  "@screenTimeServerDayThu": {
+    "description": "SCR-FAT-032 server panel — Thursday in the week editor"
+  },
+  "screenTimeServerDayFri": "الجمعة",
+  "@screenTimeServerDayFri": {
+    "description": "SCR-FAT-032 server panel — Friday in the week editor"
+  },
+  "screenTimeServerEarnedMinutesOnHint": "دقائق مهامك تُضاف إلى حد اليوم مباشرة",
+  "@screenTimeServerEarnedMinutesOnHint": {
+    "description": "SCR-FAT-032 server panel — earned-minutes switch on"
+  },
+  "screenTimeServerEarnedMinutesOffHint": "دقائق مهامك محفوظة لك ولا تُطيل حد اليوم",
+  "@screenTimeServerEarnedMinutesOffHint": {
+    "description": "SCR-FAT-032 server panel — earned-minutes switch off"
+  },
+  "screenTimeServerCapPresets": "اقتراحات سريعة",
+  "@screenTimeServerCapPresets": {
+    "description": "SCR-FAT-032 server panel — heading over the daily-cap quick picks"
+  },
+  "screenTimeServerCapUnlimited": "بلا حد",
+  "@screenTimeServerCapUnlimited": {
+    "description": "SCR-FAT-032 server panel — the zero-minute cap pick"
+  },
+  "screenTimeServerCapPresetValue": "{minutes} دقيقة",
+  "@screenTimeServerCapPresetValue": {
+    "description": "SCR-FAT-032 server panel — one daily-cap quick pick",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "capabilityStateConfirmed": "يعمل على الهاتف",
+  "@capabilityStateConfirmed": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the device reported this capability as confirmed)"
+  },
+  "capabilityStateAwaitingSetup": "في انتظار إعدادك",
+  "@capabilityStateAwaitingSetup": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the capability exists but a family step is still missing)"
+  },
+  "capabilityStatePermissionNeeded": "يحتاج إذناً من الهاتف",
+  "@capabilityStatePermissionNeeded": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the operating system has not granted this yet)"
+  },
+  "capabilityStateUnsupported": "لا يقدر هذا الهاتف عليه",
+  "@capabilityStateUnsupported": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the device reported the capability as unsupported)"
+  },
+  "capabilityStateRevoked": "سُحب الإذن",
+  "@capabilityStateRevoked": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the capability was revoked after it worked)"
+  },
+  "capabilityStateUnknown": "لم يخبرنا الهاتف بعد",
+  "@capabilityStateUnknown": {
+    "description": "S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — no report exists for this capability)"
+  },
+  "deviceLedgerTitle": "ما يقدر عليه هذا الهاتف",
+  "@deviceLedgerTitle": {
+    "description": "SCR-FAT-026 — heading of the device capability ledger the phone itself reported"
+  },
+  "deviceLedgerHonestyLine": "كل سطر هنا هو آخر ما بلّغ عنه الهاتف نفسه، لا ما نتمناه له.",
+  "@deviceLedgerHonestyLine": {
+    "description": "SCR-FAT-026 — the honesty line under the capability ledger heading"
+  },
+  "deviceLedgerSubtitle": "قدرة الهاتف وأوامره",
+  "@deviceLedgerSubtitle": {
+    "description": "SCR-FAT-026 — subtitle stating the source of every capability row"
+  },
+  "deviceLedgerLoading": "نسأل الخادم عن قدرات هذا الجهاز…",
+  "@deviceLedgerLoading": {
+    "description": "SCR-FAT-026 — while the capability ledger read is in flight"
+  },
+  "deviceLedgerRefresh": "طلب تحديث من الهاتف",
+  "@deviceLedgerRefresh": {
+    "description": "SCR-FAT-026 — label of the button that re-reads the ledger and the orders"
+  },
+  "deviceLedgerNoSession": "لا توجد جلسة خادم — لم نعرض أي قدرة",
+  "@deviceLedgerNoSession": {
+    "description": "SCR-FAT-026 — this build has no server session, so the ledger is empty by choice"
+  },
+  "deviceLedgerDenied": "لا يملك هذا الحساب أن يرى هذا الجهاز",
+  "@deviceLedgerDenied": {
+    "description": "SCR-FAT-026 — the server refused the capability read for this account"
+  },
+  "deviceLedgerUnreachable": "لم يستجب الخادم — هذه آخر حالة وصلت",
+  "@deviceLedgerUnreachable": {
+    "description": "SCR-FAT-026 — the ledger could not be re-read; the screen keeps the last answer and says so"
+  },
+  "deviceLedgerBadReply": "جواب الخادم لم يُفهم — لم نعرض شيئاً",
+  "@deviceLedgerBadReply": {
+    "description": "SCR-FAT-026 — a malformed ledger answer is stated as a defect, not papered over"
+  },
+  "deviceLedgerNoReport": "لم يبلّغ هذا الجهاز عن أي قدرة بعد",
+  "@deviceLedgerNoReport": {
+    "description": "SCR-FAT-026 — the ledger is genuinely empty for this device"
+  },
+  "deviceLedgerNoChild": "هذا السجل غير مربوط بابن على الخادم",
+  "@deviceLedgerNoChild": {
+    "description": "SCR-FAT-026 — the device entry carries no server child identifier, so nothing was asked"
+  },
+  "deviceLedgerSummary": "{working} تعمل، و{waiting} تنتظر إعدادك",
+  "@deviceLedgerSummary": {
+    "description": "SCR-FAT-026 — one-line count of confirmed and not-yet-working capabilities",
+    "placeholders": {
+      "working": {
+        "type": "int"
+      },
+      "waiting": {
+        "type": "int"
+      }
+    }
+  },
+  "deviceLedgerLastReport": "آخر بلاغ: {when}",
+  "@deviceLedgerLastReport": {
+    "description": "SCR-FAT-026 — when the device last spoke about one capability",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerConfirmedSince": "مؤكَّد منذ {when}",
+  "@deviceLedgerConfirmedSince": {
+    "description": "SCR-FAT-026 — the moment the server recorded a capability as confirmed",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerFromApp": "من تطبيق إصدار {version}",
+  "@deviceLedgerFromApp": {
+    "description": "SCR-FAT-026 — which app build on the phone made the report",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerOnSystem": "على نظام {os}",
+  "@deviceLedgerOnSystem": {
+    "description": "SCR-FAT-026 — which operating system the report came from",
+    "placeholders": {
+      "os": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerCapUsage": "عدّ الدقائق المستهلكة",
+  "@deviceLedgerCapUsage": {
+    "description": "SCR-FAT-026 — capability row for usage metering"
+  },
+  "deviceLedgerCapApps": "معرفة التطبيقات الموجودة",
+  "@deviceLedgerCapApps": {
+    "description": "SCR-FAT-026 — capability row for the app inventory"
+  },
+  "deviceLedgerCapBlock": "إظهار شاشة الحجب فوق التطبيق",
+  "@deviceLedgerCapBlock": {
+    "description": "SCR-FAT-026 — capability row for the blocking overlay"
+  },
+  "deviceLedgerCapFollow": "المتابعة أثناء الاستخدام الفعلي",
+  "@deviceLedgerCapFollow": {
+    "description": "SCR-FAT-026 — capability row for accessibility-based enforcement"
+  },
+  "deviceLedgerCapLock": "إيقاف الهاتف فوراً بأمرك",
+  "@deviceLedgerCapLock": {
+    "description": "SCR-FAT-026 — capability row for the instant lock"
+  },
+  "deviceLedgerCapWeb": "حجب المواقع غير اللائقة",
+  "@deviceLedgerCapWeb": {
+    "description": "SCR-FAT-026 — capability row for web filtering"
+  },
+  "deviceLedgerCapPlace": "معرفة المكان أثناء اليوم",
+  "@deviceLedgerCapPlace": {
+    "description": "SCR-FAT-026 — capability row for background location"
+  },
+  "deviceLedgerCapRestart": "البقاء فعّالاً بعد إعادة التشغيل",
+  "@deviceLedgerCapRestart": {
+    "description": "SCR-FAT-026 — capability row for boot persistence"
+  },
+  "deviceLedgerCapAlerts": "وصول التنبيهات إلى الهاتف",
+  "@deviceLedgerCapAlerts": {
+    "description": "SCR-FAT-026 — capability row for push delivery"
+  },
+  "deviceLedgerCapBattery": "الإبلاغ عن مستوى البطارية",
+  "@deviceLedgerCapBattery": {
+    "description": "SCR-FAT-026 — capability row for battery reporting"
+  },
+  "deviceLedgerCapTamper": "تنبيهك عند محاولة إيقافه",
+  "@deviceLedgerCapTamper": {
+    "description": "SCR-FAT-026 — capability row for tamper signals"
+  },
+  "deviceLedgerCommandsTitle": "أوامرك لهذا الجهاز",
+  "@deviceLedgerCommandsTitle": {
+    "description": "SCR-FAT-026 — heading of the command ledger section"
+  },
+  "deviceLedgerCommandsHint": "لا يقبل الخادم أمراً بقدرة لم يؤكد الهاتف أنه يملكها",
+  "@deviceLedgerCommandsHint": {
+    "description": "SCR-FAT-026 — the spine invariant stated in the parent's words"
+  },
+  "deviceLedgerCommandsEmpty": "لا أمر معلّق ولا سابق على هذا الجهاز",
+  "@deviceLedgerCommandsEmpty": {
+    "description": "SCR-FAT-026 — the command ledger is empty"
+  },
+  "deviceLedgerCommandsDenied": "لا يملك هذا الحساب أن يرى أوامر هذا الجهاز",
+  "@deviceLedgerCommandsDenied": {
+    "description": "SCR-FAT-026 — the server refused the command list for this account"
+  },
+  "deviceLedgerRefuseDevice": "لا يقبل الجهاز أمراً الآن — إما مقطوع أو سُحب اعتماده",
+  "@deviceLedgerRefuseDevice": {
+    "description": "SCR-FAT-026 — refusal when the device itself is not eligible for commands"
+  },
+  "deviceLedgerRefuseOther": "رفض الخادم أمرك",
+  "@deviceLedgerRefuseOther": {
+    "description": "SCR-FAT-026 — a command the server refused. The sentence stops at the refusal on purpose: the server may or may not have explained itself, and promising that it said nothing would be the screen talking about an answer it did not read"
+  },
+  "deviceLedgerCommandWindow": "سُجّل {recorded} · نافذته مفتوحة حتى {until}",
+  "@deviceLedgerCommandWindow": {
+    "description": "SCR-FAT-026 — the window a command was valid for, in the device's own reported minutes",
+    "placeholders": {
+      "recorded": {
+        "type": "String"
+      },
+      "until": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerCommandClosed": "انتهت نافذته قبل أن يصل",
+  "@deviceLedgerCommandClosed": {
+    "description": "SCR-FAT-026 — an order whose expiry passed unexecuted"
+  },
+  "deviceLedgerCommandAccepted": "استلمه الخادم",
+  "@deviceLedgerCommandAccepted": {
+    "description": "SCR-FAT-026 — command state accepted"
+  },
+  "deviceLedgerCommandDispatched": "أُرسل إلى الهاتف",
+  "@deviceLedgerCommandDispatched": {
+    "description": "SCR-FAT-026 — command state dispatched"
+  },
+  "deviceLedgerCommandReceived": "وصل إلى الهاتف",
+  "@deviceLedgerCommandReceived": {
+    "description": "SCR-FAT-026 — command state received"
+  },
+  "deviceLedgerCommandApplied": "نُفّذ على الهاتف",
+  "@deviceLedgerCommandApplied": {
+    "description": "SCR-FAT-026 — command state applied"
+  },
+  "deviceLedgerCommandLimited": "نُفّذ بعضه",
+  "@deviceLedgerCommandLimited": {
+    "description": "SCR-FAT-026 — command state limited"
+  },
+  "deviceLedgerCommandRejected": "رفضه الخادم",
+  "@deviceLedgerCommandRejected": {
+    "description": "SCR-FAT-026 — command state rejected"
+  },
+  "deviceLedgerCommandExpired": "انتهت صلاحيته",
+  "@deviceLedgerCommandExpired": {
+    "description": "SCR-FAT-026 — command state expired"
+  },
+  "deviceLedgerCommandFailed": "فشل تنفيذه",
+  "@deviceLedgerCommandFailed": {
+    "description": "SCR-FAT-026 — command state failed"
+  },
+  "deviceLedgerTypeLock": "إيقاف الهاتف",
+  "@deviceLedgerTypeLock": {
+    "description": "SCR-FAT-026 — one-line name of a lock_now command"
+  },
+  "deviceLedgerTypeRelease": "رفع الإيقاف",
+  "@deviceLedgerTypeRelease": {
+    "description": "SCR-FAT-026 — one-line name of a release_lock command"
+  },
+  "deviceLedgerTypeRefresh": "تحديث الإعدادات",
+  "@deviceLedgerTypeRefresh": {
+    "description": "SCR-FAT-026 — one-line name of a refresh_policy command"
+  },
+  "deviceLedgerAskRefresh": "حدّث إعدادات الهاتف",
+  "@deviceLedgerAskRefresh": {
+    "description": "SCR-FAT-026 — the action that issues a refresh_policy command"
+  },
+  "deviceLedgerActionWaiting": "لا يظهر الأمر حتى يؤكد الهاتف قدرته",
+  "@deviceLedgerActionWaiting": {
+    "description": "SCR-FAT-026 — why no action button is offered for a capability that is not confirmed"
+  },
+  "deviceLedgerBusy": "أمرُك قيد الإرسال…",
+  "@deviceLedgerBusy": {
+    "description": "SCR-FAT-026 — while a command write is in flight"
+  },
+  "deviceLedgerReceiptLine": "ردّ الهاتف: {state} · {at}",
+  "@deviceLedgerReceiptLine": {
+    "description": "SCR-FAT-026 — a command receipt: what the device said it did, and when",
+    "placeholders": {
+      "state": {
+        "type": "String"
+      },
+      "at": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerReceiptFailure": "سبب الفشل: {reason}",
+  "@deviceLedgerReceiptFailure": {
+    "description": "SCR-FAT-026 — the failure reason the device or the server gave for an order",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerRepliedAt": "ردّ الهاتف: {when}",
+  "@deviceLedgerRepliedAt": {
+    "description": "SCR-FAT-026 — when the receipt for an order arrived",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "deviceLedgerRefreshNote": "لا يغيّر هذا الأمر وقت طفلك ولا يحجب تطبيقاً — يطلب من الهاتف أن يأخذ الإعدادات المحفوظة مرة أخرى",
+  "@deviceLedgerRefreshNote": {
+    "description": "SCR-FAT-026 — what the refresh command does and does not do, said before it is pressed"
+  },
+  "deviceLedgerLockElsewhere": "أمر الإيقاف ورفعه يُتخذان من لوحة وقت الشاشة — وهنا ترى أثره وإيصال الهاتف به",
+  "@deviceLedgerLockElsewhere": {
+    "description": "SCR-FAT-026 — where the lock decision lives, so this screen offers one truth and not a second button"
+  },
+  "deviceLedgerRefreshSent": "طلب التحديث مسجّل عند الخادم",
+  "@deviceLedgerRefreshSent": {
+    "description": "SCR-FAT-026 — after a refresh_policy order was accepted"
+  },
+  "deviceLedgerOrdersShown": "يظهر {shown} من {total}، الأحدث أولاً",
+  "@deviceLedgerOrdersShown": {
+    "description": "SCR-FAT-026 — how many commands the screen drew out of how many the server returned, so a shortened list is never read as the whole history",
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "familyCustomizationTitle": "طابع عائلتك",
+  "@familyCustomizationTitle": {
+    "description": "Settings hub — the card that holds a family's own week, rest days, addressing words and digits."
+  },
+  "familyCustomizationIntro": "أسبوعكم، أيام راحتكم، كلمات أبنائكم، وأرقامكم. ما تختارونه هنا تقرأه الشاشات كلها.",
+  "@familyCustomizationIntro": {
+    "description": "Says what the card changes, so a parent knows it is a setting and not a summary."
+  },
+  "familyCustomizationWeekStartLabel": "بأي يوم يبدأ أسبوعكم",
+  "@familyCustomizationWeekStartLabel": {
+    "description": "The family's own first day of the week."
+  },
+  "familyCustomizationRestDaysLabel": "أيام الراحة",
+  "@familyCustomizationRestDaysLabel": {
+    "description": "Which days this family rests on."
+  },
+  "familyCustomizationRestDaysHint": "يوم واحد على الأقل — كل حسابٍ في التطبيق يقيس أسبوعه عليها.",
+  "@familyCustomizationRestDaysHint": {
+    "description": "Why an empty rest list is not offered, stated as a fact rather than a scold."
+  },
+  "familyCustomizationNumeralsLabel": "أرقامكم",
+  "@familyCustomizationNumeralsLabel": {
+    "description": "How this family wants numbers written."
+  },
+  "familyCustomizationNumeralsWestern": "أرقام لاتينية",
+  "@familyCustomizationNumeralsWestern": {
+    "description": "The choice the app has always drawn. No digits in the value: the shape is shown by the preview line."
+  },
+  "familyCustomizationNumeralsEastern": "أرقام شرقية",
+  "@familyCustomizationNumeralsEastern": {
+    "description": "The choice a family may now take. No digits in the value — see the Western label's note."
+  },
+  "familyCustomizationNumeralsPreview": "هكذا تبدو أرقامكم: {sample}",
+  "@familyCustomizationNumeralsPreview": {
+    "description": "Live preview of the family's own digits, rendered by the app's numeral reader.",
+    "placeholders": {
+      "sample": {
+        "type": "String"
+      }
+    }
+  },
+  "familyCustomizationWordsLabel": "كيف ينادي أبناؤكم أهلهم",
+  "@familyCustomizationWordsLabel": {
+    "description": "The four addressing words this family chooses."
+  },
+  "familyCustomizationWordsHint": "كلمة واحدة قصيرة لكل دور. اتركوا الحقل فارغاً ليعود كما كان في التطبيق.",
+  "@familyCustomizationWordsHint": {
+    "description": "Explains both the limit and how to undo a word, in one line."
+  },
+  "familyCustomizationWordFather": "كلمة الأبناء لأبيهم",
+  "@familyCustomizationWordFather": {
+    "description": "Label for the father's addressing word."
+  },
+  "familyCustomizationWordMother": "كلمة الأبناء لأمهم",
+  "@familyCustomizationWordMother": {
+    "description": "Label for the mother's addressing word."
+  },
+  "familyCustomizationWordGuardian": "كلمة الأبناء لوصيّهم",
+  "@familyCustomizationWordGuardian": {
+    "description": "Label for the added guardian's addressing word."
+  },
+  "familyCustomizationWordChild": "كيف تُنادى بطاقات الأبناء",
+  "@familyCustomizationWordChild": {
+    "description": "Label for the word a child's row is shown with."
+  },
+  "familyCustomizationDefaultNote": "لم تُغيّروا شيئاً بعد — هذا ما يبدأ به التطبيق لكل عائلة.",
+  "@familyCustomizationDefaultNote": {
+    "description": "Shown when the family has no stored profile, so a default is never read as a decision."
+  },
+  "familyCustomizationSave": "احفظوا طابع العائلة",
+  "@familyCustomizationSave": {
+    "description": "The card's only write action."
+  },
+  "familyCustomizationSavedNote": "حُفظ اختياركم، وهو ما تقرأه الشاشات الآن.",
+  "@familyCustomizationSavedNote": {
+    "description": "Confirmation that the change reached the family's record."
+  },
+  "familyCustomizationRefreshCta": "أعيدوا القراءة",
+  "@familyCustomizationRefreshCta": {
+    "description": "Retry when there was nothing to show."
+  },
+  "familyCustomizationNoServerNote": "لا عائلة متصلة على هذا الجهاز، فلم نسأل أحداً عن طابعكم.",
+  "@familyCustomizationNoServerNote": {
+    "description": "Honest state: nothing was read because there was nobody to ask."
+  },
+  "familyCustomizationUnreachableNote": "لم يُجب أحد. ما ترونه آخرُ ما قرأناه، وليس تأكيداً من الآن.",
+  "@familyCustomizationUnreachableNote": {
+    "description": "Honest state: the connection did not answer."
+  },
+  "familyCustomizationAccessDeniedNote": "حسابك لا يطّلع على طابع هذه العائلة من هنا.",
+  "@familyCustomizationAccessDeniedNote": {
+    "description": "The family said this account may not read its profile."
+  },
+  "familyCustomizationUnreadableNote": "جاءنا جوابٌ لم نفهمه، ولم نخمّن بدله.",
+  "@familyCustomizationUnreadableNote": {
+    "description": "A malformed reply is reported as a defect, never as an empty profile."
+  },
+  "familyCustomizationStaleNote": "غيّر أحدكم الطابع بعد أن فتحتموه. أعدنا لكم أحدث ما عند العائلة — راجعوه ثم احفظوا إن شئتم.",
+  "@familyCustomizationStaleNote": {
+    "description": "A version conflict, stated as what happened and what to do next."
+  },
+  "familyCustomizationNotPrimaryNote": "تعديل الطابع لصاحب العائلة أولاً؛ ما ترونه هنا قراءةٌ فقط.",
+  "@familyCustomizationNotPrimaryNote": {
+    "description": "The write was refused because the profile is read by every system in the app."
+  },
+  "familyCustomizationNoRestDayNote": "لا يُترك أسبوعٌ بلا يوم راحة.",
+  "@familyCustomizationNoRestDayNote": {
+    "description": "The floor, said the same way whether it came from the tap or from the record."
+  },
+  "familyCustomizationWordRefusedNote": "كلمة واحدة قصيرة، من غير أرقام ولا رموز غريبة.",
+  "@familyCustomizationWordRefusedNote": {
+    "description": "The addressing word a family typed was refused."
+  },
+  "familyCustomizationRefusedNote": "رفض التطبيق هذا التعديل.",
+  "@familyCustomizationRefusedNote": {
+    "description": "A refusal with no reason this build can name — said plainly, never dressed up."
+  },
+  "settingsClockAm": "ص",
+  "@settingsClockAm": {
+    "description": "كلمة ما قبل الظهر في الساعة ذات الاثنتي عشرة ساعة."
+  },
+  "settingsClockPm": "م",
+  "@settingsClockPm": {
+    "description": "كلمة ما بعد الظهر في الساعة ذات الاثنتي عشرة ساعة."
+  },
+  "notificationPrefsTimeUnset": "لم يُحدَّد",
+  "@notificationPrefsTimeUnset": {
+    "description": "يُعرض مكان وقتٍ لم يختره الأب بعد، بدل أن تختلقه الشاشة."
+  },
+  "notificationPrefsUndo": "تراجع",
+  "@notificationPrefsUndo": {
+    "description": "يزيل التغيير الذي لم يُحفظ بعد."
+  },
+  "notificationPrefsDraftBadge": "تغيير غير محفوظ",
+  "@notificationPrefsDraftBadge": {
+    "description": "ينبّه الوالد إلى أن التعديل لا يزال على الشاشة ولم يصل إلى حسابه."
+  },
+  "notificationPrefsSaveTimes": "احفظ وقت الصمت",
+  "@notificationPrefsSaveTimes": {
+    "description": "زرّ الحفظ حين يكون وقت الصمت هو المتغيّر."
+  },
+  "notificationPrefsQuietDurationHours": "مدة الصمت: {hours} ساعة",
+  "@notificationPrefsQuietDurationHours": {
+    "description": "طول نافذة الصمت إذا كانت ساعات كاملة.",
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationPrefsQuietDurationMinutes": "مدة الصمت: {minutes} دقيقة",
+  "@notificationPrefsQuietDurationMinutes": {
+    "description": "طول نافذة الصمت إذا كانت أقل من ساعة.",
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationPrefsQuietDurationBoth": "مدة الصمت: {hours} ساعة و{minutes} دقيقة",
+  "@notificationPrefsQuietDurationBoth": {
+    "description": "طول نافذة الصمت بالساعات والدقائق.",
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationPrefsQuietCrossesMidnight": "يمتدّ من مساء اليوم إلى فجر الغد",
+  "@notificationPrefsQuietCrossesMidnight": {
+    "description": "توضيح حين تكون النهاية قبل البداية في الساعة."
+  },
+  "notificationPrefsQuietNowInside": "الآن أنت داخل وقت الصمت: لا يصلك إلا نداء الاستغاثة",
+  "@notificationPrefsQuietNowInside": {
+    "description": "حالة الصمت الحاضرة، محسوبةً لا متخيَّلة."
+  },
+  "notificationPrefsQuietNowOutside": "الآن أنت خارج وقت الصمت: تصلك التنبيهات العادية لحظة حدوثها",
+  "@notificationPrefsQuietNowOutside": {
+    "description": "حالة الوصول الحاضرة حين لا يكون الصمت فعّالاً."
+  },
+  "notificationPrefsQuietOffState": "وقت الصمت متوقف: كل تنبيه يصلك لحظة حدوثه",
+  "@notificationPrefsQuietOffState": {
+    "description": "حالة الوصول الحاضرة حين يكون وقت الصمت مطفأً."
+  },
+  "notificationPrefsEqualTimes": "البداية والنهاية الوقت نفسه — اختر وقتين مختلفين ليبدأ الصمت ويتوقف",
+  "@notificationPrefsEqualTimes": {
+    "description": "سبب مسمّى لرفض الحفظ حين يتساوى الوقتان."
+  },
+  "notificationPrefsChildReadOnly": "إعدادات الإشعارات هنا يملكها والدك — يمكنك قراءتها دون أن تغيّرها",
+  "@notificationPrefsChildReadOnly": {
+    "description": "سبب القراءة فقط للطفل، بدل مفاتيح معطّلة بلا تفسير."
+  },
+  "notificationPrefsAlwaysArrive": "تصلك دائماً: الاستغاثة، دخول المنطقة، خروجها، تقرير حماية الجهاز",
+  "@notificationPrefsAlwaysArrive": {
+    "description": "جردٌ صادق لما لا يمكن إسكاته، لا وعدٌ عام."
+  },
+  "notificationPrefsLaterStep": "تأخير ربع ساعة",
+  "@notificationPrefsLaterStep": {
+    "description": "زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار."
+  },
+  "notificationPrefsEarlierStep": "تقديم ربع ساعة",
+  "@notificationPrefsEarlierStep": {
+    "description": "زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار."
+  },
+  "notificationPrefsTapTimeHint": "اضغط لاختيار وقت",
+  "@notificationPrefsTapTimeHint": {
+    "description": "يُقرأ بصوتٍ مع حالة الوقت، ولا يظهر على الشاشة."
+  },
+  "notificationPrefsSaveFailedDraft": "لم يُحفظ التغيير بعد — يمكنك المحاولة مرة أخرى، وسنبقي ما اخترته",
+  "@notificationPrefsSaveFailedDraft": {
+    "description": "أمانة الفشل: لا تُرجَع الشاشة إلى القيمة القديمة بصمت."
+  },
+  "notificationPrefsStoredLocally": "محفوظٌ على هذا الجهاز وحده — لا تقرأه بقية أجهزتك",
+  "@notificationPrefsStoredLocally": {
+    "description": "أمانة المصدر: تشرح للشاشة أين تُحفظ الإعدادات اليوم."
+  },
+  "notificationPrefsStoredInFamily": "في حساب عائلتك — كل أجهزتك تقرؤها",
+  "@notificationPrefsStoredInFamily": {
+    "description": "تُعرض حين تصير الإعدادات خوادمية، فلا تُكذب الشاشة على نفسها."
+  },
+  "notificationPrefsNoDeliveryYet": "لا تُرسَل إشعارات في هذا الإصدار — اختياراتك تُحفظ إلى أن يبدأ الإرسال",
+  "@notificationPrefsNoDeliveryYet": {
+    "description": "صدقٌ صريح بدل وعدٍ لا ينفَّذ."
+  },
+  "notificationPrefsDevicePermissionGranted": "إشعارات هذا الهاتف مسموحة — ما تكتبه هنا سينفذ على هذا الجهاز",
+  "@notificationPrefsDevicePermissionGranted": {
+    "description": "يُعرض حين يكون إذن العرض عند النظام ممنوحًا، فيعرف الأب أن الوعد بالإيصال له أساس."
+  },
+  "notificationPrefsDevicePermissionDenied": "جهازك يمنع الإشعارات عن هذا التطبيق — لن يصلك شيء مهما كانت إعدادات هذه الصفحة",
+  "@notificationPrefsDevicePermissionDenied": {
+    "description": "أمانة الوصل: لا تُوعِد أبًا بالوصول وقد رفض نظام الجهاز العرض. تُعرض مع زر الطلب أدناه."
+  },
+  "notificationPrefsDevicePermissionRequest": "السماح بالإشعارات",
+  "@notificationPrefsDevicePermissionRequest": {
+    "description": "زرٌّ يفتح طلب النظام لإذن العرض على هذا الجهاز."
+  },
+  "notificationPrefsDevicePermissionUnknown": "لم نتمكن من قراءة إذن العرض من جهازك — فلا نعدك بوصولٍ ولا نمنعه",
+  "@notificationPrefsDevicePermissionUnknown": {
+    "description": "الحال الأمين حين لا يجيب النظام (بناءٌ بلا قناة أصلية، أو منصة لا سؤال لديها في هذا الإصدار)."
   }
 }

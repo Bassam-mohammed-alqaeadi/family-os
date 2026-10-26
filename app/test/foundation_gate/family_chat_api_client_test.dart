@@ -192,6 +192,13 @@ class _RecordingHttpTransport implements FoundationGateHttpTransport {
     required String body,
   }) =>
       _record('PUT', uri, headers, body);
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) =>
+      _record('DELETE', uri, headers, '');
 }
 
 class _RecordingDeviceTransport implements FamilyChatDeviceTransport {

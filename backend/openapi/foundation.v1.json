@@ -6179,6 +6179,216 @@
         }
       }
     },
+    "/v1/families/{familyId}/me/notification-preferences": {
+      "get": {
+        "operationId": "readMyNotificationPreferences",
+        "summary": "Reads this guardian's own notification preferences",
+        "description": "The row `notification-gating.js` consults before any push leaves the server, exactly as it is stored. A guardian who never wrote anything receives the default view: an absent row is not a silenced family.",
+        "tags": [
+          "Family notifications"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "This guardian's preferences, stored or default.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateMyNotificationPreferences",
+        "summary": "Writes this guardian's own notification preferences",
+        "description": "Per-guardian on purpose: one adult's night is not another's, so a guardian writes their own row and cannot reach a co-guardian's. A child has no row to write and is refused by name. Turning quiet hours off clears both faces, because the stored law is an equality between the switch and the pair. Muting a safety key is refused with 403 before the database constraint is ever reached.",
+        "tags": [
+          "Family notifications"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationPreferencesPatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The preferences as the server stored them, with the version to write against next.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferencesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/customization": {
+      "get": {
+        "operationId": "readFamilyCustomizationProfile",
+        "summary": "Reads the family's week, rest days and addressing words",
+        "description": "Returns the persisted profile, or the default view with `source: default` when this family has never written one - a family that opens nothing sees what it has always seen. Any active guardian of the family may read it; the values are the server's, never a client snapshot.",
+        "tags": [
+          "Family customization"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The family profile, persisted or default.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyCustomizationProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateFamilyCustomizationProfile",
+        "summary": "Sets the family's week, rest days and addressing words",
+        "description": "Writes the family's own choices with optimistic version checking. Only the primary guardian may change the profile: these values are read by every system in the family, and one capability must have one writer. A co-guardian is refused with a named reason rather than silently ignored, and an empty rest-day list is refused by the same law the database holds.",
+        "tags": [
+          "Family customization"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyCustomizationPatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated profile, as the server stored it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FamilyCustomizationProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
     "/v1/devices/{deviceId}/chat/participants": {
       "get": {
         "operationId": "listDeviceChatParticipants",
@@ -7702,6 +7912,591 @@
           }
         }
       }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/earn": {
+      "post": {
+        "operationId": "earnChildMinutes",
+        "summary": "Credits minutes earned in an allowed channel",
+        "description": "A guardian credits minutes for a channel the economy allows. The source names what earned them, and the same source cannot be credited twice.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MinutesEarnRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The change as recorded, with the balance after it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "description": "The same idempotency key was used for a different request, or the economy refused the change (for example minutes_duplicate_source, minutes_reversal_exceeds_balance, minutes_insufficient).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A value is outside its allowed range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/consume": {
+      "post": {
+        "operationId": "consumeChildMinutes",
+        "summary": "Spends minutes from the child handset in one session",
+        "description": "The child's own device reports minutes spent in one session of one app. The device credential names the device; the device must belong to this child. The draw order is daily, temporary, the app wallet, then free.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MinutesConsumeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The change as recorded, with the balance after it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesConsumeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "403": {
+            "description": "The device credential is not accepted for this child.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          },
+          "409": {
+            "description": "The economy refused the spend, for example minutes_insufficient or minutes_locked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/grants": {
+      "post": {
+        "operationId": "grantChildMinutes",
+        "summary": "Grants minutes outright to a child",
+        "description": "A guardian grants minutes in one wallet. A co-guardian is held to the per-request ceiling of 30; the primary guardian has none. The idempotency key is the grant's source.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MinutesGrantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The change as recorded, with the balance after it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesEntryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "description": "The same idempotency key was used for a different request, or the economy refused the change (for example minutes_duplicate_source, minutes_reversal_exceeds_balance, minutes_insufficient).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A value is outside its allowed range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/allocations": {
+      "post": {
+        "operationId": "allocateChildMinutes",
+        "summary": "Moves minutes between a child's app and free wallets",
+        "description": "Moves minutes between the app and free wallets only. It creates no minutes, and a daily or temporary wallet on either side is refused.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MinutesAllocationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The change as recorded, with the balance after it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesAllocationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "description": "The same idempotency key was used for a different request, or the economy refused the change (for example minutes_duplicate_source, minutes_reversal_exceeds_balance, minutes_insufficient).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A value is outside its allowed range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/reversals": {
+      "post": {
+        "operationId": "reverseChildMinutes",
+        "summary": "Reverses one credit, once, by the primary guardian",
+        "description": "The primary guardian reverses a credit once, for a stated reason, never above what the credit still holds after spending and expiry. The original stays in the ledger.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MinutesReversalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The change as recorded, with the balance after it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesReversalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "409": {
+            "description": "The same idempotency key was used for a different request, or the economy refused the change (for example minutes_duplicate_source, minutes_reversal_exceeds_balance, minutes_insufficient).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A value is outside its allowed range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/ledger": {
+      "get": {
+        "operationId": "listChildMinutesLedger",
+        "summary": "Lists the minutes ledger for a child, page by page",
+        "description": "Every row ever written, newest first. Guardians see the whole record, including the entries a correction reversed.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of ledger rows.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesLedgerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/families/{familyId}/children/{childId}/minutes/balance": {
+      "get": {
+        "operationId": "readChildMinutesBalance",
+        "summary": "Reads a child's minutes balance, derived from the ledger",
+        "description": "The balance is a sum over the ledger at the moment of the read, never a stored number. Guardians read it here.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/FamilyId"
+          },
+          {
+            "$ref": "#/components/parameters/ChildId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The balance by wallet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesBalance"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/AuthenticationRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/FamilyAccessDenied"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
+    },
+    "/v1/devices/{deviceId}/minutes-balance": {
+      "get": {
+        "operationId": "readDeviceMinutesBalance",
+        "summary": "Reads the child's own minutes balance from the child's handset",
+        "description": "The handset sees its own full balance, including each app wallet, because its wallet view needs the detail. The device credential names the child; no child id is taken.",
+        "tags": [
+          "Minutes economy"
+        ],
+        "security": [
+          {
+            "oidcBearer": []
+          },
+          {
+            "deviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DeviceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The full balance for this child.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinutesBalance"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "403": {
+            "description": "The device credential is not accepted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceNotReady"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8519,9 +9314,9 @@
         "properties": {
           "pairingCode": {
             "type": "string",
-            "minLength": 32,
-            "maxLength": 128,
-            "pattern": "^[A-Za-z0-9_-]+$"
+            "minLength": 6,
+            "maxLength": 6,
+            "pattern": "^\\d{6}$"
           }
         },
         "additionalProperties": false
@@ -8549,8 +9344,9 @@
           },
           "pairingCode": {
             "type": "string",
-            "minLength": 32,
-            "maxLength": 128
+            "minLength": 6,
+            "maxLength": 6,
+            "pattern": "^\\d{6}$"
           },
           "expiresAt": {
             "type": "string",
@@ -10948,10 +11744,15 @@
           "schoolMode",
           "bedtime",
           "timezoneOffsetMinutes",
+          "earnedMinutesExtendLimit",
           "version",
           "updatedAt"
         ],
         "properties": {
+          "earnedMinutesExtendLimit": {
+            "type": "boolean",
+            "description": "True when the guardian allows earned minutes to extend the daily phone limit. Default false."
+          },
           "childId": {
             "$ref": "#/components/schemas/Uuid"
           },
@@ -11041,6 +11842,9 @@
         "type": "object",
         "minProperties": 1,
         "properties": {
+          "earnedMinutesExtendLimit": {
+            "type": "boolean"
+          },
           "dailyLimitMinutes": {
             "type": "integer",
             "minimum": 0,
@@ -15062,6 +15866,796 @@
               "message": {
                 "type": "string"
               }
+            }
+          }
+        }
+      },
+      "MinutesSource": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesWalletRef": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "temporary",
+              "app",
+              "free"
+            ]
+          },
+          "appId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "scope"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesEntry": {
+        "type": "object",
+        "description": "One row of the append-only minutes ledger.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entryKind": {
+            "type": "string",
+            "enum": [
+              "credit",
+              "consumption",
+              "reversal",
+              "expiry"
+            ]
+          },
+          "channel": {
+            "type": "string"
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "walletScope": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "temporary",
+              "app",
+              "free"
+            ]
+          },
+          "appId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "creditRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "actorMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "awardedByDeviceId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "balanceAfterMinutes": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "entryKind",
+          "channel",
+          "minutes",
+          "walletScope",
+          "sourceType",
+          "sourceId",
+          "balanceAfterMinutes",
+          "createdAt"
+        ]
+      },
+      "MinutesBalance": {
+        "type": "object",
+        "description": "Derived from the ledger at the moment of the read; never a stored number.",
+        "properties": {
+          "daily": {
+            "type": "integer"
+          },
+          "temporary": {
+            "type": "integer"
+          },
+          "free": {
+            "type": "integer"
+          },
+          "apps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "appId": {
+                  "type": "string"
+                },
+                "minutes": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "appId",
+                "minutes"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "daily",
+          "temporary",
+          "free",
+          "apps",
+          "total",
+          "asOf"
+        ]
+      },
+      "MinutesEarnRequest": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "appId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "source": {
+            "$ref": "#/components/schemas/MinutesSource"
+          }
+        },
+        "required": [
+          "channel",
+          "minutes",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesConsumeRequest": {
+        "type": "object",
+        "properties": {
+          "appId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "sessionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "appId",
+          "minutes",
+          "sessionId"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesGrantRequest": {
+        "type": "object",
+        "properties": {
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "daily",
+              "temporary",
+              "app",
+              "free"
+            ]
+          },
+          "appId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "minutes",
+          "scope"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesAllocationRequest": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/MinutesWalletRef"
+          },
+          "to": {
+            "$ref": "#/components/schemas/MinutesWalletRef"
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "minutes"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesReversalRequest": {
+        "type": "object",
+        "properties": {
+          "targetEntryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "targetEntryId",
+          "minutes",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesEntryResponse": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/MinutesEntry"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/MinutesBalance"
+          }
+        },
+        "required": [
+          "entry",
+          "balance"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesConsumeResponse": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MinutesEntry"
+            }
+          },
+          "balance": {
+            "$ref": "#/components/schemas/MinutesBalance"
+          }
+        },
+        "required": [
+          "entries",
+          "balance"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesAllocationResponse": {
+        "type": "object",
+        "properties": {
+          "outEntry": {
+            "$ref": "#/components/schemas/MinutesEntry"
+          },
+          "outEntries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MinutesEntry"
+            }
+          },
+          "inEntry": {
+            "$ref": "#/components/schemas/MinutesEntry"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/MinutesBalance"
+          }
+        },
+        "required": [
+          "outEntry",
+          "outEntries",
+          "inEntry",
+          "balance"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesReversalResponse": {
+        "type": "object",
+        "properties": {
+          "reversalEntry": {
+            "$ref": "#/components/schemas/MinutesEntry"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/MinutesBalance"
+          }
+        },
+        "required": [
+          "reversalEntry",
+          "balance"
+        ],
+        "additionalProperties": false
+      },
+      "MinutesLedgerResponse": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MinutesEntry"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "entries",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "CustomizationDayKey": {
+        "type": "string",
+        "enum": [
+          "sun",
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri",
+          "sat"
+        ],
+        "description": "A day of the week named by key rather than numbered. A family's week is a fact about that family, so it travels as a word that reads itself in a log instead of an ordinal two implementations can number differently."
+      },
+      "GuardianLabelWords": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "The words this family wants the app to use for the people in it. These four keys are the whole vocabulary the product speaks with; any other key is refused, and a value is a word of 1 to 24 characters. A key that is absent means the app's own language files speak for that person - absence is not silence.",
+        "properties": {
+          "father": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "mother": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "guardian": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "child": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 24
+          }
+        }
+      },
+      "GuardianLabelWordsPatch": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "The same four words, with one addition a partial update needs: `null` drops a word and hands that person back to the app's language files. Omitting a key leaves it untouched; naming it null removes it.",
+        "properties": {
+          "father": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "mother": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "guardian": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 24
+          },
+          "child": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 24
+          }
+        }
+      },
+      "FamilyCustomizationProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version",
+          "weekStartDay",
+          "numerals",
+          "restDays",
+          "guardianLabels",
+          "updatedAt",
+          "updatedByMembershipId",
+          "source"
+        ],
+        "description": "What this family decided for itself. `restDays` is derived from one stored flag per day, so the list is canonical - never duplicated, never dependent on the order a client typed it in.",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optimistic concurrency token. 0 means the family has never written a row, and what is reported is the default view."
+          },
+          "weekStartDay": {
+            "$ref": "#/components/schemas/CustomizationDayKey"
+          },
+          "restDays": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 7,
+            "items": {
+              "$ref": "#/components/schemas/CustomizationDayKey"
+            },
+            "description": "Canonical sun to sat order."
+          },
+          "guardianLabels": {
+            "$ref": "#/components/schemas/GuardianLabelWords"
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "updatedByMembershipId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Constrained to a membership of this family, in the database."
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "default",
+              "family"
+            ],
+            "description": "'default' is not a stored row; it is what the app falls back to."
+          },
+          "numerals": {
+            "type": "string",
+            "enum": [
+              "western",
+              "eastern"
+            ],
+            "description": "How this family's numbers are written. 'western' is the default every screen drew before the choice existed; the family may pick 'eastern'. Every number in the app passes through one reader that consults this value, which is why the value exists."
+          }
+        }
+      },
+      "FamilyCustomizationProfileResponse": {
+        "type": "object",
+        "required": [
+          "profile"
+        ],
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/FamilyCustomizationProfile"
+          }
+        }
+      },
+      "FamilyCustomizationPatchRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion"
+        ],
+        "description": "Partial update. `expectedVersion` must be the version the caller read: a profile two guardians opened cannot be saved twice with the second write winning in silence. `numerals` is the family's own choice of digit system. `restDays: []` is refused - a family may rest any day it likes, but not every day, because the weekday rules of other systems are measured against the days that are not rest.",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "weekStartDay": {
+            "$ref": "#/components/schemas/CustomizationDayKey"
+          },
+          "restDays": {
+            "type": "array",
+            "maxItems": 7,
+            "items": {
+              "$ref": "#/components/schemas/CustomizationDayKey"
+            }
+          },
+          "labels": {
+            "$ref": "#/components/schemas/GuardianLabelWordsPatch"
+          },
+          "numerals": {
+            "type": "string",
+            "enum": [
+              "western",
+              "eastern"
+            ]
+          }
+        }
+      },
+      "NotificationPreferences": {
+        "type": "object",
+        "required": [
+          "version",
+          "quietHoursEnabled",
+          "quietStartMinutes",
+          "quietEndMinutes",
+          "quietHoursOffsetMinutes",
+          "pushAllowed",
+          "deliveryMode",
+          "childRequestsEnabled",
+          "disabledCopyKeys",
+          "updatedAt",
+          "source"
+        ],
+        "description": "One guardian's own delivery wishes, as the gate reads them. Minutes of day on that guardian's clock - never a UTC face - because quiet hours that ignore where a person is sleeping are not quiet hours.",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optimistic concurrency token. 0 means this guardian has never written a row and what is reported is the default view."
+          },
+          "quietHoursEnabled": {
+            "type": "boolean"
+          },
+          "quietStartMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1439,
+            "description": "Minute of day the window opens (0 = 00:00). Both faces or neither: `family_notification_preferences_quiet_pair` makes the switch and the pair one fact."
+          },
+          "quietEndMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1439,
+            "description": "Minute of day the window closes, exclusive. A window whose end is earlier than its start wraps midnight; equal faces silence the whole day."
+          },
+          "quietHoursOffsetMinutes": {
+            "type": "integer",
+            "minimum": -840,
+            "maximum": 840,
+            "description": "Minutes east of UTC on the handset that last saved this row. A traveller's window follows the phone when the app is opened and stays where it was left in between - said plainly on the screen rather than discovered at 2am."
+          },
+          "pushAllowed": {
+            "type": "boolean",
+            "description": "false is a request for silence, not a disconnect: registrations, alerts and history keep working."
+          },
+          "deliveryMode": {
+            "type": "string",
+            "enum": [
+              "interrupt",
+              "daily_digest",
+              "history_only"
+            ],
+            "description": "`daily_digest` defers ordinary alerts to the family's rollup instead of this instant; `history_only` records without pushing. No mode defers or mutes a safety alert."
+          },
+          "childRequestsEnabled": {
+            "type": "boolean",
+            "description": "Whether a child's ordinary requests (a claimed task waiting for an answer) may reach this guardian. Safety is outside this switch's reach."
+          },
+          "disabledCopyKeys": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "string"
+            },
+            "description": "Per-key muting, canonical order, bounded by the database. The four safety copy keys are refused by `family_notification_preferences_never_silence_safety`, and a key with no engine is refused here rather than stored as a decoration."
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "default",
+              "stored"
+            ],
+            "description": "`default` is not a stored row; it is what a guardian who never opened the screen sees."
+          }
+        }
+      },
+      "NotificationPreferencesResponse": {
+        "type": "object",
+        "required": [
+          "preferences",
+          "mutableCopyKeys"
+        ],
+        "properties": {
+          "preferences": {
+            "$ref": "#/components/schemas/NotificationPreferences"
+          },
+          "mutableCopyKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The keys muting can act on today. A screen lists these and no others, so a switch never exists before the engine that reads it."
+          }
+        }
+      },
+      "NotificationPreferencesPatchRequest": {
+        "type": "object",
+        "required": [
+          "expectedVersion"
+        ],
+        "additionalProperties": false,
+        "description": "A partial write. `expectedVersion` is the version read a moment ago; a mismatch is refused with 409 rather than overwriting a choice someone else just made. A field the server has no engine for is refused on the wire, not stored and ignored.",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "quietHoursEnabled": {
+            "type": "boolean"
+          },
+          "quietStartMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "quietEndMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1439
+          },
+          "quietHoursOffsetMinutes": {
+            "type": "integer",
+            "minimum": -840,
+            "maximum": 840
+          },
+          "pushAllowed": {
+            "type": "boolean"
+          },
+          "deliveryMode": {
+            "type": "string",
+            "enum": [
+              "interrupt",
+              "daily_digest",
+              "history_only"
+            ]
+          },
+          "childRequestsEnabled": {
+            "type": "boolean"
+          },
+          "disabledCopyKeys": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "string"
             }
           }
         }

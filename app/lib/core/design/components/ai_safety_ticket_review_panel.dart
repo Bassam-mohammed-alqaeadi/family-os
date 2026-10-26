@@ -65,12 +65,12 @@ class AiSafetyTicketReviewPanel extends StatelessWidget {
       selected ??= open.first;
     }
 
-    return DecoratedBox(
+    return Material(
       key: AiSafetyTicketReviewKeys.panel,
-      decoration: BoxDecoration(
-        color: colors.surface,
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radii.card),
-        border: Border.all(color: colors.border),
+        side: BorderSide(color: colors.border),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),

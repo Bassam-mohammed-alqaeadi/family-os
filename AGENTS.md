@@ -12,6 +12,8 @@ The authority order is:
 4. [`docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md`](docs/product_refinement_v2/16_RUNTIME_TRUTH_POLICY.md) and [`docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md`](docs/product_refinement_v2/18_JACOBS_LAW_AND_EXPERIENCE_CONTINUITY.md) — truth and experience requirements;
 5. system-specific contracts, privacy/security decisions and runbooks — operational detail for the selected function.
 
+**Tooling:** the agent chooses verification tools per task type by [`docs/development/AI_TOOLING_POLICY.md`](docs/development/AI_TOOLING_POLICY.md); that policy does not override this document.
+
 ## 1.1 The two gates, and the one honesty measure
 
 These were added on 2026-10-06, after a full audit of the code measured the platform at

@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart' as intl;
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/core/design/components/app_empty_state.dart';
@@ -14,6 +13,7 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/clock_format.dart';
 import 'package:family_os/core/policy/chat_availability.dart';
 import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
@@ -1110,8 +1110,7 @@ class _Bubble extends StatelessWidget {
                         <String>[
                           if (message.editedAt != null) l10n.familyChatEdited,
                           if (message.createdAt != null)
-                            intl.DateFormat.Hm(l10n.localeName)
-                                .format(message.createdAt!.toLocal())
+                            formatFamilyClockFromDateTime(context, message.createdAt!.toLocal())
                           else if (message.timeLabel.isNotEmpty)
                             message.timeLabel,
                           if (receiptLine != null) receiptLine,

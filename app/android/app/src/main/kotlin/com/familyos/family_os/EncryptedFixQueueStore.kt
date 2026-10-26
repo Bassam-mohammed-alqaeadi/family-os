@@ -111,7 +111,20 @@ class EncryptedFixQueueStore(
         val parent = target.absoluteFile.parentFile ?: throw IOException("queue file has no parent")
         val staging = File(parent, target.name + ".tmp")
         staging.writeBytes(bytes)
-        if (!staging.renameTo(target)) {
+        try {
+            java.nio.file.Files.move(
+                staging.toPath(),
+                target.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+            )
+        } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+            java.nio.file.Files.move(
+                staging.toPath(),
+                target.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+            )
+        } catch (_: Exception) {
             staging.delete()
             throw IOException("queue could not be stored")
         }

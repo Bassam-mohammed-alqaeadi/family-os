@@ -2030,6 +2030,24 @@ abstract class AppLocalizations {
   /// **'إعدادات وقت الشاشة غير متاحة — تعذّر فتح التخزين المحلي. الحفظ معطّل.'**
   String get childScreenTimePolicyUnavailable;
 
+  /// SCR: child screen time — notice when earned minutes extend limit is enabled
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق المكتسبة تمدد وقت الشاشة اليومي تلقائياً'**
+  String get childScreenTimeEarnedExtensionNotice;
+
+  /// SCR: child screen time — empty state title
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد حدود زمنية محددة'**
+  String get childScreenTimeEmptyTitle;
+
+  /// SCR: child screen time — empty state message
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يتم ضبط أي نوافذ زمنية أو حد يومي لهذا الحساب بعد.'**
+  String get childScreenTimeEmptyMessage;
+
   /// SCR-FAT-032 sleep schedule row
   ///
   /// In ar, this message translates to:
@@ -2107,6 +2125,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'محافظ التطبيقات'**
   String get childScreenTimeWalletsHeading;
+
+  /// SCR-FAT-032 note when the shown balance is the last good server reading
+  ///
+  /// In ar, this message translates to:
+  /// **'الأرقام المعروضة قديمة: آخر قراءة ناجحة من الخادم'**
+  String get childScreenTimeBalanceStale;
 
   /// SCR-FAT-032 wallet balance line
   ///
@@ -3806,6 +3830,18 @@ abstract class AppLocalizations {
   /// **'المكافأة عند الإتقان (≥{percent}٪)'**
   String attributionRewardRewardsHeading(int percent);
 
+  /// SCR-FAT-045 accessible label for the parent-set minutes of a reward
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق'**
+  String get attributionRewardMinutesField;
+
+  /// SCR-FAT-045 reward row value while the server counts the amount; no minute figure
+  ///
+  /// In ar, this message translates to:
+  /// **'تُحتسب قريباً'**
+  String get attributionRewardCountedSoon;
+
   /// SCR-FAT-045 wallet minutes reward
   ///
   /// In ar, this message translates to:
@@ -3839,8 +3875,8 @@ abstract class AppLocalizations {
   /// SCR-FAT-045 assign success toast
   ///
   /// In ar, this message translates to:
-  /// **'أُسند لـ{name} — وصله: «والدك جهّز لك تحديًا — {minutes} دقيقة تنتظرك!»'**
-  String attributionRewardAssignedToast(String name, int minutes);
+  /// **'أُسند لـ{name} — وصله التحدي'**
+  String attributionRewardAssignedToast(String name);
 
   /// SCR-FAT-045 cannot assign toast
   ///
@@ -15899,11 +15935,11 @@ abstract class AppLocalizations {
   /// **'تشغيل أو إيقاف التلاوة'**
   String get quranProgressPlaySemantics;
 
-  /// SCR-FAT-072 approve CTA minutes-only
+  /// SCR-FAT-072 approve CTA, no minute figure
   ///
   /// In ar, this message translates to:
-  /// **'اعتماد وصرف المكافأة (+{minutes} د)'**
-  String quranProgressApproveCta(int minutes);
+  /// **'اعتماد الورد'**
+  String get quranProgressApproveCta;
 
   /// SCR-FAT-072 whisper
   ///
@@ -15914,8 +15950,8 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 approve toast
   ///
   /// In ar, this message translates to:
-  /// **'تم اعتماد تلاوة {name} وإضافة +{minutes} دقيقة لوقت اللعب'**
-  String quranProgressApproveToast(String name, int minutes);
+  /// **'تم اعتماد تلاوة {name}'**
+  String quranProgressApproveToast(String name);
 
   /// SCR-FAT-072 whisper toast
   ///
@@ -15923,11 +15959,11 @@ abstract class AppLocalizations {
   /// **'حُفظ التشجيع محليًا لـ {name} — إشعار الابن سيصل إلى الأجهزة الأخرى في تحديث قادم'**
   String quranProgressWhisperToast(String name);
 
-  /// SCR-FAT-072 approved banner
+  /// SCR-FAT-072 approved banner, no minute figure
   ///
   /// In ar, this message translates to:
-  /// **'⭐ تم اعتماد هذا الورد وصرف مكافأة +{minutes} دقيقة بنجاح'**
-  String quranProgressApprovedBanner(int minutes);
+  /// **'⭐ تم اعتماد هذا الورد — المكافأة تُحتسب قريباً'**
+  String get quranProgressApprovedBanner;
 
   /// SCR-FAT-072 plan
   ///
@@ -15953,11 +15989,11 @@ abstract class AppLocalizations {
   /// **'مكافأة الإتمام'**
   String get quranProgressPlanReward;
 
-  /// SCR-FAT-072 reward value minutes-only
+  /// SCR-FAT-072 reward value, no minute figure
   ///
   /// In ar, this message translates to:
-  /// **'+{minutes} دقيقة لعب للمحفظة'**
-  String quranProgressPlanRewardValue(int minutes);
+  /// **'تُحتسب قريباً'**
+  String get quranProgressPlanRewardValue;
 
   /// SCR-FAT-072 surah key
   ///
@@ -20600,8 +20636,8 @@ abstract class AppLocalizations {
   /// SCR-FAT-072 publish plan toast
   ///
   /// In ar, this message translates to:
-  /// **'أُرسلت خطة الورد — {surah} · مكافأة +{minutes} دقيقة'**
-  String quranProgressPublishPlanToast(String surah, int minutes);
+  /// **'أُرسلت خطة الورد — {surah}'**
+  String quranProgressPublishPlanToast(String surah);
 
   /// SCR-CHD-025 licensed An-Naba 1 (never AI-generated)
   ///
@@ -21782,6 +21818,24 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'وضع المدرسة'**
   String get screenTimeServerSchoolMode;
+
+  /// SCR: screen-time server panel — toggle title for earned minutes limit extension
+  ///
+  /// In ar, this message translates to:
+  /// **'تمديد الحد بالدقائق المكتسبة'**
+  String get screenTimeServerEarnedMinutesTitle;
+
+  /// SCR: screen-time server panel — toggle subtitle for earned minutes limit extension
+  ///
+  /// In ar, this message translates to:
+  /// **'إضافة الدقائق المكتسبة من الأنشطة والمهام إلى وقت الشاشة اليومي'**
+  String get screenTimeServerEarnedMinutesSubtitle;
+
+  /// SCR: screen-time server panel — formula breakdown preview for earned minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'المتبقي = الحد اليومي + المنح + الدقائق المكتسبة − الاستهلاك'**
+  String get screenTimeServerEarnedMinutesPreview;
 
   /// SCR: screen-time server panel — save CTA
   ///
@@ -23024,6 +23078,1584 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'عندي رمز دعوة — الانضمام إلى عائلة موجودة'**
   String get deviceModeInviteCodeSemantics;
+
+  /// CTA button to continue to child profile after pairing
+  ///
+  /// In ar, this message translates to:
+  /// **'متابعة إلى ملف الابن'**
+  String get nativePairingContinueToProfile;
+
+  /// Relative time for last seen just now
+  ///
+  /// In ar, this message translates to:
+  /// **'الآن'**
+  String get childProfileLastSeenNow;
+
+  /// Relative time in minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل {minutes} د'**
+  String childProfileLastSeenMinutes(int minutes);
+
+  /// Relative time in hours
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل {hours} س'**
+  String childProfileLastSeenHours(int hours);
+
+  /// Relative time in days
+  ///
+  /// In ar, this message translates to:
+  /// **'قبل {days} يوم'**
+  String childProfileLastSeenDays(int days);
+
+  /// Fallback name for a child
+  ///
+  /// In ar, this message translates to:
+  /// **'الابن'**
+  String get childProfileFallbackName;
+
+  /// Button to initiate child profile deletion
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف ملف الابن'**
+  String get childProfileDeleteButton;
+
+  /// SCR-FAT-013 delete child confirm dialog title
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف ملف الابن'**
+  String get childProfileDeleteConfirmTitle;
+
+  /// SCR-FAT-013 delete child confirmation prompt
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا الإجراء نهائي ولا يمكن التراجع عنه. لتأكيد الحذف، اكتب CONFIRM DELETE أدناه:'**
+  String get childProfileDeleteConfirmPrompt;
+
+  /// SCR-FAT-013 delete child confirm token hint
+  ///
+  /// In ar, this message translates to:
+  /// **'CONFIRM DELETE'**
+  String get childProfileDeleteConfirmTokenHint;
+
+  /// SCR-FAT-013 delete child confirm action button
+  ///
+  /// In ar, this message translates to:
+  /// **'تأكيد الحذف'**
+  String get childProfileDeleteConfirmAction;
+
+  /// SCR-FAT-013 delete child success toast
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حذف ملف الابن بنجاح'**
+  String get childProfileDeleteSuccessToast;
+
+  /// Child day board note when earned minutes extend today limit
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق التي تكسبها من أنشطتك تُضاف إلى وقتك اليومي'**
+  String get childDayBoardEarnedExtendsOn;
+
+  /// Child day board note when earned minutes do not extend today limit
+  ///
+  /// In ar, this message translates to:
+  /// **'الدقائق التي تكسبها من أنشطتك لا تُضاف إلى وقت اليوم — تُحفظ لك'**
+  String get childDayBoardEarnedExtendsOff;
+
+  /// Screen time server panel loading state
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ تحميل حالة وقت الشاشة من الخادم…'**
+  String get screenTimeServerLoading;
+
+  /// Screen time server panel empty state when no limits are set
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُضبط حدود وقت الشاشة لهذا الطفل بعد — لا شيء مفروض الآن.'**
+  String get screenTimeServerEmpty;
+
+  /// Child day board when no screen time daily limit is set
+  ///
+  /// In ar, this message translates to:
+  /// **'بلا حد يومي الآن'**
+  String get childDayBoardNoLimit;
+
+  /// Retry action on screen time server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'إعادة المحاولة'**
+  String get screenTimeServerRetry;
+
+  /// Title for quick extra minutes grant buttons on server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'منح وقت إضافي سريع'**
+  String get screenTimeServerQuickGrantTitle;
+
+  /// Quick grant 15 minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'+15 دقيقة'**
+  String get screenTimeServerGrant15;
+
+  /// Quick grant 30 minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'+30 دقيقة'**
+  String get screenTimeServerGrant30;
+
+  /// Quick grant 60 minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'+60 دقيقة'**
+  String get screenTimeServerGrant60;
+
+  /// Validation message when screen time daily cap is invalid
+  ///
+  /// In ar, this message translates to:
+  /// **'يرجى إدخال عدد دقائق بين 0 و 1440'**
+  String get screenTimeServerCapInvalid;
+
+  /// Total limit minutes label on screen time server panel
+  ///
+  /// In ar, this message translates to:
+  /// **'الحد الكلي: {minutes} دقيقة'**
+  String screenTimeServerTotalLimit(int minutes);
+
+  /// Accessibility semantics label for daily screen time consumption progress bar
+  ///
+  /// In ar, this message translates to:
+  /// **'نسبة استهلاك وقت الشاشة اليومي'**
+  String get screenTimeServerProgressLabel;
+
+  /// SCR-CHD-004 daily time hero ring title
+  ///
+  /// In ar, this message translates to:
+  /// **'وقتك اليوم'**
+  String get childDayBoardTimeHeroTitle;
+
+  /// SCR-CHD-004 hero ring legend for the guardian-set daily cap
+  ///
+  /// In ar, this message translates to:
+  /// **'الحد الأساسي'**
+  String get childDayBoardTimeHeroBase;
+
+  /// SCR-CHD-004 hero ring legend for minutes earned by tasks and activities
+  ///
+  /// In ar, this message translates to:
+  /// **'دقائق كسبتها'**
+  String get childDayBoardTimeHeroEarned;
+
+  /// SCR-CHD-004 hero ring legend for guardian-granted temporary minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'منحة من أهلي'**
+  String get childDayBoardTimeHeroGrant;
+
+  /// SCR-CHD-004 hero ring when the server reports no daily limit
+  ///
+  /// In ar, this message translates to:
+  /// **'وقتك مفتوح اليوم'**
+  String get childDayBoardTimeHeroNoLimit;
+
+  /// SCR-CHD-004 hero ring loading state
+  ///
+  /// In ar, this message translates to:
+  /// **'نقرأ وقتك من الخادم…'**
+  String get childDayBoardTimeHeroLoading;
+
+  /// SCR-CHD-004 hero ring calm tone when minutes are plentiful
+  ///
+  /// In ar, this message translates to:
+  /// **'أمامك وقت مريح — استمتع بذكاء'**
+  String get childDayBoardTimeHeroAbundant;
+
+  /// SCR-CHD-004 hero ring warm tone when the day is nearly spent
+  ///
+  /// In ar, this message translates to:
+  /// **'بقي القليل — أنهِ لعبتك بهدوء'**
+  String get childDayBoardTimeHeroNearEnd;
+
+  /// SCR-CHD-004 hero ring when the day's minutes are spent
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهى وقت اليوم — غداً وقت جديد'**
+  String get childDayBoardTimeHeroDepleted;
+
+  /// SCR-CHD-004 hero ring bedtime tone
+  ///
+  /// In ar, this message translates to:
+  /// **'اقترب وقت النوم — خفف الشاشة'**
+  String get childDayBoardTimeHeroWindDown;
+
+  /// SCR-CHD-004 hero ring accessibility sentence
+  ///
+  /// In ar, this message translates to:
+  /// **'حلبة وقت الشاشة: {percent}% مستهلك'**
+  String childDayBoardTimeHeroRingSemantics(int percent);
+
+  /// SCR-CHD-004 routine card title
+  ///
+  /// In ar, this message translates to:
+  /// **'روتين اليوم'**
+  String get childDayBoardRoutineTitle;
+
+  /// SCR-CHD-004 routine badge for the sleep window
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت النوم 🌙'**
+  String get childDayBoardRoutineSleep;
+
+  /// SCR-CHD-004 routine badge for the school window
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت الدوام 🎒'**
+  String get childDayBoardRoutineSchool;
+
+  /// SCR-CHD-004 routine badge when the child's own time is open
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت اللعب 🎮'**
+  String get childDayBoardRoutineFree;
+
+  /// SCR-CHD-004 routine badge in the minutes before bedtime
+  ///
+  /// In ar, this message translates to:
+  /// **'تهدئة قبل النوم'**
+  String get childDayBoardRoutineWindDown;
+
+  /// SCR-CHD-004 routine card hint line
+  ///
+  /// In ar, this message translates to:
+  /// **'النوم والدوام واللعب حسب جدول عائلتك'**
+  String get childDayBoardRoutineHint;
+
+  /// SCR-CHD-004 tasks and rewards card title
+  ///
+  /// In ar, this message translates to:
+  /// **'مهامي ومكافآتي'**
+  String get childDayBoardTasksTitle;
+
+  /// SCR-CHD-004 tasks card subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'أنهِ مهمتك لتربح دقائق'**
+  String get childDayBoardTasksSubtitle;
+
+  /// SCR-CHD-004 reward shown on one task card
+  ///
+  /// In ar, this message translates to:
+  /// **'{points} نقطة'**
+  String childDayBoardTasksPoints(int points);
+
+  /// SCR-CHD-004 status of a task nobody has sent
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تبدأ بعد'**
+  String get childDayBoardTasksStatusPending;
+
+  /// SCR-CHD-004 status of a task awaiting a guardian's answer
+  ///
+  /// In ar, this message translates to:
+  /// **'أرسلتها — بانتظار أهل'**
+  String get childDayBoardTasksStatusClaimed;
+
+  /// SCR-CHD-004 status of an approved task
+  ///
+  /// In ar, this message translates to:
+  /// **'موافق عليها'**
+  String get childDayBoardTasksStatusConfirmed;
+
+  /// SCR-CHD-004 status of a declined task
+  ///
+  /// In ar, this message translates to:
+  /// **'ردّها أهل هذه المرة'**
+  String get childDayBoardTasksStatusDeclined;
+
+  /// SCR-CHD-004 status of a task closed for the day
+  ///
+  /// In ar, this message translates to:
+  /// **'مؤرشفة'**
+  String get childDayBoardTasksStatusArchived;
+
+  /// SCR-CHD-004 link from the tasks card to the tasks list
+  ///
+  /// In ar, this message translates to:
+  /// **'كل المهام'**
+  String get childDayBoardTasksOpenAll;
+
+  /// SCR-CHD-004 empty state of the tasks card
+  ///
+  /// In ar, this message translates to:
+  /// **'لا مهام اليوم'**
+  String get childDayBoardTasksEmpty;
+
+  /// SCR-CHD-004 loading state of the tasks card
+  ///
+  /// In ar, this message translates to:
+  /// **'نقرأ مهامك…'**
+  String get childDayBoardTasksLoading;
+
+  /// SCR-CHD-004 state of the tasks card with no server bound
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُربط خادم المهام بعد'**
+  String get childDayBoardTasksUnavailable;
+
+  /// SCR-CHD-004 error state of the tasks card
+  ///
+  /// In ar, this message translates to:
+  /// **'لم أستطع قراءة مهامك الآن'**
+  String get childDayBoardTasksRefused;
+
+  /// SCR-CHD-004 safety card title
+  ///
+  /// In ar, this message translates to:
+  /// **'زر الأمان'**
+  String get childDayBoardSafetyTitle;
+
+  /// SCR-CHD-004 safety button when it is armed
+  ///
+  /// In ar, this message translates to:
+  /// **'جاهز — اضغط مطولاً للنجدة'**
+  String get childDayBoardSafetyReady;
+
+  /// SCR-CHD-004 instruction under the safety button
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط مطولاً 3 ثوانٍ'**
+  String get childDayBoardSafetyHold;
+
+  /// SCR-CHD-004 countdown inside the safety hold
+  ///
+  /// In ar, this message translates to:
+  /// **'استمر بالضغط — {seconds}'**
+  String childDayBoardSafetyProgress(int seconds);
+
+  /// SCR-CHD-004 message once the hold completed
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسل طلب النجدة'**
+  String get childDayBoardSafetyReleased;
+
+  /// SCR-CHD-004 accessibility label of the safety button
+  ///
+  /// In ar, this message translates to:
+  /// **'زر النجدة — اضغط مطولاً لثلاث ثوانٍ'**
+  String get childDayBoardSafetySemantics;
+
+  /// SCR-CHD-004 family touchpoints card title
+  ///
+  /// In ar, this message translates to:
+  /// **'عائلتي'**
+  String get childDayBoardTouchpointsTitle;
+
+  /// SCR-CHD-004 family touchpoints card subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'اتصال أو رسالة بضغطة واحدة'**
+  String get childDayBoardTouchpointsSubtitle;
+
+  /// SCR-CHD-004 one-tap touchpoint to the shared family thread
+  ///
+  /// In ar, this message translates to:
+  /// **'محادثة العائلة'**
+  String get childDayBoardTouchpointsFamilyThread;
+
+  /// SCR-CHD-004 one-tap touchpoint to the child's conversation list
+  ///
+  /// In ar, this message translates to:
+  /// **'كل المحادثات'**
+  String get childDayBoardTouchpointsAllChats;
+
+  /// SCR-CHD-004 one-tap touchpoint to the time-request screen
+  ///
+  /// In ar, this message translates to:
+  /// **'أطلب دقائق إضافية'**
+  String get childDayBoardTouchpointsAskTime;
+
+  /// SCR-CHD-004 one-tap touchpoint to the child's Qur'an page
+  ///
+  /// In ar, this message translates to:
+  /// **'وردي من القرآن'**
+  String get childDayBoardTouchpointsQuran;
+
+  /// SCR-CHD-004 one-tap touchpoint to the child's minutes wallet
+  ///
+  /// In ar, this message translates to:
+  /// **'دفتر دقائق'**
+  String get childDayBoardTouchpointsWallet;
+
+  /// SCR-FAT-032 server panel — quick and custom extension card title
+  ///
+  /// In ar, this message translates to:
+  /// **'تمديد الوقت'**
+  String get screenTimeServerExtensionTitle;
+
+  /// SCR-FAT-032 server panel — extension card honesty hint
+  ///
+  /// In ar, this message translates to:
+  /// **'تُضاف الدقائق بقرار من الخادم وتصل للطفل عند مزامنته'**
+  String get screenTimeServerExtensionHint;
+
+  /// SCR-FAT-032 server panel — open the custom extension sheet
+  ///
+  /// In ar, this message translates to:
+  /// **'دقائق مخصصة'**
+  String get screenTimeServerExtensionCustom;
+
+  /// SCR-FAT-032 server panel — custom extension sheet title
+  ///
+  /// In ar, this message translates to:
+  /// **'كم دقيقة تمنح الآن؟'**
+  String get screenTimeServerExtensionCustomTitle;
+
+  /// SCR-FAT-032 server panel — custom extension helper text
+  ///
+  /// In ar, this message translates to:
+  /// **'من 1 إلى 240 دقيقة'**
+  String get screenTimeServerExtensionCustomHelper;
+
+  /// SCR-FAT-032 server panel — custom extension confirm button
+  ///
+  /// In ar, this message translates to:
+  /// **'امنح على الخادم'**
+  String get screenTimeServerExtensionCustomConfirm;
+
+  /// SCR-FAT-032 server panel — custom extension validation error
+  ///
+  /// In ar, this message translates to:
+  /// **'أدخل عدد دقائق بين 1 و 240'**
+  String get screenTimeServerExtensionCustomInvalid;
+
+  /// SCR-FAT-032 server panel — extension write in flight
+  ///
+  /// In ar, this message translates to:
+  /// **'الخادم ينفذ التمديد…'**
+  String get screenTimeServerExtensionPending;
+
+  /// SCR-FAT-032 server panel — lock card when a lock is live
+  ///
+  /// In ar, this message translates to:
+  /// **'الهاتف موقوف الآن بقرارك'**
+  String get screenTimeServerLockStateLocked;
+
+  /// SCR-FAT-032 server panel — lock card when nothing is stopping the phone
+  ///
+  /// In ar, this message translates to:
+  /// **'الهاتف يعمل ضمن حد اليوم'**
+  String get screenTimeServerLockStateUnlocked;
+
+  /// SCR-FAT-032 server panel — when the live lock began
+  ///
+  /// In ar, this message translates to:
+  /// **'أوقف عند {time}'**
+  String screenTimeServerLockSince(String time);
+
+  /// SCR-FAT-032 server panel — lock write in flight
+  ///
+  /// In ar, this message translates to:
+  /// **'الخادم ينفذ…'**
+  String get screenTimeServerLockBusy;
+
+  /// SCR-FAT-032 server panel — confirmed-lock chip
+  ///
+  /// In ar, this message translates to:
+  /// **'تم التأكيد من الخادم'**
+  String get screenTimeServerLockConfirmed;
+
+  /// SCR-FAT-032 server panel — release lock note
+  ///
+  /// In ar, this message translates to:
+  /// **'الإعادة لا تلغي حد اليوم'**
+  String get screenTimeServerLockReleaseNote;
+
+  /// SCR-FAT-032 server panel — app rules card title
+  ///
+  /// In ar, this message translates to:
+  /// **'التطبيقات والفئات'**
+  String get screenTimeServerAppsTitle;
+
+  /// SCR-FAT-032 server panel — app rules card subtitle
+  ///
+  /// In ar, this message translates to:
+  /// **'قرارك لكل تطبيق يُحفظ على الخادم'**
+  String get screenTimeServerAppsSubtitle;
+
+  /// SCR-FAT-032 server panel — open the app rules sheet
+  ///
+  /// In ar, this message translates to:
+  /// **'أدر التطبيقات'**
+  String get screenTimeServerAppsOpen;
+
+  /// SCR-FAT-032 server panel — link from the insights card to app rules
+  ///
+  /// In ar, this message translates to:
+  /// **'قواعد التطبيقات'**
+  String get screenTimeServerAppsRules;
+
+  /// SCR-FAT-032 app rules sheet — dismiss control
+  ///
+  /// In ar, this message translates to:
+  /// **'تم'**
+  String get screenTimeServerAppsClose;
+
+  /// SCR-FAT-032 app rules sheet — loading state
+  ///
+  /// In ar, this message translates to:
+  /// **'نقرأ تطبيقات الهاتف…'**
+  String get screenTimeServerAppsLoading;
+
+  /// SCR-FAT-032 app rules sheet — empty state
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يبلّغ الهاتف عن تطبيقات بعد'**
+  String get screenTimeServerAppsEmpty;
+
+  /// SCR-FAT-032 app rules sheet — refused read
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يملك هذا الحساب إدارة تطبيقات هذا الابن'**
+  String get screenTimeServerAppsDenied;
+
+  /// SCR-FAT-032 app rules sheet — unreachable state
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يستجب الخادم — هذه آخر قائمة وصلت'**
+  String get screenTimeServerAppsStale;
+
+  /// SCR-FAT-032 app rules sheet — no session bound
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسة خادم — لا نغير شيئاً'**
+  String get screenTimeServerAppsNoSession;
+
+  /// SCR-FAT-032 app rules sheet — allow one app
+  ///
+  /// In ar, this message translates to:
+  /// **'اسمح'**
+  String get screenTimeServerAppAllow;
+
+  /// SCR-FAT-032 app rules sheet — block one app
+  ///
+  /// In ar, this message translates to:
+  /// **'احجب'**
+  String get screenTimeServerAppBlock;
+
+  /// SCR-FAT-032 app rules sheet — the rule the server stores for one app
+  ///
+  /// In ar, this message translates to:
+  /// **'مسموح'**
+  String get screenTimeServerAppStateAllowed;
+
+  /// SCR-FAT-032 app rules sheet — a blocked app, stated as the stored rule
+  ///
+  /// In ar, this message translates to:
+  /// **'محجوب'**
+  String get screenTimeServerAppStateBlocked;
+
+  /// SCR-FAT-032 app rules sheet — a rule nobody has written yet
+  ///
+  /// In ar, this message translates to:
+  /// **'بانتظار القرار'**
+  String get screenTimeServerAppPending;
+
+  /// SCR-FAT-032 app rules sheet — an app with no limit on it
+  ///
+  /// In ar, this message translates to:
+  /// **'مسموح دائماً'**
+  String get screenTimeServerAppFree;
+
+  /// SCR-FAT-032 app rules sheet — per-app limit field label
+  ///
+  /// In ar, this message translates to:
+  /// **'حد يومي للتطبيق'**
+  String get screenTimeServerAppLimitSet;
+
+  /// SCR-FAT-032 app rules sheet — the stored per-app limit
+  ///
+  /// In ar, this message translates to:
+  /// **'حد {minutes} دقيقة'**
+  String screenTimeServerAppLimitValue(int minutes);
+
+  /// SCR-FAT-032 app rules sheet — helper under the limit field
+  ///
+  /// In ar, this message translates to:
+  /// **'بلا حد لهذا التطبيق'**
+  String get screenTimeServerAppUnlimited;
+
+  /// SCR-FAT-032 app rules sheet — today's minutes for one app
+  ///
+  /// In ar, this message translates to:
+  /// **'استهلك {minutes} دقيقة'**
+  String screenTimeServerAppUsed(int minutes);
+
+  /// SCR-FAT-032 app rules sheet — a rule for an app no handset reported
+  ///
+  /// In ar, this message translates to:
+  /// **'التطبيق غير معروف على هذا الهاتف بعد'**
+  String get screenTimeServerAppUnknown;
+
+  /// SCR-FAT-032 app rules sheet — a write that did not land
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم القرار — لم يتغير شيء'**
+  String get screenTimeServerAppSaveError;
+
+  /// SCR-FAT-032 app rules sheet — the games category
+  ///
+  /// In ar, this message translates to:
+  /// **'ألعاب'**
+  String get screenTimeServerCategoryGames;
+
+  /// SCR-FAT-032 app rules sheet — the social category
+  ///
+  /// In ar, this message translates to:
+  /// **'تواصل'**
+  String get screenTimeServerCategorySocial;
+
+  /// SCR-FAT-032 app rules sheet — the video category
+  ///
+  /// In ar, this message translates to:
+  /// **'فيديو ويوتيوب'**
+  String get screenTimeServerCategoryVideo;
+
+  /// SCR-FAT-032 app rules sheet — the learning category
+  ///
+  /// In ar, this message translates to:
+  /// **'تعليم'**
+  String get screenTimeServerCategoryEducation;
+
+  /// SCR-FAT-032 app rules sheet — anything the phone reported without a category
+  ///
+  /// In ar, this message translates to:
+  /// **'أخرى'**
+  String get screenTimeServerCategoryOther;
+
+  /// SCR-FAT-032 app rules sheet — block every app in one category
+  ///
+  /// In ar, this message translates to:
+  /// **'احجب الفئة'**
+  String get screenTimeServerCategoryBlockAll;
+
+  /// SCR-FAT-032 app rules sheet — allow every app in one category
+  ///
+  /// In ar, this message translates to:
+  /// **'اسمح للفئة'**
+  String get screenTimeServerCategoryAllowAll;
+
+  /// SCR-FAT-032 app rules sheet — how many rules one category action wrote
+  ///
+  /// In ar, this message translates to:
+  /// **'طبق على {count} تطبيق'**
+  String screenTimeServerCategoryApplied(int count);
+
+  /// SCR-FAT-032 app rules sheet — per-category minute budget field
+  ///
+  /// In ar, this message translates to:
+  /// **'ميزانية الفئة اليومية'**
+  String get screenTimeServerCategoryBudget;
+
+  /// SCR-FAT-032 app rules sheet — the contract a category budget waits on
+  ///
+  /// In ar, this message translates to:
+  /// **'ميزانية الفئة تحتاج مساراً جديداً على الخادم'**
+  String get screenTimeServerCategoryBudgetPending;
+
+  /// SCR-FAT-032 server panel — usage insights card title
+  ///
+  /// In ar, this message translates to:
+  /// **'تحليل استهلاك اليوم'**
+  String get screenTimeServerInsightsTitle;
+
+  /// SCR-FAT-032 server panel — minutes used today
+  ///
+  /// In ar, this message translates to:
+  /// **'المستهلك'**
+  String get screenTimeServerInsightsUsed;
+
+  /// SCR-FAT-032 server panel — the cap today's minutes are read against
+  ///
+  /// In ar, this message translates to:
+  /// **'حد اليوم'**
+  String get screenTimeServerInsightsCap;
+
+  /// SCR-FAT-032 server panel — minutes a guardian added to the cap
+  ///
+  /// In ar, this message translates to:
+  /// **'منح إضافية'**
+  String get screenTimeServerInsightsGranted;
+
+  /// SCR-FAT-032 server panel — heading over the per-app bars
+  ///
+  /// In ar, this message translates to:
+  /// **'أكثر التطبيقات استهلاكاً'**
+  String get screenTimeServerInsightsTop;
+
+  /// SCR-FAT-032 server panel — insights when the day is untouched
+  ///
+  /// In ar, this message translates to:
+  /// **'لا استهلاك مسجلاً اليوم'**
+  String get screenTimeServerInsightsNoUsage;
+
+  /// SCR-FAT-032 server panel — insights when used minutes exceed what was allowed
+  ///
+  /// In ar, this message translates to:
+  /// **'تجاوز الاستهلاك حد اليوم'**
+  String get screenTimeServerInsightsOverCap;
+
+  /// SCR-FAT-032 server panel — one app's share of the day
+  ///
+  /// In ar, this message translates to:
+  /// **'{percent}% من وقت اليوم'**
+  String screenTimeServerInsightsShare(int percent);
+
+  /// SCR-FAT-032 server panel — insights footnote
+  ///
+  /// In ar, this message translates to:
+  /// **'الأرقام كما حسابها الخادم اليوم، على ساعة الجهاز'**
+  String get screenTimeServerInsightsHint;
+
+  /// SCR-FAT-032 server panel — week schedule card title
+  ///
+  /// In ar, this message translates to:
+  /// **'جدول الأسبوع'**
+  String get screenTimeServerWeekTitle;
+
+  /// SCR-FAT-032 server panel — heading over the school-day chips
+  ///
+  /// In ar, this message translates to:
+  /// **'أيام وضع المدرسة'**
+  String get screenTimeServerWeekSchoolDays;
+
+  /// SCR-FAT-032 server panel — the weekend group of days
+  ///
+  /// In ar, this message translates to:
+  /// **'عطلة الأسبوع'**
+  String get screenTimeServerWeekWeekend;
+
+  /// SCR-FAT-032 server panel — the weekday group of days
+  ///
+  /// In ar, this message translates to:
+  /// **'أيام الدراسة'**
+  String get screenTimeServerWeekWeekdays;
+
+  /// SCR-FAT-032 server panel — bedtime window explanation
+  ///
+  /// In ar, this message translates to:
+  /// **'الخادم يخزن نافذة نوم واحدة لكل الأيام حتى تُبنى نافذة للعطلة'**
+  String get screenTimeServerWeekBedtimeHint;
+
+  /// SCR-FAT-032 server panel — what the weekend bedtime waits on
+  ///
+  /// In ar, this message translates to:
+  /// **'نافذة نوم منفصلة للعطلة تحتاج امتداداً في عقد الخادم'**
+  String get screenTimeServerWeekWeekendNote;
+
+  /// SCR-FAT-032 server panel — write the school-day set
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظ أيام الأسبوع'**
+  String get screenTimeServerWeekSave;
+
+  /// SCR-FAT-032 server panel — pick the bedtime start
+  ///
+  /// In ar, this message translates to:
+  /// **'بداية النوم'**
+  String get screenTimeServerWeekBedtimeStart;
+
+  /// SCR-FAT-032 server panel — pick the bedtime end
+  ///
+  /// In ar, this message translates to:
+  /// **'نهاية النوم'**
+  String get screenTimeServerWeekBedtimeEnd;
+
+  /// SCR-FAT-032 server panel — pick the weekend bedtime start
+  ///
+  /// In ar, this message translates to:
+  /// **'بداية نوم العطلة'**
+  String get screenTimeServerWeekWeekendBedtimeStart;
+
+  /// SCR-FAT-032 server panel — pick the weekend bedtime end
+  ///
+  /// In ar, this message translates to:
+  /// **'نهاية نوم العطلة'**
+  String get screenTimeServerWeekWeekendBedtimeEnd;
+
+  /// SCR-FAT-032 server panel — Saturday in the week editor
+  ///
+  /// In ar, this message translates to:
+  /// **'السبت'**
+  String get screenTimeServerDaySat;
+
+  /// SCR-FAT-032 server panel — Sunday in the week editor
+  ///
+  /// In ar, this message translates to:
+  /// **'الأحد'**
+  String get screenTimeServerDaySun;
+
+  /// SCR-FAT-032 server panel — Monday in the week editor
+  ///
+  /// In ar, this message translates to:
+  /// **'الاثنين'**
+  String get screenTimeServerDayMon;
+
+  /// SCR-FAT-032 server panel — Tuesday in the week editor
+  ///
+  /// In ar, this message translates to:
+  /// **'الثلاثاء'**
+  String get screenTimeServerDayTue;
+
+  /// SCR-FAT-032 server panel — Wednesday in the week editor
+  ///
+  /// In ar, this message translates to:
+  /// **'الأربعاء'**
+  String get screenTimeServerDayWed;
+
+  /// SCR-FAT-032 server panel — Thursday in the week editor
+  ///
+  /// In ar, this message translates to:
+  /// **'الخميس'**
+  String get screenTimeServerDayThu;
+
+  /// SCR-FAT-032 server panel — Friday in the week editor
+  ///
+  /// In ar, this message translates to:
+  /// **'الجمعة'**
+  String get screenTimeServerDayFri;
+
+  /// SCR-FAT-032 server panel — earned-minutes switch on
+  ///
+  /// In ar, this message translates to:
+  /// **'دقائق مهامك تُضاف إلى حد اليوم مباشرة'**
+  String get screenTimeServerEarnedMinutesOnHint;
+
+  /// SCR-FAT-032 server panel — earned-minutes switch off
+  ///
+  /// In ar, this message translates to:
+  /// **'دقائق مهامك محفوظة لك ولا تُطيل حد اليوم'**
+  String get screenTimeServerEarnedMinutesOffHint;
+
+  /// SCR-FAT-032 server panel — heading over the daily-cap quick picks
+  ///
+  /// In ar, this message translates to:
+  /// **'اقتراحات سريعة'**
+  String get screenTimeServerCapPresets;
+
+  /// SCR-FAT-032 server panel — the zero-minute cap pick
+  ///
+  /// In ar, this message translates to:
+  /// **'بلا حد'**
+  String get screenTimeServerCapUnlimited;
+
+  /// SCR-FAT-032 server panel — one daily-cap quick pick
+  ///
+  /// In ar, this message translates to:
+  /// **'{minutes} دقيقة'**
+  String screenTimeServerCapPresetValue(int minutes);
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the device reported this capability as confirmed)
+  ///
+  /// In ar, this message translates to:
+  /// **'يعمل على الهاتف'**
+  String get capabilityStateConfirmed;
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the capability exists but a family step is still missing)
+  ///
+  /// In ar, this message translates to:
+  /// **'في انتظار إعدادك'**
+  String get capabilityStateAwaitingSetup;
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the operating system has not granted this yet)
+  ///
+  /// In ar, this message translates to:
+  /// **'يحتاج إذناً من الهاتف'**
+  String get capabilityStatePermissionNeeded;
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the device reported the capability as unsupported)
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يقدر هذا الهاتف عليه'**
+  String get capabilityStateUnsupported;
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — the capability was revoked after it worked)
+  ///
+  /// In ar, this message translates to:
+  /// **'سُحب الإذن'**
+  String get capabilityStateRevoked;
+
+  /// S0 spine — what a device said about one of its own capabilities, in the words every capability row on the platform uses (SCR-FAT-026 — no report exists for this capability)
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يخبرنا الهاتف بعد'**
+  String get capabilityStateUnknown;
+
+  /// SCR-FAT-026 — heading of the device capability ledger the phone itself reported
+  ///
+  /// In ar, this message translates to:
+  /// **'ما يقدر عليه هذا الهاتف'**
+  String get deviceLedgerTitle;
+
+  /// SCR-FAT-026 — the honesty line under the capability ledger heading
+  ///
+  /// In ar, this message translates to:
+  /// **'كل سطر هنا هو آخر ما بلّغ عنه الهاتف نفسه، لا ما نتمناه له.'**
+  String get deviceLedgerHonestyLine;
+
+  /// SCR-FAT-026 — subtitle stating the source of every capability row
+  ///
+  /// In ar, this message translates to:
+  /// **'قدرة الهاتف وأوامره'**
+  String get deviceLedgerSubtitle;
+
+  /// SCR-FAT-026 — while the capability ledger read is in flight
+  ///
+  /// In ar, this message translates to:
+  /// **'نسأل الخادم عن قدرات هذا الجهاز…'**
+  String get deviceLedgerLoading;
+
+  /// SCR-FAT-026 — label of the button that re-reads the ledger and the orders
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب تحديث من الهاتف'**
+  String get deviceLedgerRefresh;
+
+  /// SCR-FAT-026 — this build has no server session, so the ledger is empty by choice
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد جلسة خادم — لم نعرض أي قدرة'**
+  String get deviceLedgerNoSession;
+
+  /// SCR-FAT-026 — the server refused the capability read for this account
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يملك هذا الحساب أن يرى هذا الجهاز'**
+  String get deviceLedgerDenied;
+
+  /// SCR-FAT-026 — the ledger could not be re-read; the screen keeps the last answer and says so
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يستجب الخادم — هذه آخر حالة وصلت'**
+  String get deviceLedgerUnreachable;
+
+  /// SCR-FAT-026 — a malformed ledger answer is stated as a defect, not papered over
+  ///
+  /// In ar, this message translates to:
+  /// **'جواب الخادم لم يُفهم — لم نعرض شيئاً'**
+  String get deviceLedgerBadReply;
+
+  /// SCR-FAT-026 — the ledger is genuinely empty for this device
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يبلّغ هذا الجهاز عن أي قدرة بعد'**
+  String get deviceLedgerNoReport;
+
+  /// SCR-FAT-026 — the device entry carries no server child identifier, so nothing was asked
+  ///
+  /// In ar, this message translates to:
+  /// **'هذا السجل غير مربوط بابن على الخادم'**
+  String get deviceLedgerNoChild;
+
+  /// SCR-FAT-026 — one-line count of confirmed and not-yet-working capabilities
+  ///
+  /// In ar, this message translates to:
+  /// **'{working} تعمل، و{waiting} تنتظر إعدادك'**
+  String deviceLedgerSummary(int working, int waiting);
+
+  /// SCR-FAT-026 — when the device last spoke about one capability
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر بلاغ: {when}'**
+  String deviceLedgerLastReport(String when);
+
+  /// SCR-FAT-026 — the moment the server recorded a capability as confirmed
+  ///
+  /// In ar, this message translates to:
+  /// **'مؤكَّد منذ {when}'**
+  String deviceLedgerConfirmedSince(String when);
+
+  /// SCR-FAT-026 — which app build on the phone made the report
+  ///
+  /// In ar, this message translates to:
+  /// **'من تطبيق إصدار {version}'**
+  String deviceLedgerFromApp(String version);
+
+  /// SCR-FAT-026 — which operating system the report came from
+  ///
+  /// In ar, this message translates to:
+  /// **'على نظام {os}'**
+  String deviceLedgerOnSystem(String os);
+
+  /// SCR-FAT-026 — capability row for usage metering
+  ///
+  /// In ar, this message translates to:
+  /// **'عدّ الدقائق المستهلكة'**
+  String get deviceLedgerCapUsage;
+
+  /// SCR-FAT-026 — capability row for the app inventory
+  ///
+  /// In ar, this message translates to:
+  /// **'معرفة التطبيقات الموجودة'**
+  String get deviceLedgerCapApps;
+
+  /// SCR-FAT-026 — capability row for the blocking overlay
+  ///
+  /// In ar, this message translates to:
+  /// **'إظهار شاشة الحجب فوق التطبيق'**
+  String get deviceLedgerCapBlock;
+
+  /// SCR-FAT-026 — capability row for accessibility-based enforcement
+  ///
+  /// In ar, this message translates to:
+  /// **'المتابعة أثناء الاستخدام الفعلي'**
+  String get deviceLedgerCapFollow;
+
+  /// SCR-FAT-026 — capability row for the instant lock
+  ///
+  /// In ar, this message translates to:
+  /// **'إيقاف الهاتف فوراً بأمرك'**
+  String get deviceLedgerCapLock;
+
+  /// SCR-FAT-026 — capability row for web filtering
+  ///
+  /// In ar, this message translates to:
+  /// **'حجب المواقع غير اللائقة'**
+  String get deviceLedgerCapWeb;
+
+  /// SCR-FAT-026 — capability row for background location
+  ///
+  /// In ar, this message translates to:
+  /// **'معرفة المكان أثناء اليوم'**
+  String get deviceLedgerCapPlace;
+
+  /// SCR-FAT-026 — capability row for boot persistence
+  ///
+  /// In ar, this message translates to:
+  /// **'البقاء فعّالاً بعد إعادة التشغيل'**
+  String get deviceLedgerCapRestart;
+
+  /// SCR-FAT-026 — capability row for push delivery
+  ///
+  /// In ar, this message translates to:
+  /// **'وصول التنبيهات إلى الهاتف'**
+  String get deviceLedgerCapAlerts;
+
+  /// SCR-FAT-026 — capability row for battery reporting
+  ///
+  /// In ar, this message translates to:
+  /// **'الإبلاغ عن مستوى البطارية'**
+  String get deviceLedgerCapBattery;
+
+  /// SCR-FAT-026 — capability row for tamper signals
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيهك عند محاولة إيقافه'**
+  String get deviceLedgerCapTamper;
+
+  /// SCR-FAT-026 — heading of the command ledger section
+  ///
+  /// In ar, this message translates to:
+  /// **'أوامرك لهذا الجهاز'**
+  String get deviceLedgerCommandsTitle;
+
+  /// SCR-FAT-026 — the spine invariant stated in the parent's words
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يقبل الخادم أمراً بقدرة لم يؤكد الهاتف أنه يملكها'**
+  String get deviceLedgerCommandsHint;
+
+  /// SCR-FAT-026 — the command ledger is empty
+  ///
+  /// In ar, this message translates to:
+  /// **'لا أمر معلّق ولا سابق على هذا الجهاز'**
+  String get deviceLedgerCommandsEmpty;
+
+  /// SCR-FAT-026 — the server refused the command list for this account
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يملك هذا الحساب أن يرى أوامر هذا الجهاز'**
+  String get deviceLedgerCommandsDenied;
+
+  /// SCR-FAT-026 — refusal when the device itself is not eligible for commands
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يقبل الجهاز أمراً الآن — إما مقطوع أو سُحب اعتماده'**
+  String get deviceLedgerRefuseDevice;
+
+  /// SCR-FAT-026 — a command the server refused. The sentence stops at the refusal on purpose: the server may or may not have explained itself, and promising that it said nothing would be the screen talking about an answer it did not read
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض الخادم أمرك'**
+  String get deviceLedgerRefuseOther;
+
+  /// SCR-FAT-026 — the window a command was valid for, in the device's own reported minutes
+  ///
+  /// In ar, this message translates to:
+  /// **'سُجّل {recorded} · نافذته مفتوحة حتى {until}'**
+  String deviceLedgerCommandWindow(String recorded, String until);
+
+  /// SCR-FAT-026 — an order whose expiry passed unexecuted
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت نافذته قبل أن يصل'**
+  String get deviceLedgerCommandClosed;
+
+  /// SCR-FAT-026 — command state accepted
+  ///
+  /// In ar, this message translates to:
+  /// **'استلمه الخادم'**
+  String get deviceLedgerCommandAccepted;
+
+  /// SCR-FAT-026 — command state dispatched
+  ///
+  /// In ar, this message translates to:
+  /// **'أُرسل إلى الهاتف'**
+  String get deviceLedgerCommandDispatched;
+
+  /// SCR-FAT-026 — command state received
+  ///
+  /// In ar, this message translates to:
+  /// **'وصل إلى الهاتف'**
+  String get deviceLedgerCommandReceived;
+
+  /// SCR-FAT-026 — command state applied
+  ///
+  /// In ar, this message translates to:
+  /// **'نُفّذ على الهاتف'**
+  String get deviceLedgerCommandApplied;
+
+  /// SCR-FAT-026 — command state limited
+  ///
+  /// In ar, this message translates to:
+  /// **'نُفّذ بعضه'**
+  String get deviceLedgerCommandLimited;
+
+  /// SCR-FAT-026 — command state rejected
+  ///
+  /// In ar, this message translates to:
+  /// **'رفضه الخادم'**
+  String get deviceLedgerCommandRejected;
+
+  /// SCR-FAT-026 — command state expired
+  ///
+  /// In ar, this message translates to:
+  /// **'انتهت صلاحيته'**
+  String get deviceLedgerCommandExpired;
+
+  /// SCR-FAT-026 — command state failed
+  ///
+  /// In ar, this message translates to:
+  /// **'فشل تنفيذه'**
+  String get deviceLedgerCommandFailed;
+
+  /// SCR-FAT-026 — one-line name of a lock_now command
+  ///
+  /// In ar, this message translates to:
+  /// **'إيقاف الهاتف'**
+  String get deviceLedgerTypeLock;
+
+  /// SCR-FAT-026 — one-line name of a release_lock command
+  ///
+  /// In ar, this message translates to:
+  /// **'رفع الإيقاف'**
+  String get deviceLedgerTypeRelease;
+
+  /// SCR-FAT-026 — one-line name of a refresh_policy command
+  ///
+  /// In ar, this message translates to:
+  /// **'تحديث الإعدادات'**
+  String get deviceLedgerTypeRefresh;
+
+  /// SCR-FAT-026 — the action that issues a refresh_policy command
+  ///
+  /// In ar, this message translates to:
+  /// **'حدّث إعدادات الهاتف'**
+  String get deviceLedgerAskRefresh;
+
+  /// SCR-FAT-026 — why no action button is offered for a capability that is not confirmed
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يظهر الأمر حتى يؤكد الهاتف قدرته'**
+  String get deviceLedgerActionWaiting;
+
+  /// SCR-FAT-026 — while a command write is in flight
+  ///
+  /// In ar, this message translates to:
+  /// **'أمرُك قيد الإرسال…'**
+  String get deviceLedgerBusy;
+
+  /// SCR-FAT-026 — a command receipt: what the device said it did, and when
+  ///
+  /// In ar, this message translates to:
+  /// **'ردّ الهاتف: {state} · {at}'**
+  String deviceLedgerReceiptLine(String state, String at);
+
+  /// SCR-FAT-026 — the failure reason the device or the server gave for an order
+  ///
+  /// In ar, this message translates to:
+  /// **'سبب الفشل: {reason}'**
+  String deviceLedgerReceiptFailure(String reason);
+
+  /// SCR-FAT-026 — when the receipt for an order arrived
+  ///
+  /// In ar, this message translates to:
+  /// **'ردّ الهاتف: {when}'**
+  String deviceLedgerRepliedAt(String when);
+
+  /// SCR-FAT-026 — what the refresh command does and does not do, said before it is pressed
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يغيّر هذا الأمر وقت طفلك ولا يحجب تطبيقاً — يطلب من الهاتف أن يأخذ الإعدادات المحفوظة مرة أخرى'**
+  String get deviceLedgerRefreshNote;
+
+  /// SCR-FAT-026 — where the lock decision lives, so this screen offers one truth and not a second button
+  ///
+  /// In ar, this message translates to:
+  /// **'أمر الإيقاف ورفعه يُتخذان من لوحة وقت الشاشة — وهنا ترى أثره وإيصال الهاتف به'**
+  String get deviceLedgerLockElsewhere;
+
+  /// SCR-FAT-026 — after a refresh_policy order was accepted
+  ///
+  /// In ar, this message translates to:
+  /// **'طلب التحديث مسجّل عند الخادم'**
+  String get deviceLedgerRefreshSent;
+
+  /// SCR-FAT-026 — how many commands the screen drew out of how many the server returned, so a shortened list is never read as the whole history
+  ///
+  /// In ar, this message translates to:
+  /// **'يظهر {shown} من {total}، الأحدث أولاً'**
+  String deviceLedgerOrdersShown(int shown, int total);
+
+  /// Settings hub — the card that holds a family's own week, rest days, addressing words and digits.
+  ///
+  /// In ar, this message translates to:
+  /// **'طابع عائلتك'**
+  String get familyCustomizationTitle;
+
+  /// Says what the card changes, so a parent knows it is a setting and not a summary.
+  ///
+  /// In ar, this message translates to:
+  /// **'أسبوعكم، أيام راحتكم، كلمات أبنائكم، وأرقامكم. ما تختارونه هنا تقرأه الشاشات كلها.'**
+  String get familyCustomizationIntro;
+
+  /// The family's own first day of the week.
+  ///
+  /// In ar, this message translates to:
+  /// **'بأي يوم يبدأ أسبوعكم'**
+  String get familyCustomizationWeekStartLabel;
+
+  /// Which days this family rests on.
+  ///
+  /// In ar, this message translates to:
+  /// **'أيام الراحة'**
+  String get familyCustomizationRestDaysLabel;
+
+  /// Why an empty rest list is not offered, stated as a fact rather than a scold.
+  ///
+  /// In ar, this message translates to:
+  /// **'يوم واحد على الأقل — كل حسابٍ في التطبيق يقيس أسبوعه عليها.'**
+  String get familyCustomizationRestDaysHint;
+
+  /// How this family wants numbers written.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرقامكم'**
+  String get familyCustomizationNumeralsLabel;
+
+  /// The choice the app has always drawn. No digits in the value: the shape is shown by the preview line.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرقام لاتينية'**
+  String get familyCustomizationNumeralsWestern;
+
+  /// The choice a family may now take. No digits in the value — see the Western label's note.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرقام شرقية'**
+  String get familyCustomizationNumeralsEastern;
+
+  /// Live preview of the family's own digits, rendered by the app's numeral reader.
+  ///
+  /// In ar, this message translates to:
+  /// **'هكذا تبدو أرقامكم: {sample}'**
+  String familyCustomizationNumeralsPreview(String sample);
+
+  /// The four addressing words this family chooses.
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف ينادي أبناؤكم أهلهم'**
+  String get familyCustomizationWordsLabel;
+
+  /// Explains both the limit and how to undo a word, in one line.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة واحدة قصيرة لكل دور. اتركوا الحقل فارغاً ليعود كما كان في التطبيق.'**
+  String get familyCustomizationWordsHint;
+
+  /// Label for the father's addressing word.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة الأبناء لأبيهم'**
+  String get familyCustomizationWordFather;
+
+  /// Label for the mother's addressing word.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة الأبناء لأمهم'**
+  String get familyCustomizationWordMother;
+
+  /// Label for the added guardian's addressing word.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة الأبناء لوصيّهم'**
+  String get familyCustomizationWordGuardian;
+
+  /// Label for the word a child's row is shown with.
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف تُنادى بطاقات الأبناء'**
+  String get familyCustomizationWordChild;
+
+  /// Shown when the family has no stored profile, so a default is never read as a decision.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُغيّروا شيئاً بعد — هذا ما يبدأ به التطبيق لكل عائلة.'**
+  String get familyCustomizationDefaultNote;
+
+  /// The card's only write action.
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظوا طابع العائلة'**
+  String get familyCustomizationSave;
+
+  /// Confirmation that the change reached the family's record.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُفظ اختياركم، وهو ما تقرأه الشاشات الآن.'**
+  String get familyCustomizationSavedNote;
+
+  /// Retry when there was nothing to show.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعيدوا القراءة'**
+  String get familyCustomizationRefreshCta;
+
+  /// Honest state: nothing was read because there was nobody to ask.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا عائلة متصلة على هذا الجهاز، فلم نسأل أحداً عن طابعكم.'**
+  String get familyCustomizationNoServerNote;
+
+  /// Honest state: the connection did not answer.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُجب أحد. ما ترونه آخرُ ما قرأناه، وليس تأكيداً من الآن.'**
+  String get familyCustomizationUnreachableNote;
+
+  /// The family said this account may not read its profile.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسابك لا يطّلع على طابع هذه العائلة من هنا.'**
+  String get familyCustomizationAccessDeniedNote;
+
+  /// A malformed reply is reported as a defect, never as an empty profile.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاءنا جوابٌ لم نفهمه، ولم نخمّن بدله.'**
+  String get familyCustomizationUnreadableNote;
+
+  /// A version conflict, stated as what happened and what to do next.
+  ///
+  /// In ar, this message translates to:
+  /// **'غيّر أحدكم الطابع بعد أن فتحتموه. أعدنا لكم أحدث ما عند العائلة — راجعوه ثم احفظوا إن شئتم.'**
+  String get familyCustomizationStaleNote;
+
+  /// The write was refused because the profile is read by every system in the app.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل الطابع لصاحب العائلة أولاً؛ ما ترونه هنا قراءةٌ فقط.'**
+  String get familyCustomizationNotPrimaryNote;
+
+  /// The floor, said the same way whether it came from the tap or from the record.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يُترك أسبوعٌ بلا يوم راحة.'**
+  String get familyCustomizationNoRestDayNote;
+
+  /// The addressing word a family typed was refused.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة واحدة قصيرة، من غير أرقام ولا رموز غريبة.'**
+  String get familyCustomizationWordRefusedNote;
+
+  /// A refusal with no reason this build can name — said plainly, never dressed up.
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض التطبيق هذا التعديل.'**
+  String get familyCustomizationRefusedNote;
+
+  /// كلمة ما قبل الظهر في الساعة ذات الاثنتي عشرة ساعة.
+  ///
+  /// In ar, this message translates to:
+  /// **'ص'**
+  String get settingsClockAm;
+
+  /// كلمة ما بعد الظهر في الساعة ذات الاثنتي عشرة ساعة.
+  ///
+  /// In ar, this message translates to:
+  /// **'م'**
+  String get settingsClockPm;
+
+  /// يُعرض مكان وقتٍ لم يختره الأب بعد، بدل أن تختلقه الشاشة.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُحدَّد'**
+  String get notificationPrefsTimeUnset;
+
+  /// يزيل التغيير الذي لم يُحفظ بعد.
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجع'**
+  String get notificationPrefsUndo;
+
+  /// ينبّه الوالد إلى أن التعديل لا يزال على الشاشة ولم يصل إلى حسابه.
+  ///
+  /// In ar, this message translates to:
+  /// **'تغيير غير محفوظ'**
+  String get notificationPrefsDraftBadge;
+
+  /// زرّ الحفظ حين يكون وقت الصمت هو المتغيّر.
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظ وقت الصمت'**
+  String get notificationPrefsSaveTimes;
+
+  /// طول نافذة الصمت إذا كانت ساعات كاملة.
+  ///
+  /// In ar, this message translates to:
+  /// **'مدة الصمت: {hours} ساعة'**
+  String notificationPrefsQuietDurationHours(String hours);
+
+  /// طول نافذة الصمت إذا كانت أقل من ساعة.
+  ///
+  /// In ar, this message translates to:
+  /// **'مدة الصمت: {minutes} دقيقة'**
+  String notificationPrefsQuietDurationMinutes(String minutes);
+
+  /// طول نافذة الصمت بالساعات والدقائق.
+  ///
+  /// In ar, this message translates to:
+  /// **'مدة الصمت: {hours} ساعة و{minutes} دقيقة'**
+  String notificationPrefsQuietDurationBoth(String hours, String minutes);
+
+  /// توضيح حين تكون النهاية قبل البداية في الساعة.
+  ///
+  /// In ar, this message translates to:
+  /// **'يمتدّ من مساء اليوم إلى فجر الغد'**
+  String get notificationPrefsQuietCrossesMidnight;
+
+  /// حالة الصمت الحاضرة، محسوبةً لا متخيَّلة.
+  ///
+  /// In ar, this message translates to:
+  /// **'الآن أنت داخل وقت الصمت: لا يصلك إلا نداء الاستغاثة'**
+  String get notificationPrefsQuietNowInside;
+
+  /// حالة الوصول الحاضرة حين لا يكون الصمت فعّالاً.
+  ///
+  /// In ar, this message translates to:
+  /// **'الآن أنت خارج وقت الصمت: تصلك التنبيهات العادية لحظة حدوثها'**
+  String get notificationPrefsQuietNowOutside;
+
+  /// حالة الوصول الحاضرة حين يكون وقت الصمت مطفأً.
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت الصمت متوقف: كل تنبيه يصلك لحظة حدوثه'**
+  String get notificationPrefsQuietOffState;
+
+  /// سبب مسمّى لرفض الحفظ حين يتساوى الوقتان.
+  ///
+  /// In ar, this message translates to:
+  /// **'البداية والنهاية الوقت نفسه — اختر وقتين مختلفين ليبدأ الصمت ويتوقف'**
+  String get notificationPrefsEqualTimes;
+
+  /// سبب القراءة فقط للطفل، بدل مفاتيح معطّلة بلا تفسير.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعدادات الإشعارات هنا يملكها والدك — يمكنك قراءتها دون أن تغيّرها'**
+  String get notificationPrefsChildReadOnly;
+
+  /// جردٌ صادق لما لا يمكن إسكاته، لا وعدٌ عام.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصلك دائماً: الاستغاثة، دخول المنطقة، خروجها، تقرير حماية الجهاز'**
+  String get notificationPrefsAlwaysArrive;
+
+  /// زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأخير ربع ساعة'**
+  String get notificationPrefsLaterStep;
+
+  /// زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار.
+  ///
+  /// In ar, this message translates to:
+  /// **'تقديم ربع ساعة'**
+  String get notificationPrefsEarlierStep;
+
+  /// يُقرأ بصوتٍ مع حالة الوقت، ولا يظهر على الشاشة.
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط لاختيار وقت'**
+  String get notificationPrefsTapTimeHint;
+
+  /// أمانة الفشل: لا تُرجَع الشاشة إلى القيمة القديمة بصمت.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُحفظ التغيير بعد — يمكنك المحاولة مرة أخرى، وسنبقي ما اخترته'**
+  String get notificationPrefsSaveFailedDraft;
+
+  /// أمانة المصدر: تشرح للشاشة أين تُحفظ الإعدادات اليوم.
+  ///
+  /// In ar, this message translates to:
+  /// **'محفوظٌ على هذا الجهاز وحده — لا تقرأه بقية أجهزتك'**
+  String get notificationPrefsStoredLocally;
+
+  /// تُعرض حين تصير الإعدادات خوادمية، فلا تُكذب الشاشة على نفسها.
+  ///
+  /// In ar, this message translates to:
+  /// **'في حساب عائلتك — كل أجهزتك تقرؤها'**
+  String get notificationPrefsStoredInFamily;
+
+  /// صدقٌ صريح بدل وعدٍ لا ينفَّذ.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا تُرسَل إشعارات في هذا الإصدار — اختياراتك تُحفظ إلى أن يبدأ الإرسال'**
+  String get notificationPrefsNoDeliveryYet;
+
+  /// يُعرض حين يكون إذن العرض عند النظام ممنوحًا، فيعرف الأب أن الوعد بالإيصال له أساس.
+  ///
+  /// In ar, this message translates to:
+  /// **'إشعارات هذا الهاتف مسموحة — ما تكتبه هنا سينفذ على هذا الجهاز'**
+  String get notificationPrefsDevicePermissionGranted;
+
+  /// أمانة الوصل: لا تُوعِد أبًا بالوصول وقد رفض نظام الجهاز العرض. تُعرض مع زر الطلب أدناه.
+  ///
+  /// In ar, this message translates to:
+  /// **'جهازك يمنع الإشعارات عن هذا التطبيق — لن يصلك شيء مهما كانت إعدادات هذه الصفحة'**
+  String get notificationPrefsDevicePermissionDenied;
+
+  /// زرٌّ يفتح طلب النظام لإذن العرض على هذا الجهاز.
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح بالإشعارات'**
+  String get notificationPrefsDevicePermissionRequest;
+
+  /// الحال الأمين حين لا يجيب النظام (بناءٌ بلا قناة أصلية، أو منصة لا سؤال لديها في هذا الإصدار).
+  ///
+  /// In ar, this message translates to:
+  /// **'لم نتمكن من قراءة إذن العرض من جهازك — فلا نعدك بوصولٍ ولا نمنعه'**
+  String get notificationPrefsDevicePermissionUnknown;
 }
 
 class _AppLocalizationsDelegate

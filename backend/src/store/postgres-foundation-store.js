@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypt
 import pg from 'pg';
 import { AI_EVENT_SCHEMA_VERSION, aiEventDefinition, aiEventView } from '../ai-events.js';
 import { HttpError } from '../http-error.js';
+import { generatePairingCode } from '../pairing-code.js';
 import { toGuardianDeviceView } from '../device-lifecycle.js';
 import { PERMISSION_POLICY_VERSION, buildPermissionSnapshot } from '../permission-policy.js';
 import { FOUNDATION_SCHEMA_MIGRATIONS } from '../schema-manifest.js';
@@ -100,6 +101,27 @@ function capabilityHash(value) {
 
 function newCapability() {
   return randomBytes(32).toString('base64url');
+}
+
+const PAIRING_CODE_ISSUE_ATTEMPTS = 5;
+
+/**
+ * Issues a code that matches no active pairing. A 6-digit code is small enough to collide, and a
+ * claim looks a code up by its hash alone, so an active duplicate would let one code pair a child
+ * with the wrong family. Expired and claimed rows never match and are not counted.
+ */
+async function issueUnambiguousPairingCode(client) {
+  for (let attempt = 0; attempt < PAIRING_CODE_ISSUE_ATTEMPTS; attempt += 1) {
+    const candidate = generatePairingCode();
+    const clash = await client.query(
+      `SELECT 1 FROM family_device_pairings
+       WHERE pairing_code_hash = $1 AND claimed_at IS NULL AND expires_at > NOW()
+       LIMIT 1`,
+      [capabilityHash(candidate)],
+    );
+    if (clash.rowCount === 0) return candidate;
+  }
+  throw new HttpError(503, 'pairing_code_unavailable', 'A pairing code could not be issued right now. Try again.');
 }
 
 /**
@@ -750,7 +772,7 @@ export class PostgresFoundationStore {
       if (child.rowCount === 0) {
         throw new HttpError(404, 'family_child_not_found', 'Child profile was not found in this family.');
       }
-      const pairingCode = newCapability();
+      const pairingCode = await issueUnambiguousPairingCode(client);
       const pairing = await client.query(
         `INSERT INTO family_device_pairings
          (id, family_id, child_id, pairing_code_hash, device_label, expires_at, created_by_membership_id)
@@ -793,10 +815,12 @@ export class PostgresFoundationStore {
          WHERE pairing_code_hash = $1
            AND claimed_at IS NULL
            AND expires_at > NOW()
+         LIMIT 2
          FOR UPDATE`,
         [capabilityHash(pairingCode)],
       );
-      if (pairing.rowCount === 0) {
+      // Fail closed: a code that matches more than one active pairing must not pick one.
+      if (pairing.rowCount !== 1) {
         throw new HttpError(400, 'pairing_not_claimable', 'This pairing code is invalid, expired, or already used.');
       }
       const item = pairing.rows[0];

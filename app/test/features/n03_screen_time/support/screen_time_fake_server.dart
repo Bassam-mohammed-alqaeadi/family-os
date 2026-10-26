@@ -71,6 +71,16 @@ final class ScreenTimeFakeTransport implements FoundationGateHttpTransport {
     return _match(uri);
   }
 
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    calls.add('DELETE ${uri.path}');
+    if (failure != null) throw failure!;
+    return _match(uri);
+  }
+
   FoundationGateHttpResponse _match(Uri uri) {
     for (final entry in responses.entries) {
       if (uri.path.endsWith(entry.key)) return entry.value;
@@ -87,13 +97,16 @@ String screenTimeSnapshotJson({
   int usedMinutes = 30,
   int? remaining = 30,
   int cap = 60,
+  bool earnedMinutesExtendLimit = false,
+  bool configured = true,
 }) => jsonEncode(<String, Object?>{
   'childId': screenTimeChildId,
   'date': '2026-10-07',
   'policy': <String, Object?>{
     'childId': screenTimeChildId,
-    'configured': true,
+    'configured': configured,
     'dailyLimitMinutes': cap,
+    'earnedMinutesExtendLimit': earnedMinutesExtendLimit,
     'schoolMode': <String, Object?>{
       'enabled': false,
       'days': <int>[7, 1, 2, 3, 4],

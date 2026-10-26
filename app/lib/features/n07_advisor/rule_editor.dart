@@ -102,12 +102,12 @@ class RuleEditorState extends State<RuleEditor> {
           style: TextStyle(color: colors.ink2, fontSize: 13),
         ),
         const SizedBox(height: 12),
-        DecoratedBox(
+        Material(
           key: RuleEditorKeys.picker,
-          decoration: BoxDecoration(
-            color: colors.surface,
+          color: colors.surface,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radii.card),
-            border: Border.all(color: colors.border),
+            side: BorderSide(color: colors.border),
           ),
           child: Column(
             children: [

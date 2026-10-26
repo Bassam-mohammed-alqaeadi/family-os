@@ -81,29 +81,55 @@ test('an event outside both closed vocabularies fails closed', () => {
   assert.throws(() => classifyNotificationEvent('family.future_event'), /unclassified_outbox_event_type/);
 });
 
-test('Arabic time is 12-hour and uses Arabic-Indic digits', () => {
-  assert.equal(formatNotificationTime('2026-05-10T15:45:00.000Z', 'ar'), '٣:٤٥ م بتوقيت UTC');
+test('Arabic time follows the family numerals profile, not the handset language', () => {
+  // A family that never opened the customization card keeps what every screen
+  // already shows it: Western digits inside an Arabic sentence.
+  assert.equal(formatNotificationTime('2026-05-10T15:45:00.000Z', 'ar'), '3:45 م بتوقيت UTC');
+  // The same family choosing Eastern digits must be heard on the lock screen too,
+  // or the profile is decoration — which is the one thing this programme forbids.
+  assert.equal(
+    formatNotificationTime('2026-05-10T15:45:00.000Z', 'ar', 'eastern'),
+    '٣:٤٥ م بتوقيت UTC',
+  );
 });
 
 test('Arabic morning time keeps a leading-zero minute and Arabic AM marker', () => {
-  assert.equal(formatNotificationTime('2026-05-10T03:07:00.000Z', 'ar'), '٣:٠٧ ص بتوقيت UTC');
+  assert.equal(
+    formatNotificationTime('2026-05-10T03:07:00.000Z', 'ar', 'eastern'),
+    '٣:٠٧ ص بتوقيت UTC',
+  );
 });
 
 test('Arabic noon is rendered as twelve with the PM marker', () => {
-  assert.equal(formatNotificationTime('2026-05-10T12:00:00.000Z', 'ar'), '١٢:٠٠ م بتوقيت UTC');
+  assert.equal(
+    formatNotificationTime('2026-05-10T12:00:00.000Z', 'ar', 'eastern'),
+    '١٢:٠٠ م بتوقيت UTC',
+  );
 });
 
 test('English time remains readable in 12-hour form', () => {
   assert.equal(formatNotificationTime('2026-05-10T15:45:00.000Z', 'en'), '3:45 PM UTC');
+  // Eastern digits describe how this family writes numbers in its own text. An
+  // English sentence is not that text, so the profile never restyles it.
+  assert.equal(formatNotificationTime('2026-05-10T15:45:00.000Z', 'en', 'eastern'), '3:45 PM UTC');
 });
 
 test('SOS Arabic copy includes the send-time child name and localized time', () => {
   assert.deepEqual(renderAlertCopy('sos.raised', {
-    locale: 'ar', child: 'ليان', time: '2026-05-10T15:45:00Z',
+    locale: 'ar', child: 'ليان', time: '2026-05-10T15:45:00Z', numerals: 'eastern',
   }), {
     title: 'استغاثة من ليان', body: 'ضغط زر الاستغاثة الساعة ٣:٤٥ م بتوقيت UTC',
   });
   assert.equal(ALERT_COPY['sos.raised'].ar.title, 'استغاثة من {child}');
+});
+
+test('SOS copy for a family with no profile reads the way the app does', () => {
+  assert.equal(
+    renderAlertCopy('sos.raised', {
+      locale: 'ar', child: 'ليان', time: '2026-05-10T15:45:00Z',
+    }).body,
+    'ضغط زر الاستغاثة الساعة 3:45 م بتوقيت UTC',
+  );
 });
 
 test('geofence English copy resolves both the child and zone placeholders', () => {

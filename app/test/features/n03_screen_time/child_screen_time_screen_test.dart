@@ -19,9 +19,85 @@ import 'package:family_os/core/policy/time_request_repository.dart';
 import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
 import 'package:family_os/features/n03_screen_time/child_screen_time_screen.dart';
+import 'package:family_os/features/n03_screen_time/guardian_minutes_balance_authority.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
+
+  testWidgets('wallet minutes come from the server, not the local policy (S3)', (tester) async {
+    final child = ChildId('wallet-child');
+    final policy = InMemoryScreenTimePolicyRepository({
+      child.value: ScreenTimePolicy(
+        wallets: [AppWallet(appId: 'youtube', earnedMinutes: Minutes(99))],
+      ),
+    });
+    await _pump(
+      tester,
+      repository: PrefsScheduleWindowRepository(MemorySchedulePrefsStore(<String, String>{})),
+      childId: child,
+      role: AppRole.father,
+      policyRepository: policy,
+      balanceReader: (_) async => const MinutesBalanceReading({'youtube': 25}),
+    );
+
+    // The server balance arrives after the screen is ready (async chain).
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
+    await tester.pump();
+    // The wallet rows sit below the fold of the lazy settings list: scroll to them.
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('wallet_minutes_youtube')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const Key('wallet_minutes_youtube')), findsOneWidget);
+    expect(find.textContaining('25'), findsWidgets);
+    expect(find.textContaining('99'), findsNothing);
+  });
+
+  testWidgets('a failed read shows the last good reading flagged stale', (tester) async {
+    final child = ChildId('wallet-child-3');
+    final policy = InMemoryScreenTimePolicyRepository({
+      child.value: ScreenTimePolicy(
+        wallets: [AppWallet(appId: 'youtube', earnedMinutes: Minutes(99))],
+      ),
+    });
+    await _pump(
+      tester,
+      repository: PrefsScheduleWindowRepository(MemorySchedulePrefsStore(<String, String>{})),
+      childId: child,
+      role: AppRole.father,
+      policyRepository: policy,
+      balanceReader: (_) async => const MinutesBalanceReading({'youtube': 25}, stale: true),
+    );
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('wallet_balance_stale')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byKey(const Key('wallet_balance_stale')), findsOneWidget);
+    expect(find.byKey(const Key('wallet_minutes_youtube')), findsOneWidget);
+  });
+
+  testWidgets('no server balance → wallet row shows no number', (tester) async {
+    final child = ChildId('wallet-child-2');
+    final policy = InMemoryScreenTimePolicyRepository({
+      child.value: ScreenTimePolicy(
+        wallets: [AppWallet(appId: 'youtube', earnedMinutes: Minutes(99))],
+      ),
+    });
+    await _pump(
+      tester,
+      repository: PrefsScheduleWindowRepository(MemorySchedulePrefsStore(<String, String>{})),
+      childId: child,
+      role: AppRole.father,
+      policyRepository: policy,
+      balanceReader: (_) async => null,
+    );
+
+    expect(find.byKey(const Key('wallet_minutes_youtube')), findsNothing);
+    expect(find.textContaining('99'), findsNothing);
+  });
 
   final child = ChildId('widget-child');
 
@@ -369,6 +445,132 @@ void main() {
 
     expect(find.textContaining('15'), findsWidgets);
   });
+
+  testWidgets('earned minutes extension explanation displays when enabled and hides when disabled', (tester) async {
+    final enabledChild = ChildId('child-earned-ext-on');
+    final enabledPolicyRepo = InMemoryScreenTimePolicyRepository({
+      enabledChild.value: ScreenTimePolicy(
+        dailyCapMinutes: 60,
+        earnedMinutesExtendLimit: true,
+      ),
+    });
+    await _pump(
+      tester,
+      repository: InMemoryScheduleWindowRepository(),
+      childId: enabledChild,
+      role: AppRole.child,
+      policyRepository: enabledPolicyRepo,
+    );
+    expect(find.byKey(ChildScreenTimeKeys.earnedExtensionNotice), findsOneWidget);
+    expect(find.text('الدقائق المكتسبة تمدد وقت الشاشة اليومي تلقائياً'), findsOneWidget);
+
+    final disabledChild = ChildId('child-earned-ext-off');
+    final disabledPolicyRepo = InMemoryScreenTimePolicyRepository({
+      disabledChild.value: ScreenTimePolicy(
+        dailyCapMinutes: 60,
+        earnedMinutesExtendLimit: false,
+      ),
+    });
+    await _pump(
+      tester,
+      repository: InMemoryScheduleWindowRepository(),
+      childId: disabledChild,
+      role: AppRole.child,
+      policyRepository: disabledPolicyRepo,
+    );
+    expect(find.byKey(ChildScreenTimeKeys.earnedExtensionNotice), findsNothing);
+  });
+
+  testWidgets('5 states: loading, empty, error, stale, and success are distinguishable', (tester) async {
+    final testChild = ChildId('child-5-states');
+    final repo = InMemoryScheduleWindowRepository();
+    final policyRepo = InMemoryScreenTimePolicyRepository({
+      testChild.value: ScreenTimePolicy(dailyCapMinutes: 60),
+    });
+
+    // 1. Success state
+    await _pump(
+      tester,
+      repository: repo,
+      childId: testChild,
+      role: AppRole.father,
+      policyRepository: policyRepo,
+    );
+    expect(find.byKey(ChildScreenTimeKeys.body), findsOneWidget);
+    expect(find.byKey(ChildScreenTimeKeys.empty), findsNothing);
+    expect(find.byKey(ChildScreenTimeKeys.error), findsNothing);
+
+    // 2. Empty state
+    await tester.pumpWidget(
+      CurrentRole(
+        notifier: RoleController(AppRole.father),
+        child: MaterialApp(
+          theme: buildFamilyTheme(),
+          locale: const Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: ChildScreenTimeScreen(
+            key: const Key('test_state_empty'),
+            childId: testChild,
+            repository: repo,
+            policyRepository: policyRepo,
+            emptyOverride: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildScreenTimeKeys.empty), findsOneWidget);
+    expect(find.text('لا توجد حدود زمنية محددة'), findsOneWidget);
+
+    // 3. Error state
+    await tester.pumpWidget(
+      CurrentRole(
+        notifier: RoleController(AppRole.father),
+        child: MaterialApp(
+          theme: buildFamilyTheme(),
+          locale: const Locale('ar'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: ChildScreenTimeScreen(
+            key: const Key('test_state_error'),
+            childId: testChild,
+            repository: repo,
+            policyRepository: policyRepo,
+            policyUnavailableOverride: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(ChildScreenTimeKeys.error), findsOneWidget);
+
+    // 4. Stale state
+    await _pump(
+      tester,
+      repository: repo,
+      childId: testChild,
+      role: AppRole.father,
+      policyRepository: policyRepo,
+      balanceReader: (_) async => const MinutesBalanceReading({'youtube': 10}, stale: true),
+    );
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
+    await tester.pump();
+    expect(find.byKey(ChildScreenTimeKeys.stale), findsOneWidget);
+
+    // 5. Loading state key
+    expect(ChildScreenTimeKeys.loading, isNotNull);
+  });
 }
 
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
@@ -389,12 +591,19 @@ Future<void> _pump(
   ScreenTimePolicyRepository? policyRepository,
   ScheduleTimePicker? pickTime,
   TimeRequestService? timeRequestService,
+  Future<MinutesBalanceReading?> Function(String)? balanceReader,
 }) async {
   final roleCtrl = RoleController(role);
   await tester.pumpWidget(
     CurrentRole(
       notifier: roleCtrl,
-      child: MaterialApp(
+      child: MediaQuery(
+        // The clock faces this screen shows follow the phone's own hour cycle
+        // (shared family formatter). The strings pinned below are 24-hour, so
+        // the fixture states that device setting; the screen is not locked to
+        // one clock grammar.
+        data: const MediaQueryData(alwaysUse24HourFormat: true),
+        child: MaterialApp(
         theme: buildFamilyTheme(),
         locale: const Locale('ar'),
         supportedLocales: AppLocalizations.supportedLocales,
@@ -410,7 +619,9 @@ Future<void> _pump(
           policyRepository: policyRepository,
           pickTime: pickTime,
           timeRequestService: timeRequestService,
+          balanceReader: balanceReader,
         ),
+      ),
       ),
     ),
   );

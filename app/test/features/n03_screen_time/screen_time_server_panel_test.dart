@@ -229,4 +229,141 @@ void main() {
     );
     expect(save.onPressed, isNull);
   });
+
+  testWidgets('earned minutes toggle renders, displays subtitle & preview breakdown, and writes to server', (tester) async {
+    final transport = ScreenTimeFakeTransport({
+      '/screen-time': FoundationGateHttpResponse(
+        statusCode: 200,
+        body: screenTimeSnapshotJson(kind: 'limited', reason: null),
+      ),
+    });
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
+
+    final toggleFinder = find.byKey(const Key('screen_time_server_earned_minutes_toggle'));
+    expect(toggleFinder, findsOneWidget);
+    expect(find.text('تمديد الحد بالدقائق المكتسبة'), findsOneWidget);
+    expect(
+      find.text('إضافة الدقائق المكتسبة من الأنشطة والمهام إلى وقت الشاشة اليومي'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('المتبقي = الحد اليومي + المنح + الدقائق المكتسبة − الاستهلاك'),
+      findsOneWidget,
+    );
+
+    final switchTile = tester.widget<SwitchListTile>(toggleFinder);
+    expect(switchTile.value, isFalse);
+
+    await tester.ensureVisible(toggleFinder);
+    await tester.tap(toggleFinder);
+    await tester.pumpAndSettle();
+
+    expect(
+      transport.calls.any(
+        (call) =>
+            call ==
+            'PATCH /v1/families/$screenTimeFamilyId/children/$screenTimeChildId/screen-time',
+      ),
+      isTrue,
+    );
+    final patchBody = jsonDecode(
+      transport.bodies.firstWhere((b) => b.contains('earnedMinutesExtendLimit')),
+    ) as Map<String, Object?>;
+    expect(patchBody['earnedMinutesExtendLimit'], isTrue);
+  });
+
+  testWidgets('quick grant button posts direct minutes grant to server', (tester) async {
+    final transport = ScreenTimeFakeTransport({
+      '/minutes/grants': const FoundationGateHttpResponse(
+        statusCode: 201,
+        body: '{"grant":{"minutes":15,"channel":"guardian_grant"}}',
+      ),
+      '/screen-time': FoundationGateHttpResponse(
+        statusCode: 200,
+        body: screenTimeSnapshotJson(kind: 'limited', reason: null),
+      ),
+    });
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
+
+    final grant15Finder = find.byKey(const Key('screen_time_server_quick_grant_15'));
+    expect(grant15Finder, findsOneWidget);
+    await tester.ensureVisible(grant15Finder);
+    await tester.pumpAndSettle();
+    await tester.tap(grant15Finder);
+    await tester.pumpAndSettle();
+
+    expect(
+      transport.calls.any(
+        (call) =>
+            call ==
+            'POST /v1/families/$screenTimeFamilyId/children/$screenTimeChildId/minutes/grants',
+      ),
+      isTrue,
+    );
+    final grantBody = jsonDecode(
+      transport.bodies.firstWhere((b) => b.contains('guardian_instant_grant')),
+    ) as Map<String, Object?>;
+    expect(grantBody['minutes'], 15);
+  });
+
+  testWidgets('progress bar and total limit render accurately', (tester) async {
+    final transport = ScreenTimeFakeTransport({
+      '/screen-time': FoundationGateHttpResponse(
+        statusCode: 200,
+        body: screenTimeSnapshotJson(usedMinutes: 45, remaining: 15, cap: 60),
+      ),
+    });
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
+
+    final barFinder = find.byKey(const Key('screen_time_server_progress_bar'));
+    expect(barFinder, findsOneWidget);
+    final bar = tester.widget<LinearProgressIndicator>(barFinder);
+    expect(bar.value, closeTo(0.75, 0.01));
+    expect(find.text('الحد الكلي: 60 دقيقة'), findsOneWidget);
+  });
+
+  testWidgets('invalid daily cap shows error text and does not write to server', (tester) async {
+    final transport = ScreenTimeFakeTransport({
+      '/screen-time': FoundationGateHttpResponse(
+        statusCode: 200,
+        body: screenTimeSnapshotJson(kind: 'limited', reason: null),
+      ),
+    });
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
+
+    final fieldFinder = find.byKey(const Key('screen_time_server_cap_field'));
+    final saveFinder = find.byKey(const Key('screen_time_server_cap_save'));
+
+    await tester.enterText(fieldFinder, '-50');
+    await tester.tap(saveFinder);
+    await tester.pumpAndSettle();
+
+    expect(find.text('يرجى إدخال عدد دقائق بين 0 و 1440'), findsOneWidget);
+    expect(
+      transport.calls.any((c) => c.startsWith('PATCH')),
+      isFalse,
+    );
+  });
+
+  testWidgets('retry button reloads server state when unreachable', (tester) async {
+    final transport = ScreenTimeFakeTransport({
+      '/screen-time': FoundationGateHttpResponse(
+        statusCode: 200,
+        body: screenTimeSnapshotJson(kind: 'limited', reason: null),
+      ),
+    });
+    await _pump(tester, authority: screenTimeAuthorityFor(transport));
+
+    transport.failure = StateError('network down');
+    await tester.tap(find.byKey(const Key('screen_time_server_lock_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('screen_time_server_retry_button')), findsOneWidget);
+
+    transport.failure = null;
+    await tester.tap(find.byKey(const Key('screen_time_server_retry_button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('screen_time_server_retry_button')), findsNothing);
+  });
 }

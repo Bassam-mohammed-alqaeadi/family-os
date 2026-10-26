@@ -1,0 +1,30 @@
+[
+  {
+    "key": "notificationPrefsDevicePermissionGranted",
+    "ar": "إشعارات هذا الهاتف مسموحة — ما تكتبه هنا سينفذ على هذا الجهاز",
+    "en": "Notifications are allowed on this phone — what you set here will be carried out on this device",
+    "desc": "يُعرض حين يكون إذن العرض عند النظام ممنوحًا، فيعرف الأب أن الوعد بالإيصال له أساس.",
+    "placeholders": []
+  },
+  {
+    "key": "notificationPrefsDevicePermissionDenied",
+    "ar": "جهازك يمنع الإشعارات عن هذا التطبيق — لن يصلك شيء مهما كانت إعدادات هذه الصفحة",
+    "en": "Your device is blocking notifications for this app — nothing will arrive no matter what this page says",
+    "desc": "أمانة الوصل: لا تُوعِد أبًا بالوصول وقد رفض نظام الجهاز العرض. تُعرض مع زر الطلب أدناه.",
+    "placeholders": []
+  },
+  {
+    "key": "notificationPrefsDevicePermissionRequest",
+    "ar": "السماح بالإشعارات",
+    "en": "Allow notifications",
+    "desc": "زرٌّ يفتح طلب النظام لإذن العرض على هذا الجهاز.",
+    "placeholders": []
+  },
+  {
+    "key": "notificationPrefsDevicePermissionUnknown",
+    "ar": "لم نتمكن من قراءة إذن العرض من جهازك — فلا نعدك بوصولٍ ولا نمنعه",
+    "en": "We could not read the display permission from your device — so we promise neither delivery nor refusal",
+    "desc": "الحال الأمين حين لا يجيب النظام (بناءٌ بلا قناة أصلية، أو منصة لا سؤال لديها في هذا الإصدار).",
+    "placeholders": []
+  }
+]

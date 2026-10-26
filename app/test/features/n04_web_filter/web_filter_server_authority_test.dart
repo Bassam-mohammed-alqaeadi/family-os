@@ -85,6 +85,17 @@ final class _Transport implements FoundationGateHttpTransport {
     if (failure != null) throw failure!;
     return response!;
   }
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    calls.add('DELETE ${uri.path}');
+    uris.add(uri);
+    if (failure != null) throw failure!;
+    return response!;
+  }
 }
 
 WebFilterServerAuthority _authorityFor(

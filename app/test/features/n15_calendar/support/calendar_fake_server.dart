@@ -308,4 +308,14 @@ final class CalendarFakeServer implements FoundationGateHttpTransport {
     bodies.add(body);
     return _write(uri, jsonDecode(body) as Map<String, Object?>);
   }
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    if (networkFailure != null) throw networkFailure!;
+    calls.add('DELETE ${uri.path}');
+    throw StateError('the fake server was asked to delete ${uri.path}');
+  }
 }

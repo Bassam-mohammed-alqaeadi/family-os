@@ -12,6 +12,7 @@ import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
 import 'package:family_os/features/n12_devices/device_health_list_screen.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
+import 'package:family_os/features/n12_devices/family_customization_panel.dart';
 
 /// Widget keys for SCR-FAT-025 settings hub acceptance.
 abstract final class SettingsHubKeys {
@@ -207,6 +208,12 @@ class SettingsHubScreenState extends State<SettingsHubScreen> {
                 ),
             ],
           ),
+          const SizedBox(height: 12),
+          // A family's own character — the day its week opens with, which days rest, the words its
+          // children use, and how its numbers are written. It is a card on this screen and not a
+          // route of its own, because a parent should not have to find a second place where "our
+          // family" lives. Everything in it is read from the spine; with no spine it says so.
+          const FamilyCustomizationSection(),
           const SizedBox(height: 12),
           _HubSection(
             key: SettingsHubKeys.devicesSection,

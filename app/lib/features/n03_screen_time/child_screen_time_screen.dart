@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:family_os/app/role_controller.dart';
+import 'package:family_os/core/design/components/app_empty_state.dart';
 import 'package:family_os/core/design/components/app_toast.dart';
 import 'package:family_os/core/design/components/banner.dart';
 import 'package:family_os/core/design/components/enforcement_status_badge.dart';
@@ -17,6 +18,7 @@ import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
 import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/clock_format.dart';
 import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/policy/policy_sync_bus.dart';
 import 'package:family_os/core/policy/schedule_window.dart';
@@ -29,6 +31,7 @@ import 'package:family_os/core/policy/time_request_service.dart';
 import 'package:family_os/core/screen_time/screen_time_runtime.dart';
 import 'package:family_os/core/screen_time/stage1_time_request_runtime.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_repository.dart';
+import 'package:family_os/features/n03_screen_time/guardian_minutes_balance_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n03_screen_time/screen_time_server_panel.dart';
 import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
@@ -53,6 +56,11 @@ final MemoryScreenTimePolicyPrefsStore stage1PolicyPrefsStore =
 abstract final class ChildScreenTimeKeys {
   static const screen = Key('child_screen_time_screen');
   static const loading = Key('child_screen_time_loading');
+  static const empty = Key('child_screen_time_empty');
+  static const error = Key('child_screen_time_error');
+  static const stale = Key('child_screen_time_stale');
+  static const body = Key('child_screen_time_body');
+  static const earnedExtensionNotice = Key('child_screen_time_earned_extension_notice');
   static const policyUnavailable = Key('child_screen_time_policy_unavailable');
   static const localHonesty = Key('child_screen_time_local_honesty');
   static const save = Key('child_screen_time_save');
@@ -75,7 +83,15 @@ class ChildScreenTimeScreen extends StatefulWidget {
     this.motherLevel = MotherLevel.partner,
     this.timeRequestService,
     this.policyUnavailableOverride,
+    this.emptyOverride,
+    this.balanceReader,
   });
+
+  /// Test seam — force empty state for 5-state testability.
+  final bool? emptyOverride;
+
+  /// Reads a child's balance per app from the server. Null → the guardian's bound server read.
+  final Future<MinutesBalanceReading?> Function(String childId)? balanceReader;
 
   /// Explicit child; null → Identity active child → stage1 canonical.
   final ChildId? childId;
@@ -117,6 +133,10 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
   var _loading = true;
   var _saving = false;
   var _policyUnavailable = false;
+  /// Server balance per wallet app. Null → the server gave no balance: no number is shown.
+  Map<String, int>? _balanceByApp;
+  /// True when the shown balance is the last good reading and the newest read failed.
+  bool _balanceStale = false;
   PolicySyncStatus? _syncStatus;
   int _temporaryGrantRemaining = 0;
   late TimeRequestService _timeRequestService;
@@ -181,6 +201,13 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
   @override
   void didUpdateWidget(covariant ChildScreenTimeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.policyUnavailableOverride != oldWidget.policyUnavailableOverride) {
+      _policyUnavailable = widget.policyUnavailableOverride ?? false;
+    }
+    if (widget.emptyOverride != oldWidget.emptyOverride && widget.emptyOverride == true) {
+      _windows = const [];
+      _policy = ScreenTimePolicy(dailyCapMinutes: 0, wallets: const []);
+    }
     if (oldWidget.childId != widget.childId && widget.childId != null) {
       _childId = widget.childId!;
       _load();
@@ -263,6 +290,15 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
   }
 
   Future<void> _load() async {
+    if (widget.emptyOverride == true) {
+      if (!mounted) return;
+      setState(() {
+        _windows = const [];
+        _policy = ScreenTimePolicy(dailyCapMinutes: 0, wallets: const []);
+        _loading = false;
+      });
+      return;
+    }
     final scheduleRepo = _repository;
     final loaded = scheduleRepo != null
         ? await scheduleRepo.load(_childId)
@@ -285,6 +321,18 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
       _temporaryGrantRemaining = grantRemaining;
       _capController.text = '${policy.dailyCapMinutes}';
       _loading = false;
+    });
+    _loadBalance();
+  }
+
+  /// The server balance never blocks the screen: it arrives after the screen is ready.
+  Future<void> _loadBalance() async {
+    final reader = widget.balanceReader ?? guardianMinutesBalanceByApp;
+    final balanceByApp = await reader(_childId.value);
+    if (!mounted) return;
+    setState(() {
+      _balanceByApp = balanceByApp?.byApp;
+      _balanceStale = balanceByApp?.stale ?? false;
     });
   }
 
@@ -327,6 +375,10 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
       _canSaveSchedule &&
       !_saving &&
       !_loading;
+
+  bool get _isEmpty =>
+      widget.emptyOverride == true ||
+      (_windows.isEmpty && _policy.dailyCapMinutes == 0 && _policy.wallets.isEmpty);
 
   ScheduleWindow _window(ScheduleKind kind) =>
       _windows.firstWhere((w) => w.kind == kind);
@@ -470,11 +522,12 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
     };
   }
 
+  /// Digits and clock cycle are the family's and the phone's (shared formatter).
+  /// `--:--` stays this screen's own marker for "no window yet": it is not a
+  /// time, so it must not borrow the notification card's wording for one.
   String _formatTod(TimeOfDay? tod) {
     if (tod == null) return '--:--';
-    final h = tod.hour.toString().padLeft(2, '0');
-    final m = tod.minute.toString().padLeft(2, '0');
-    return '$h:$m';
+    return formatFamilyClock(context, tod);
   }
 
   @override
@@ -520,7 +573,7 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
         ),
         body: SafeArea(
           child: ScreenTimeServerPanel(
-            childId: _childId,
+            childId: ChildId(ScreenTimeServerAuthority.unscopeChildId(_childId.value)),
             authority: serverAuthority,
             canEdit: canEdit,
           ),
@@ -548,47 +601,81 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                 key: ChildScreenTimeKeys.loading,
                 child: CircularProgressIndicator(),
               )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                      children: [
-                        Text(
-                          l10n.childScreenTimeSubtitle,
-                          style: TextStyle(
-                            fontSize: 14,
-                            height: 1.45,
-                            color: colors.ink2,
-                          ),
-                        ),
-                        if (_policyUnavailable) ...[
-                          const SizedBox(height: 12),
-                          BannerNote(
-                            key: ChildScreenTimeKeys.policyUnavailable,
-                            variant: BannerVariant.a,
-                            message: l10n.childScreenTimePolicyUnavailable,
-                          ),
-                        ],
-                        const SizedBox(height: 12),
-                        BannerNote(
-                          key: ChildScreenTimeKeys.localHonesty,
-                          variant: BannerVariant.t,
-                          message: l10n.childScreenTimeLocalHonestyBanner,
-                        ),
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: const EnforcementStatusBadge(),
-                        ),
-                        const SizedBox(height: 12),
-                        RemainingMinutesCard(
-                          dailyMinutes: remaining.dailyRemaining.inMinutes,
-                          grantMinutes:
-                              remaining.temporaryGrantRemaining.inMinutes,
-                          walletMinutes: remaining.earnedWalletTotal.inMinutes,
-                        ),
+            : _isEmpty
+                ? AppEmptyState(
+                    key: ChildScreenTimeKeys.empty,
+                    title: l10n.childScreenTimeEmptyTitle,
+                    message: l10n.childScreenTimeEmptyMessage,
+                  )
+                : Column(
+                    key: ChildScreenTimeKeys.body,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                          children: [
+                            Text(
+                              l10n.childScreenTimeSubtitle,
+                              style: TextStyle(
+                                fontSize: 14,
+                                height: 1.45,
+                                color: colors.ink2,
+                              ),
+                            ),
+                            if (_policyUnavailable) ...[
+                              const SizedBox(height: 12),
+                              BannerNote(
+                                key: ChildScreenTimeKeys.policyUnavailable,
+                                variant: BannerVariant.a,
+                                message: l10n.childScreenTimePolicyUnavailable,
+                              ),
+                              const SizedBox(
+                                key: ChildScreenTimeKeys.error,
+                                height: 0,
+                              ),
+                            ],
+                            if (_balanceStale) ...[
+                              const SizedBox(height: 12),
+                              BannerNote(
+                                key: ChildScreenTimeKeys.stale,
+                                variant: BannerVariant.a,
+                                message: l10n.childScreenTimeBalanceStale,
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            BannerNote(
+                              key: ChildScreenTimeKeys.localHonesty,
+                              variant: BannerVariant.t,
+                              message: l10n.childScreenTimeLocalHonestyBanner,
+                            ),
+                            const SizedBox(height: 16),
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: const EnforcementStatusBadge(),
+                            ),
+                            const SizedBox(height: 12),
+                            RemainingMinutesCard(
+                              dailyMinutes: remaining.dailyRemaining.inMinutes,
+                              grantMinutes:
+                                  remaining.temporaryGrantRemaining.inMinutes,
+                              walletMinutes: _balanceByApp?.values.fold<int>(
+                                0,
+                                (sum, minutes) => sum + minutes,
+                              ),
+                            ),
+                            if (_policy.earnedMinutesExtendLimit) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                key: ChildScreenTimeKeys.earnedExtensionNotice,
+                                l10n.childScreenTimeEarnedExtensionNotice,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.ink2,
+                                ),
+                              ),
+                            ],
                         const SizedBox(height: 16),
                         for (final kind in ScheduleKind.values) ...[
                           _ScheduleRow(
@@ -633,6 +720,8 @@ class _ChildScreenTimeScreenState extends State<ChildScreenTimeScreen> {
                         _CapsSection(
                           l10n: l10n,
                           policy: _policy,
+                          balanceByApp: _balanceByApp,
+                          balanceStale: _balanceStale,
                           capController: _capController,
                           canEdit: canEdit && _canSavePolicy,
                           colors: colors,
@@ -691,6 +780,8 @@ class _CapsSection extends StatelessWidget {
   const _CapsSection({
     required this.l10n,
     required this.policy,
+    required this.balanceByApp,
+    required this.balanceStale,
     required this.capController,
     required this.canEdit,
     required this.colors,
@@ -702,6 +793,9 @@ class _CapsSection extends StatelessWidget {
 
   final AppLocalizations l10n;
   final ScreenTimePolicy policy;
+  /// Server balance per wallet app; null → no number is shown.
+  final Map<String, int>? balanceByApp;
+  final bool balanceStale;
   final TextEditingController capController;
   final bool canEdit;
   final FamilyColors colors;
@@ -789,10 +883,22 @@ class _CapsSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
+            if (balanceStale) ...[
+              Text(
+                key: const Key('wallet_balance_stale'),
+                l10n.childScreenTimeBalanceStale,
+                style: TextStyle(fontSize: 13, color: colors.coral),
+              ),
+              const SizedBox(
+                key: ChildScreenTimeKeys.stale,
+                height: 0,
+              ),
+            ],
             for (final wallet in policy.wallets) ...[
               Semantics(
-                label:
-                    '${walletLabel(wallet.appId)} ${l10n.childScreenTimeWalletMinutes(wallet.earnedMinutes.inMinutes)}',
+                label: balanceByApp?[wallet.appId] == null
+                    ? walletLabel(wallet.appId)
+                    : '${walletLabel(wallet.appId)} ${l10n.childScreenTimeWalletMinutes(balanceByApp![wallet.appId]!)}',
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: ConstrainedBox(
@@ -809,17 +915,18 @@ class _CapsSection extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Text(
-                          key: Key('wallet_minutes_${wallet.appId}'),
-                          l10n.childScreenTimeWalletMinutes(
-                            wallet.earnedMinutes.inMinutes,
+                        if (balanceByApp?[wallet.appId] != null)
+                          Text(
+                            key: Key('wallet_minutes_${wallet.appId}'),
+                            l10n.childScreenTimeWalletMinutes(
+                              balanceByApp![wallet.appId]!,
+                            ),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: colors.ink2,
+                            ),
                           ),
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: colors.ink2,
-                          ),
-                        ),
                       ],
                     ),
                   ),

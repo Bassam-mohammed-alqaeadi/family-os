@@ -25,6 +25,12 @@ const migrations = [
   '117_device_capabilities.sql','118_command_lifecycle.sql','119_ai_events_security_envelope.sql',
   '120_device_push_registrations.sql','121_delivery_states.sql','122_family_notification_preferences.sql',
   '123_notification_retries.sql','124_geofence_notification_payload_minimization.sql',
+  // Kept in sync by hand, and 135 had drifted out of it: the dispatcher joins
+  // family_customization_profiles for the family's digits, so this harness must
+  // create that table or it is testing a schema production no longer has.
+  '135_family_customization_profile.sql',
+  '136_notification_delivery_gating.sql',
+  '137_notification_preferences_versioning.sql',
 ];
 
 const FAMILY = 'aaaaaaaa-1111-4111-8111-111111111111';
@@ -48,7 +54,7 @@ async function freshDb() {
   return db;
 }
 
-async function seedFamily(db, { locale = 'ar', token = TOKEN } = {}) {
+async function seedFamily(db, { locale = 'ar', token = TOKEN, numerals = 'eastern' } = {}) {
   await db.query(`INSERT INTO accounts (id, oidc_subject) VALUES ($1, 'notification-test-subject')`, [ACCOUNT]);
   await db.query(`INSERT INTO families (id, display_name) VALUES ($1, 'عائلة الاختبار')`, [FAMILY]);
   await db.query(
@@ -74,6 +80,16 @@ async function seedFamily(db, { locale = 'ar', token = TOKEN } = {}) {
        (id, family_id, membership_id, token, platform, locale)
      VALUES ($1, $2, $3, $4, 'android', $5)`,
     [REGISTRATION, FAMILY, MEMBERSHIP, token, locale],
+  );
+  // How this family writes its digits is a customization fact stored on the family
+  // profile, and the dispatcher joins that table. So every Arabic assertion below
+  // that expects ٦:٢٠ can only pass while that join is live — a profile nobody
+  // reads would turn them Western and this file would say so.
+  await db.query(
+    `INSERT INTO family_customization_profiles
+       (family_id, numerals, updated_by_membership_id)
+     VALUES ($1, $2, $3)`,
+    [FAMILY, numerals, MEMBERSHIP],
   );
 }
 
@@ -232,6 +248,23 @@ test('a committed Arabic geofence event is formatted, routed to FCM, and recorde
     assert.equal(Object.hasOwn(source.rows[0].payload, key), false,
       `geofence notification payload must not persist ${key}`);
   }
+  await db.close();
+});
+
+test('the same Arabic sentence keeps Western digits for a family that chose them', async () => {
+  // The other half of one rule, through real SQL: the digits in a push line come
+  // from the family profile, so the family that never picked Eastern is not
+  // silently restyled by its handset language.
+  const db = await freshDb();
+  await seedFamily(db, { numerals: 'western' });
+  await insertGeofenceOutbox(db);
+  const sender = fakeSender();
+  const dispatcher = new NotificationDispatcher(sender, clientFactory(db), {
+    now: () => new Date('2026-05-10T06:21:00.000Z'),
+  });
+
+  assert.equal((await dispatcher.notify(OUTBOX, 'family.geofence_entered')).status, 'delivered');
+  assert.equal(sender.calls[0].body, 'دخل المنطقة الآمنة الساعة 6:20 ص بتوقيت UTC');
   await db.close();
 });
 
@@ -544,5 +577,263 @@ test('unknown outbox events are failed closed, logged, and rethrown', async () =
   await assert.rejects(dispatcher.notify(UNKNOWN_OUTBOX, 'family.future_event'), /unclassified_outbox_event_type/);
   const failed = await db.query(`SELECT status, failure_reason FROM outbox_events WHERE id=$1`, [UNKNOWN_OUTBOX]);
   assert.deepEqual(failed.rows[0], { status: 'failed', failure_reason: 'unclassified_event_type' });
+  await db.close();
+});
+
+// ── The delivery gate (migration 136) ──────────────────────────────────────────────────────
+// The preference row exists from this point on ONLY because something reads it. These tests are
+// that reading: which guardian was told, which was silenced, on whose clock, and what was written
+// down. A silence without a reason is a failure here exactly as a spurious push is.
+
+const CLAIM_OUTBOX = '77777777-dddd-4ddd-8ddd-dddddddddd01';
+const CLAIM_OUTBOX_B = '77777777-dddd-4ddd-8ddd-dddddddddd02';
+const CLAIM_OUTBOX_C = '77777777-dddd-4ddd-8ddd-dddddddddd03';
+const CLAIM_OUTBOX_D = '77777777-dddd-4ddd-8ddd-dddddddddd04';
+const CLAIM_OUTBOX_2 = '77777777-dddd-4ddd-8ddd-dddddddddd05';
+
+async function insertClaimEvent(db, { id = CLAIM_OUTBOX } = {}) {
+  await db.query(
+    `INSERT INTO outbox_events
+       (id, aggregate_type, aggregate_id, correlation_id, event_type, copy_key, payload)
+     VALUES ($1, 'family', $2, gen_random_uuid(), 'family.task_claimed', 'task.claimed', $3::jsonb)`,
+    [id, FAMILY, JSON.stringify({ childId: CHILD, audienceThreadId: null })],
+  );
+}
+
+async function seedPreferences(db, overrides = {}) {
+  const values = {
+    quietHoursEnabled: false, quietHoursStart: null, quietHoursEnd: null, quietHoursOffsetMinutes: 0,
+    pushAllowed: true, deliveryMode: 'interrupt', disabledCopyKeys: [], childRequestsEnabled: true,
+    ...overrides,
+  };
+  await db.query(
+    `INSERT INTO family_notification_preferences
+       (family_id, membership_id, quiet_hours_enabled, quiet_hours_start, quiet_hours_end,
+        quiet_hours_offset_minutes, push_allowed, delivery_mode, disabled_copy_keys,
+        child_requests_enabled)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    [FAMILY, MEMBERSHIP, values.quietHoursEnabled, values.quietHoursStart, values.quietHoursEnd,
+      values.quietHoursOffsetMinutes, values.pushAllowed, values.deliveryMode,
+      values.disabledCopyKeys, values.childRequestsEnabled],
+  );
+}
+
+async function decisionsFor(db, outboxId) {
+  const { rows } = await db.query(
+    `SELECT decision, reason, blocked_by, copy_key
+       FROM outbox_delivery_decisions
+      WHERE outbox_id = $1
+      ORDER BY decided_at ASC, id ASC`,
+    [outboxId],
+  );
+  return rows;
+}
+
+test('quiet hours are judged on the guardian\'s clock, and a silenced alert leaves its reason', async () => {
+  const db = await freshDb();
+  await seedFamily(db);
+  // 22:30 UTC is 01:30 for a guardian at UTC+3 — inside 22:00 → 07:00, so the alert is held.
+  await seedPreferences(db, {
+    quietHoursEnabled: true, quietHoursStart: '22:00', quietHoursEnd: '07:00', quietHoursOffsetMinutes: 180,
+  });
+  await insertClaimEvent(db);
+  const sender = fakeSender();
+  const dispatcher = new NotificationDispatcher(sender, clientFactory(db), {
+    now: () => new Date('2026-10-26T22:30:00Z'),
+  });
+
+  const result = await dispatcher.notify(CLAIM_OUTBOX, 'family.task_claimed');
+  assert.equal(result.status, 'skipped');
+  assert.equal(result.reason, 'every_recipient_gated');
+  assert.equal(sender.calls.length, 0, 'a quiet hour must not be broken by an ordinary alert');
+  assert.deepEqual(await decisionsFor(db, CLAIM_OUTBOX), [
+    { decision: 'suppressed', reason: 'quiet_hours', blocked_by: null, copy_key: 'task.claimed' },
+  ]);
+  await db.close();
+});
+
+test('the same window is awake for a guardian far enough west to be out of it', async () => {
+  const db = await freshDb();
+  await seedFamily(db);
+  // The same instant is 17:30 at UTC-5, so nothing about this family is quiet.
+  await seedPreferences(db, {
+    quietHoursEnabled: true, quietHoursStart: '22:00', quietHoursEnd: '07:00', quietHoursOffsetMinutes: -300,
+  });
+  await insertClaimEvent(db);
+  const sender = fakeSender();
+  const dispatcher = new NotificationDispatcher(sender, clientFactory(db), {
+    now: () => new Date('2026-10-26T22:30:00Z'),
+  });
+
+  const result = await dispatcher.notify(CLAIM_OUTBOX, 'family.task_claimed');
+  assert.equal(result.status, 'delivered');
+  assert.equal(sender.calls.length, 1);
+  assert.equal(sender.calls[0].title, 'طلبٌ من ليان');
+  assert.equal(sender.calls[0].channelId, 'familyos_family_alerts',
+    'an ordinary alert must not ride the safety channel');
+  assert.equal(sender.calls[0].urgency, 'normal');
+  assert.deepEqual(await decisionsFor(db, CLAIM_OUTBOX), [],
+    'a clean delivery is evidenced by its attempt, not twice over');
+  await db.close();
+});
+
+test('each floor has its own reason, the strongest one wins, and a digest wish queues honestly', async () => {
+  const db = await freshDb();
+  await seedFamily(db);
+  await seedPreferences(db, { pushAllowed: false, disabledCopyKeys: ['task.claimed'] });
+  const sender = fakeSender();
+  const dispatcher = new NotificationDispatcher(sender, clientFactory(db), {
+    now: () => new Date('2026-10-26T12:00:00Z'),
+  });
+  const floors = [
+    [CLAIM_OUTBOX, { pushAllowed: false, disabledCopyKeys: ['task.claimed'], childRequestsEnabled: false, deliveryMode: 'interrupt' },
+      { decision: 'suppressed', reason: 'push_disabled', blocked_by: null, copy_key: 'task.claimed' },
+      'a handset switched off entirely is the last word'],
+    [CLAIM_OUTBOX_B, { pushAllowed: true, disabledCopyKeys: ['task.claimed'], childRequestsEnabled: false, deliveryMode: 'interrupt' },
+      { decision: 'suppressed', reason: 'copy_muted', blocked_by: null, copy_key: 'task.claimed' },
+      'one key muted by name'],
+    [CLAIM_OUTBOX_C, { pushAllowed: true, disabledCopyKeys: [], childRequestsEnabled: false, deliveryMode: 'interrupt' },
+      { decision: 'suppressed', reason: 'child_requests_disabled', blocked_by: null, copy_key: 'task.claimed' },
+      'the child-requests switch silences ordinary requests and nothing else'],
+    [CLAIM_OUTBOX_D, { pushAllowed: true, disabledCopyKeys: [], childRequestsEnabled: true, deliveryMode: 'history_only' },
+      { decision: 'suppressed', reason: 'history_only', blocked_by: null, copy_key: 'task.claimed' },
+      'history-only is a silence, written as one'],
+  ];
+  for (const [outboxId, preferences, expected, note] of floors) {
+    await db.query(
+      `UPDATE family_notification_preferences
+          SET push_allowed = $2, disabled_copy_keys = $3, child_requests_enabled = $4,
+              delivery_mode = $5
+        WHERE family_id = $1`,
+      [FAMILY, preferences.pushAllowed, preferences.disabledCopyKeys, preferences.childRequestsEnabled,
+        preferences.deliveryMode],
+    );
+    await insertClaimEvent(db, { id: outboxId });
+    await dispatcher.notify(outboxId, 'family.task_claimed');
+    assert.deepEqual(await decisionsFor(db, outboxId), [expected], note);
+  }
+  assert.equal(sender.calls.length, 0, 'nothing was pushed while every guardian chose silence');
+
+  // A digest wish is not a suppression: the alert belongs to the family's rollup instead of this
+  // instant, so it is written as queued and never as delivered.
+  await db.query(
+    `UPDATE family_notification_preferences SET delivery_mode = 'daily_digest' WHERE family_id = $1`,
+    [FAMILY],
+  );
+  await insertClaimEvent(db, { id: CLAIM_OUTBOX_2 });
+  await dispatcher.notify(CLAIM_OUTBOX_2, 'family.task_claimed');
+  assert.deepEqual(await decisionsFor(db, CLAIM_OUTBOX_2), [
+    { decision: 'digest_queued', reason: 'digest_mode', blocked_by: null, copy_key: 'task.claimed' },
+  ]);
+  const status = await db.query(`SELECT status FROM outbox_events WHERE id = $1`, [CLAIM_OUTBOX_2]);
+  assert.equal(status.rows[0].status, 'skipped');
+  assert.equal(sender.calls.length, 0, 'a digest family is not interrupted at the instant of the alert');
+  await db.close();
+});
+
+test('a safety alert records that it overrode the family\'s wish, naming the wish', async () => {
+  const db = await freshDb();
+  await seedFamily(db, { locale: 'en' });
+  await seedPreferences(db, {
+    quietHoursEnabled: true, quietHoursStart: '18:00', quietHoursEnd: '20:00', quietHoursOffsetMinutes: 180,
+  });
+  await insertSosEvent(db);
+  const sender = fakeSender();
+  const dispatcher = new NotificationDispatcher(sender, clientFactory(db), {
+    now: () => new Date('2026-05-10T15:46:00Z'),
+  });
+
+  const result = await dispatcher.notify(SOS_OUTBOX, 'family.sos_alert_raised');
+  assert.equal(result.status, 'delivered');
+  assert.equal(sender.calls.length, 1);
+  assert.deepEqual(await decisionsFor(db, SOS_OUTBOX), [
+    { decision: 'delivered', reason: 'safety_bypass', blocked_by: 'quiet_hours', copy_key: 'sos.raised' },
+  ], 'the ledger says the window was overridden, so the guardian can be told why it rang');
+  await db.close();
+});
+
+test('136 opens the copy-key vocabulary to the promoted alert and still refuses a mismatch', async () => {
+  const db = await freshDb();
+  await seedFamily(db);
+  await assert.rejects(
+    db.query(
+      `INSERT INTO outbox_events
+         (id, aggregate_type, aggregate_id, correlation_id, event_type, copy_key, payload)
+       VALUES ($1, 'family', $2, gen_random_uuid(), 'family.task_claimed', NULL, '{}'::jsonb)`,
+      [CLAIM_OUTBOX_B, FAMILY],
+    ),
+    /outbox_events_copy_key_pair|violates check constraint/,
+  );
+  await assert.rejects(
+    db.query(
+      `INSERT INTO outbox_events
+         (id, aggregate_type, aggregate_id, correlation_id, event_type, copy_key, payload)
+       VALUES ($1, 'family', $2, gen_random_uuid(), 'family.task_claimed', 'sos.raised', '{}'::jsonb)`,
+      [CLAIM_OUTBOX_C, FAMILY],
+    ),
+    /outbox_events_copy_key_pair/,
+  );
+  await assert.rejects(
+    db.query(
+      `INSERT INTO family_notification_preferences
+         (family_id, membership_id, disabled_copy_keys)
+       VALUES ($1, gen_random_uuid(), ARRAY['sos.raised'])`,
+      [FAMILY],
+    ),
+    /never_silence_safety/,
+  );
+  await assert.rejects(
+    db.query(
+      `UPDATE family_notification_preferences SET quiet_hours_offset_minutes = 900 WHERE family_id = $1`,
+      [FAMILY],
+    )
+      .then(() => db.query(`INSERT INTO family_notification_preferences (family_id, membership_id, quiet_hours_offset_minutes)
+        VALUES ($1, gen_random_uuid(), 900)`, [FAMILY])),
+    /offset_bounded/,
+  );
+  await db.close();
+});
+
+test('the ledger holds one verdict per recipient of an event, and the clock floor is a number', async () => {
+  const db = await freshDb();
+  await seedFamily(db);
+  await seedPreferences(db, { childRequestsEnabled: false });
+  await insertClaimEvent(db, { id: CLAIM_OUTBOX_D });
+  const dispatcher = new NotificationDispatcher(fakeSender(), clientFactory(db), {
+    now: () => new Date('2026-10-26T12:00:00Z'),
+  });
+  await dispatcher.notify(CLAIM_OUTBOX_D, 'family.task_claimed');
+  const first = await decisionsFor(db, CLAIM_OUTBOX_D);
+  assert.deepEqual(first, [
+    { decision: 'suppressed', reason: 'child_requests_disabled', blocked_by: null, copy_key: 'task.claimed' },
+  ]);
+  await assert.rejects(
+    db.query(
+      `INSERT INTO outbox_delivery_decisions
+         (family_id, membership_id, outbox_id, registration_id, copy_key, decision, reason)
+       VALUES ($1, $2, $3, $4, 'task.claimed', 'suppressed', 'child_requests_disabled')`,
+      [FAMILY, MEMBERSHIP, CLAIM_OUTBOX_D, REGISTRATION],
+    ),
+    /one_per_target/,
+  );
+  await assert.rejects(
+    db.query(
+      `INSERT INTO outbox_delivery_decisions
+         (family_id, membership_id, outbox_id, registration_id, copy_key, decision, reason)
+       VALUES ($1, $2, $3, gen_random_uuid(), 'task.claimed', 'delivered', 'delivered')`,
+      [FAMILY, MEMBERSHIP, CLAIM_OUTBOX_D],
+    ),
+    /outbox_delivery_decisions_reason_check/,
+    'the ledger has no word for a clean delivery, because a clean delivery is not its business',
+  );
+  await assert.rejects(
+    db.query(
+      `INSERT INTO outbox_delivery_decisions
+         (family_id, membership_id, outbox_id, registration_id, copy_key, decision, reason, blocked_by)
+       VALUES ($1, $2, $3, gen_random_uuid(), 'sos.raised', 'delivered', 'safety_bypass', NULL)`,
+      [FAMILY, MEMBERSHIP, CLAIM_OUTBOX_D],
+    ),
+    /reason_pair/,
+  );
   await db.close();
 });

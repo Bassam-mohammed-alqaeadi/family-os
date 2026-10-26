@@ -1,9 +1,6 @@
 import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/identity/roster_children.dart';
 import 'package:family_os/core/domain/minutes.dart';
-import 'package:family_os/core/domain/role.dart';
-import 'package:family_os/core/policy/wallet_ledger.dart';
-import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
 import 'package:family_os/features/education/learning_assignment_models.dart';
 import 'package:family_os/features/education/learning_assignment_repository.dart';
 import 'package:family_os/features/n14_studio/attribution_reward_models.dart';
@@ -18,8 +15,8 @@ abstract final class AttributionWalletApps {
 abstract class AttributionRewardRepository {
   Future<AttributionRewardSnapshot> load();
 
-  /// Publishes LearningAssignment + deposits Minutes via [WalletLedger]
-  /// (P15-EDU-002 · P15-EDU-005 · Rule 5).
+  /// Publishes LearningAssignment (P15-EDU-002 · P15-EDU-005). Minutes are never written
+  /// here: the reward is not a local ledger entry (S3).
   Future<AttributionRewardSnapshot> assign();
 }
 
@@ -29,30 +26,18 @@ final class InMemoryAttributionRewardRepository
   InMemoryAttributionRewardRepository({
     AttributionRewardSnapshot? seed,
     LearningAssignmentRepository? assignments,
-    WalletLedger? wallet,
   }) : _snap =
            seed ??
-           (assignments == null && wallet == null
+           (assignments == null
                ? attributionRewardEmptyFixture()
                : attributionRewardPrototypeFixture()),
-       _assignments = assignments ?? stage1LearningAssignmentRepository,
-       _injectedWallet = wallet;
+       _assignments = assignments ?? stage1LearningAssignmentRepository;
 
   AttributionRewardSnapshot _snap;
   final LearningAssignmentRepository _assignments;
-  final WalletLedger? _injectedWallet;
-  WalletLedger? _resolvedWallet;
 
   /// Optional gate for loading-state widget tests.
   Future<void> Function()? loadGate;
-
-  Future<WalletLedger> _wallet() async {
-    final injected = _injectedWallet;
-    if (injected != null) return injected;
-    return _resolvedWallet ??= WalletLedger(
-      await ScreenTimeLocalPersistence.openPolicyRepository(),
-    );
-  }
 
   @override
   Future<AttributionRewardSnapshot> load() async {
@@ -68,21 +53,6 @@ final class InMemoryAttributionRewardRepository
     if (!_snap.canAssign) return _copy();
     final child = _snap.selectedChild!;
     final childId = ChildId(child.id);
-    final wallet = await _wallet();
-
-    for (final reward in _snap.rewards) {
-      if (!reward.enabled || reward.minutes <= 0) continue;
-      final appId = switch (reward.kind) {
-        AttributionRewardKind.wallet => AttributionWalletApps.education,
-        AttributionRewardKind.play => AttributionWalletApps.play,
-      };
-      await wallet.earn(
-        childId: childId,
-        appId: appId,
-        assignee: AppRole.child,
-        fatherSetReward: Minutes(reward.minutes),
-      );
-    }
 
     await _assignments.publish(
       LearningAssignmentPublishRequest(

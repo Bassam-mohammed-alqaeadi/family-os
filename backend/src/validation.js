@@ -1,5 +1,12 @@
 import { CONSENT_CAPABILITIES } from './child-consents.js';
+import {
+  CUSTOMIZATION_DAYS,
+  CUSTOMIZATION_LABEL_KEYS,
+  NUMERAL_SYSTEMS,
+} from './family-customization.js';
 import { HttpError } from './http-error.js';
+import { DELIVERY_MODES } from './notification-preferences.js';
+import { PAIRING_CODE_LENGTH, PAIRING_CODE_PATTERN } from './pairing-code.js';
 
 const MAX_DISPLAY_NAME_LENGTH = 120;
 const MAX_SUBJECT_LENGTH = 255;
@@ -27,6 +34,9 @@ const LOCATION_ACQUISITIONS = new Set(['located', 'stale_last_known', 'acquiring
 /// it looks on purpose: a handset with a wrong timezone is common, a handset reporting a
 /// crossing that has not happened yet is not, and migration 103 refuses the latter too.
 const MAX_FIX_CLOCK_SKEW_MS = 5 * 60 * 1000;
+/// The ways a family may ask to be reached, taken from the module that owns them rather than
+/// restated here, so a fourth mode cannot exist on the wire without existing in the gate.
+const DELIVERY_MODE_KEYS = new Set(DELIVERY_MODES);
 
 function bodyObject(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -103,8 +113,8 @@ export function createDevicePairingInput(value) {
 export function claimDevicePairingInput(value) {
   const body = bodyObject(value);
   onlyKnownFields(body, new Set(['pairingCode']));
-  const pairingCode = requiredText(body.pairingCode, 'pairingCode', { maxLength: 128 });
-  if (!/^[A-Za-z0-9_-]{32,128}$/.test(pairingCode)) {
+  const pairingCode = requiredText(body.pairingCode, 'pairingCode', { maxLength: PAIRING_CODE_LENGTH });
+  if (!PAIRING_CODE_PATTERN.test(pairingCode)) {
     throw new HttpError(400, 'invalid_request', 'pairingCode is invalid.');
   }
   return { pairingCode };
@@ -816,10 +826,18 @@ export function screenTimePolicyInput(value) {
       'schoolMode',
       'bedtime',
       'timezoneOffsetMinutes',
+      'earnedMinutesExtendLimit',
       'expectedVersion',
     ]),
   );
   const policy = {};
+  if (body.earnedMinutesExtendLimit !== undefined) {
+    policy.earnedMinutesExtendLimit = optionalBoolean(
+      body.earnedMinutesExtendLimit,
+      'earnedMinutesExtendLimit',
+      false,
+    );
+  }
   if (body.dailyLimitMinutes !== undefined) {
     policy.dailyLimitMinutes = requiredWholeNumber(
       body.dailyLimitMinutes,
@@ -1864,4 +1882,297 @@ export function pendingCommandsQuery(value) {
   const limit = value?.limit === undefined || value?.limit === ''
     ? 20 : requiredWholeNumber(Number(value.limit), 'limit', 1, 100);
   return { limit };
+}
+
+// ── S3 minutes economy: closed request bodies (D3) ──
+// Only the shape is closed here: no unknown field, and an object wherever an object belongs.
+// The values are checked by the economy itself, which owns the codes the card names
+// (minutes_invalid_amount, minutes_invalid_scope, minutes_invalid_reason, …).
+function closedObject(value, allowed) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(allowed));
+  return body;
+}
+
+function minutesOptionalInstant(value) {
+  if (value === undefined || value === null) return null;
+  const instant = new Date(value);
+  if (typeof value !== 'string' || Number.isNaN(instant.getTime())) {
+    throw new HttpError(400, 'invalid_request', 'expiresAt must be an ISO 8601 instant.');
+  }
+  return instant;
+}
+
+/** A child's minutes earned by a guardian. The source is the caller's own reference. */
+export function minutesEarnInput(value) {
+  const body = closedObject(value, ['channel', 'minutes', 'appId', 'source']);
+  const source = closedObject(body.source, ['type', 'id']);
+  return {
+    channel: body.channel,
+    minutes: body.minutes,
+    appId: body.appId ?? null,
+    source: { type: source.type, id: source.id },
+  };
+}
+
+/** A handset reports minutes spent in one session of one app. The handset names no child. */
+export function minutesConsumeInput(value) {
+  const body = closedObject(value, ['appId', 'minutes', 'sessionId']);
+  return {
+    appId: body.appId,
+    minutes: body.minutes,
+    sessionId: requiredText(body.sessionId, 'sessionId', { maxLength: 160 }),
+  };
+}
+
+/** A guardian grants minutes. Co-guardians are held to the per-request ceiling by the economy. */
+export function minutesGrantInput(value) {
+  const body = closedObject(value, ['minutes', 'scope', 'appId', 'expiresAt', 'reason']);
+  return {
+    minutes: body.minutes,
+    scope: body.scope,
+    appId: body.appId ?? null,
+    expiresAt: minutesOptionalInstant(body.expiresAt),
+    reason: body.reason ?? '',
+  };
+}
+
+/** A guardian moves minutes between the app and free wallets of one child. */
+export function minutesAllocationInput(value) {
+  const body = closedObject(value, ['from', 'to', 'minutes', 'reason']);
+  const from = closedObject(body.from, ['scope', 'appId']);
+  const to = closedObject(body.to, ['scope', 'appId']);
+  return {
+    from: { scope: from.scope, appId: from.appId ?? null },
+    to: { scope: to.scope, appId: to.appId ?? null },
+    minutes: body.minutes,
+    reason: body.reason ?? '',
+  };
+}
+
+/** The primary guardian reverses one credit. The reason is mandatory; the economy checks it. */
+export function minutesReversalInput(value) {
+  const body = closedObject(value, ['targetEntryId', 'minutes', 'reason']);
+  return {
+    targetEntryId: requireUuid(body.targetEntryId, 'targetEntryId'),
+    minutes: body.minutes,
+    reason: body.reason,
+  };
+}
+
+/** The ledger page query: a limit and an opaque cursor, nothing else. */
+export function minutesLedgerQuery(query) {
+  const allowed = new Set(['limit', 'cursor']);
+  for (const key of Object.keys(query ?? {})) {
+    if (!allowed.has(key)) throw new HttpError(400, 'invalid_request', 'Query contains unsupported parameters.');
+  }
+  const limit = query.limit === undefined ? undefined : Number(query.limit);
+  if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 100)) {
+    throw new HttpError(400, 'invalid_request', 'limit must be a whole number from 1 to 100.');
+  }
+  return {
+    limit,
+    cursor: query.cursor === undefined ? null : requiredText(query.cursor, 'cursor', { maxLength: 512 }),
+  };
+}
+
+const CUSTOMIZATION_DAY_KEYS = new Set(CUSTOMIZATION_DAYS);
+const NUMERAL_SYSTEM_KEYS = new Set(NUMERAL_SYSTEMS);
+const CUSTOMIZATION_LABEL_KEY_SET = new Set(CUSTOMIZATION_LABEL_KEYS);
+const MAX_CUSTOMIZATION_LABEL_LENGTH = 24;
+
+/**
+ * Family character profile: which day the week opens with, which days this family rests, and what
+ * the app calls the people in it. `expectedVersion` is required because the profile is edited by a
+ * person, not appended to: a write that read an older page is refused rather than silently winning.
+ *
+ * Rest days arrive as day names and leave as a canonical, duplicate-free, day-ordered list, so the
+ * seven boolean columns below the wire can never disagree with each other depending on how a client
+ * happened to type them.
+ */
+export function familyCustomizationInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, new Set(['weekStartDay', 'restDays', 'numerals', 'labels', 'expectedVersion']));
+  if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 0) {
+    throw new HttpError(400, 'invalid_request', 'expectedVersion must be a whole number from 0.');
+  }
+
+  const change = {};
+
+  if (body.weekStartDay !== undefined) {
+    if (typeof body.weekStartDay !== 'string' || !CUSTOMIZATION_DAY_KEYS.has(body.weekStartDay)) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        `weekStartDay must be one of ${[...CUSTOMIZATION_DAYS].join(', ')}.`,
+      );
+    }
+    change.weekStartDay = body.weekStartDay;
+  }
+
+  if (body.numerals !== undefined) {
+    if (typeof body.numerals !== 'string' || !NUMERAL_SYSTEM_KEYS.has(body.numerals)) {
+      throw new HttpError(400, 'invalid_request', 'numerals must be western or eastern.');
+    }
+    change.numerals = body.numerals;
+  }
+
+  if (body.restDays !== undefined) {
+    if (!Array.isArray(body.restDays) || body.restDays.length > CUSTOMIZATION_DAYS.length) {
+      throw new HttpError(400, 'invalid_request', 'restDays must be a list of day keys.');
+    }
+    const chosen = new Set();
+    for (const [index, day] of body.restDays.entries()) {
+      if (typeof day !== 'string' || !CUSTOMIZATION_DAY_KEYS.has(day)) {
+        throw new HttpError(400, 'invalid_request', `restDays[${index}] must be a day key.`);
+      }
+      if (chosen.has(day)) {
+        throw new HttpError(400, 'invalid_request', 'restDays must not repeat a day.');
+      }
+      chosen.add(day);
+    }
+    // An empty list is accepted here and refused by the module, where the answer carries the name of
+    // the law ("a family must keep at least one rest day") instead of a constraint number.
+    change.restDays = CUSTOMIZATION_DAYS.filter((day) => chosen.has(day));
+  }
+
+  if (body.labels !== undefined) {
+    const raw = body.labels;
+    if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+      throw new HttpError(400, 'invalid_request', 'labels must be an object of addressing words.');
+    }
+    const labels = {};
+    for (const [key, entry] of Object.entries(raw)) {
+      if (!CUSTOMIZATION_LABEL_KEY_SET.has(key)) {
+        throw new HttpError(400, 'invalid_request', `labels.${key} is not a word this app speaks with.`);
+      }
+      if (entry === null) {
+        labels[key] = null;
+        continue;
+      }
+      if (typeof entry !== 'string') {
+        throw new HttpError(400, 'invalid_request', `labels.${key} must be text, or null to drop it.`);
+      }
+      const word = entry.trim();
+      if (word.length === 0 || word.length > MAX_CUSTOMIZATION_LABEL_LENGTH) {
+        throw new HttpError(
+          400,
+          'invalid_request',
+          `labels.${key} must be ${MAX_CUSTOMIZATION_LABEL_LENGTH} characters or fewer, and not blank.`,
+        );
+      }
+      // A "word" that carries a newline or a control code is not a word, and this one is pasted
+      // into the middle of sentences on a child's screen.
+      if (/[\u0000-\u001f\u007f\u2028\u2029]/.test(word)) {
+        throw new HttpError(400, 'invalid_request', `labels.${key} must not contain control characters.`);
+      }
+      labels[key] = word;
+    }
+    change.labels = labels;
+  }
+
+  return { change, expectedVersion: body.expectedVersion };
+}
+
+/**
+ * Notification preferences for the guardian making the call — slice س٣ of the launch closure.
+ *
+ * Minutes of day, not clock faces, because that is the unit the app's own model already writes
+ * (`NotificationPrefs.toJson`) and the unit `notification-gating.js` reads; a third representation
+ * would be a third chance to be an hour off. `expectedVersion` is required: this is a page someone
+ * edits, not a log someone appends to.
+ *
+ * Fields the server has no engine for are refused here rather than stored and ignored, and the
+ * module re-checks the three floors (a quiet window needs both faces; safety is never muted; an
+ * unknown copy key is not muteable) where the refusal can name the law.
+ */
+const PREFERENCE_MINUTE_OF_DAY_MAX = 1_439;
+const PREFERENCE_FIELDS = new Set([
+  'expectedVersion', 'quietHoursEnabled', 'quietStartMinutes', 'quietEndMinutes',
+  'quietHoursOffsetMinutes', 'pushAllowed', 'deliveryMode', 'childRequestsEnabled',
+  'disabledCopyKeys',
+]);
+const PREFERENCE_BOOLEAN_FIELDS = new Set([
+  'quietHoursEnabled', 'pushAllowed', 'childRequestsEnabled',
+]);
+
+function preferenceMinute(value, field) {
+  if (value === null) return null;
+  if (!Number.isInteger(value) || value < 0 || value > PREFERENCE_MINUTE_OF_DAY_MAX) {
+    throw new HttpError(
+      400,
+      'invalid_request',
+      `${field} must be a whole minute of day between 0 and ${PREFERENCE_MINUTE_OF_DAY_MAX}, or null.`,
+    );
+  }
+  return value;
+}
+
+export function notificationPreferencesInput(value) {
+  const body = bodyObject(value);
+  onlyKnownFields(body, PREFERENCE_FIELDS);
+  if (!Number.isInteger(body.expectedVersion) || body.expectedVersion < 0) {
+    throw new HttpError(400, 'invalid_request', 'expectedVersion must be a whole number from 0.');
+  }
+
+  const change = {};
+
+  for (const field of PREFERENCE_BOOLEAN_FIELDS) {
+    if (body[field] === undefined) continue;
+    if (typeof body[field] !== 'boolean') {
+      throw new HttpError(400, 'invalid_request', `${field} must be true or false.`);
+    }
+    change[field] = body[field];
+  }
+
+  for (const field of ['quietStartMinutes', 'quietEndMinutes']) {
+    if (body[field] === undefined) continue;
+    change[field] = preferenceMinute(body[field], field);
+  }
+
+  if (body.quietHoursOffsetMinutes !== undefined) {
+    const offset = body.quietHoursOffsetMinutes;
+    if (!Number.isInteger(offset) || Math.abs(offset) > 840) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        'quietHoursOffsetMinutes must be a whole number of minutes between -840 and 840.',
+      );
+    }
+    change.quietHoursOffsetMinutes = offset;
+  }
+
+  if (body.deliveryMode !== undefined) {
+    if (typeof body.deliveryMode !== 'string' || !DELIVERY_MODE_KEYS.has(body.deliveryMode)) {
+      throw new HttpError(
+        400,
+        'invalid_request',
+        `deliveryMode must be one of ${[...DELIVERY_MODES].join(', ')}.`,
+      );
+    }
+    change.deliveryMode = body.deliveryMode;
+  }
+
+  if (body.disabledCopyKeys !== undefined) {
+    const raw = body.disabledCopyKeys;
+    if (!Array.isArray(raw) || raw.length > 32) {
+      throw new HttpError(400, 'invalid_request', 'disabledCopyKeys must be a list of at most 32 keys.');
+    }
+    const seen = new Set();
+    for (const key of raw) {
+      if (typeof key !== 'string' || key.trim().length === 0) {
+        throw new HttpError(400, 'invalid_request', 'disabledCopyKeys must hold non-empty key strings.');
+      }
+      const normalized = key.trim();
+      if (seen.has(normalized)) {
+        throw new HttpError(400, 'invalid_request', 'disabledCopyKeys must not repeat a key.');
+      }
+      seen.add(normalized);
+    }
+    // Canonical order, so two clients that chose the same set write the same array and the audit
+    // trail of a family does not depend on the order a screen happened to list its switches in.
+    change.disabledCopyKeys = [...seen].sort();
+  }
+
+  return { change, expectedVersion: body.expectedVersion };
 }

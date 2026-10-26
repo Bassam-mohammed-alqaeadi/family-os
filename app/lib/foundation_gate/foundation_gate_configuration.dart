@@ -97,6 +97,17 @@ class FoundationGateConfiguration {
     return stagingApiOrigin.replace(path: '/v1/families/$familyId/children');
   }
 
+  Uri familyChildUri(String familyId, String childId) {
+    if (!isFoundationGateUuid(familyId) || !isFoundationGateUuid(childId)) {
+      throw ArgumentError(
+        'Server-returned UUID family and child identifiers are required.',
+      );
+    }
+    return stagingApiOrigin.replace(
+      path: '/v1/families/$familyId/children/$childId',
+    );
+  }
+
   Uri familyDevicesUri(String familyId) {
     if (!isFoundationGateUuid(familyId)) {
       throw ArgumentError.value(
@@ -145,6 +156,17 @@ class FoundationGateConfiguration {
       );
     }
     return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/telemetry');
+  }
+
+  Uri deviceScreenTimeUri(String deviceId) {
+    if (!isFoundationGateUuid(deviceId)) {
+      throw ArgumentError.value(
+        deviceId,
+        'deviceId',
+        'A server-returned UUID device identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/devices/$deviceId/screen-time');
   }
 
   Uri familyChildDevicePairingsUri(String familyId, String childId) {
@@ -437,6 +459,13 @@ class FoundationGateConfiguration {
       _familyChildTaskCrumbUri(familyId, childId, taskId, 'decision');
 
   /// The balance and the entries that produced it.
+  /// The guardian's read of one child's minutes balance: the same answer the child's handset reads.
+  Uri familyChildMinutesBalanceUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'minutes/balance');
+
+  Uri familyChildMinutesGrantsUri(String familyId, String childId) =>
+      _familyChildCrumbUri(familyId, childId, 'minutes/grants');
+
   Uri familyChildPointsUri(String familyId, String childId) =>
       _familyChildCrumbUri(familyId, childId, 'points');
 
@@ -920,5 +949,21 @@ class FoundationGateConfiguration {
       path: '/v1/families/$familyId/commands',
       query: params.isEmpty ? null : params.join('&'),
     );
+  }
+
+
+  /// The family's own account of how this app should behave for it: which day the week opens
+  /// with, which days rest, what the children call their guardians, and how its numbers are
+  /// written. Read with GET, changed with PATCH - and nothing else, because every one of those
+  /// four is a fact the server already holds for this family alone.
+  Uri familyCustomizationUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError.value(
+        familyId,
+        'familyId',
+        'A server-returned UUID family identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/customization');
   }
 }

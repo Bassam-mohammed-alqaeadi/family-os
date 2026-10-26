@@ -51,25 +51,55 @@ jobs:
     defaults:
       run:
         working-directory: backend
-    services:
-      postgres:
-        # Use AWS's public mirror of the official image to avoid anonymous Docker Hub pull-rate limits.
-        image: public.ecr.aws/docker/library/postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: familyos_ci
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d familyos_ci"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
+    # This job used to declare PostgreSQL as a `services:` container. Three consecutive runs then
+    # died before any step of theirs could speak: "Docker pull failed with exit code 1" during
+    # `Initialize containers`. That is a registry that would not answer, reported as a red X with no
+    # log, no retry and no fallback - and a gate that cannot run is worse than no gate, because the
+    # next reader mistakes its silence for a verdict. The server is started in a step instead: the
+    # same real PostgreSQL 16, the same port, plus attempts, a fallback mirror, and a log.
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/familyos_ci
+      PG_IMAGE_PRIMARY: public.ecr.aws/docker/library/postgres:16
+      PG_IMAGE_FALLBACK: postgres:16
     steps:
       - uses: actions/checkout@v4
+
+      - name: Start real PostgreSQL 16 (retries, then a second mirror)
+        run: |
+          set -euo pipefail
+          started=""
+          for image in "$PG_IMAGE_PRIMARY" "$PG_IMAGE_FALLBACK"; do
+            for attempt in 1 2 3; do
+              echo "::group::$image · attempt $attempt"
+              docker rm -f familyos-pg >/dev/null 2>&1 || true
+              if docker run -d --name familyos-pg \
+                   -e POSTGRES_USER=postgres \
+                   -e POSTGRES_PASSWORD=postgres \
+                   -e POSTGRES_DB=familyos_ci \
+                   -p 127.0.0.1:5432:5432 "$image"; then
+                for _ in $(seq 1 30); do
+                  if docker exec familyos-pg pg_isready -U postgres -d familyos_ci >/dev/null 2>&1; then
+                    started="$image"
+                    break 3
+                  fi
+                  sleep 2
+                done
+                echo "the container started but never reported ready"
+              else
+                echo "docker could not pull or start this image"
+              fi
+              echo "::endgroup::"
+              sleep $((attempt * 5))
+            done
+          done
+          if [ -z "$started" ]; then
+            # Refuse loudly. This job's whole purpose is that SQL is executed, not discussed, and a
+            # job that quietly skipped to green would teach the next migration that nothing is owed.
+            echo "::error title=PostgreSQL unavailable::No PostgreSQL 16 image could be pulled or started from either mirror. The migration gate refuses to pass without the real server."
+            exit 1
+          fi
+          echo "PostgreSQL is running from $started"
+          docker exec familyos-pg postgres --version
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -78,11 +108,11 @@ jobs:
       - run: npm ci
       - name: Apply every migration to the real database
         run: npm run migrate
-      - name: Verify schema, constraints, revocation, W9 media/realtime/push, and S1 notification delivery
+      - name: Verify schema, constraints, revocation, W9 media/realtime/push, S1 notification delivery, and S3 minutes economy
         run: |
           log_file=$(mktemp)
           set +e
-          node --test test/postgres-integration.test.js test/postgres-chat-realtime-media.test.js test/postgres-push-registrations.test.js test/postgres-notification-delivery.integration.test.js test/postgres-notification-delivery.test.js test/postgres-invite-codes.test.js test/postgres-child-consents.test.js test/postgres-data-erasure.test.js 2>&1 | tee "$log_file"
+          node --test test/postgres-integration.test.js test/postgres-chat-realtime-media.test.js test/postgres-push-registrations.test.js test/postgres-notification-delivery.integration.test.js test/postgres-notification-delivery.test.js test/postgres-invite-codes.test.js test/postgres-child-consents.test.js test/postgres-data-erasure.test.js test/postgres-minutes-economy.test.js 2>&1 | tee "$log_file"
           test_status=${PIPESTATUS[0]}
           set -e
           if [ "$test_status" -ne 0 ]; then
@@ -98,3 +128,7 @@ jobs:
             echo "::error title=PostgreSQL integration failure::${summary:0:5000}"
             exit "$test_status"
           fi
+
+      - name: Stop the server if the job dies
+        if: always()
+        run: docker rm -f familyos-pg >/dev/null 2>&1 || true

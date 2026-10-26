@@ -23,6 +23,7 @@ import 'package:family_os/core/events/local_event_policy_bridge.dart';
 import 'package:family_os/core/family_ops/family_ops_local_persistence.dart';
 import 'package:family_os/core/fs_foundation/fs_composition_runtime.dart';
 import 'package:family_os/core/fs_foundation/fs_session_kernel.dart';
+import 'package:family_os/core/fs_foundation/selected_family_sqlite_store.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/i18n/locale_controller.dart';
 import 'package:family_os/core/identity/identity_local_persistence.dart';
@@ -32,6 +33,7 @@ import 'package:family_os/core/policy/advisor_repository.dart';
 import 'package:family_os/core/prefs_misc/prefs_misc_runtime.dart';
 import 'package:family_os/core/runtime/app_runtime.dart';
 import 'package:family_os/core/runtime/app_scope.dart';
+import 'package:family_os/core/runtime/family_child_deletion_source.dart';
 import 'package:family_os/core/runtime/family_device_source.dart';
 import 'package:family_os/core/runtime/family_policy_source.dart';
 import 'package:family_os/core/runtime/family_roster_source.dart';
@@ -50,11 +52,15 @@ import 'package:family_os/features/n06_notifications/family_notification_router.
 import 'package:family_os/features/n03_screen_time/screen_time_server_authority.dart';
 import 'package:family_os/features/n04_web_filter/web_filter_server_authority.dart';
 import 'package:family_os/features/n15_calendar/calendar_server_authority.dart';
+import 'package:family_os/features/n03_screen_time/guardian_minutes_balance_authority.dart';
+import 'package:family_os/features/n03_screen_time/minutes_balance_cache.dart';
 import 'package:family_os/features/n16_tasks/tasks_server_authority.dart';
 import 'package:family_os/features/n10_emergency/sos_server_authority.dart';
 import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
 import 'package:family_os/features/n07_privacy/audit_log_local_persistence.dart';
+import 'package:family_os/features/n12_devices/device_ledger_server_authority.dart';
+import 'package:family_os/features/n12_devices/family_customization_server_authority.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_identity_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_remote_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
@@ -65,7 +71,10 @@ import 'package:family_os/features/quran/quran_local_bridge.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_identity_repository.dart';
 import 'package:family_os/features/shared_onboarding/device_user_switch_repository.dart';
 import 'package:family_os/foundation_gate/children_roster_api_client.dart';
+import 'package:family_os/foundation_gate/family_capability_api_client.dart';
 import 'package:family_os/foundation_gate/family_creation_api_client.dart';
+import 'package:family_os/foundation_gate/family_command_api_client.dart';
+import 'package:family_os/foundation_gate/family_customization_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
@@ -84,6 +93,7 @@ import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_identity.dart';
 import 'package:family_os/foundation_gate/foundation_gate_session_controller.dart';
 import 'package:family_os/foundation_gate/main_app_foundation_runtime.dart';
+import 'package:family_os/foundation_gate/native_child_telemetry_bridge.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -163,6 +173,7 @@ Future<void> main() async {
   if (familyEntryRuntime != null) {
     FamilyNotificationRouter.registerBackgroundHandler();
     await familyEntryRuntime.refreshIdentity();
+    await familyEntryRuntime.registerGuardianPush();
     // FE-W1-FAT-027 — the members roster and its three commands come from the server when
     // a server is configured. Without this, the screen keeps the local projection: it can
     // show who this device recorded and cannot invite, accept or revoke anything.
@@ -211,6 +222,40 @@ Future<void> main() async {
     // local policy and a shield nobody had checked: a family could see "protected" on a
     // phone that had last spoken days ago. A build without this binding now says the server
     // did not answer rather than drawing a green dot.
+    // S0 - what a phone can actually enforce, and every order that was issued to it, are server
+    // facts. Before this binding the device screen drew a health picture from this handset's own
+    // record: a family could read "connected" with no proof that blocking, locking or location
+    // survived a restart. A build with no server now says nobody was asked, which is the truth.
+    final capabilityApi = familyEntryRuntime.capabilityApi;
+    final commandApi = familyEntryRuntime.commandApi;
+    if (capabilityApi != null && commandApi != null) {
+      DeviceLedgerAuthority.bind(
+        DeviceLedgerAuthority(
+          capabilities: capabilityApi,
+          commands: commandApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+        ),
+      );
+    } else {
+      DeviceLedgerAuthority.bind(null);
+    }
+    // A family's week, rest days, addressing words and digits are a row on the spine, not a
+    // preference this handset keeps. Bound here so the settings screen reads what this family
+    // actually decided; a build with no server says nobody was asked, instead of drawing a week
+    // this build invented and a family has to trust.
+    final customizationApi = familyEntryRuntime.customizationApi;
+    if (customizationApi != null) {
+      FamilyCustomizationAuthority.bind(
+        FamilyCustomizationAuthority(
+          api: customizationApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+        ),
+      );
+    } else {
+      FamilyCustomizationAuthority.bind(null);
+    }
     final webFilterApi = familyEntryRuntime.webFilterApi;
     if (webFilterApi != null) {
       bindWebFilterServerAuthority(
@@ -233,6 +278,16 @@ Future<void> main() async {
           api: tasksApi,
           idToken: familyEntryRuntime.currentIdToken,
           familyId: () => familyEntryRuntime.selectedFamilyId,
+        ),
+      );
+      // S3 — the guardian reads a child's minutes balance from the server, never from this device.
+      bindGuardianMinutesBalance(
+        GuardianMinutesBalanceAuthority(
+          api: tasksApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+          persistedFamilyId: sharedSelectedFamilyStore.read,
+          cacheOpener: openDurableMinutesBalanceCache,
         ),
       );
     }
@@ -314,6 +369,8 @@ Future<void> main() async {
     );
   } else {
     bindFamilyChatServerAuthority(null);
+    DeviceLedgerAuthority.bind(null);
+    FamilyCustomizationAuthority.bind(null);
   }
   runApp(
     FamilyOsApp(
@@ -406,6 +463,7 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
           configuration: configuration,
           transport: PackageFoundationGateHttpTransport(),
         ),
+        selectedFamilyStore: sharedSelectedFamilyStore,
       ),
       identity: identity,
       deviceApi: FamilyDeviceApiClient(
@@ -449,6 +507,18 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         transport: PackageFoundationGateHttpTransport(),
       ),
       chatApi: _familyChatApi(configuration),
+      capabilityApi: FamilyCapabilityApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      commandApi: FamilyCommandApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      customizationApi: FamilyCustomizationApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
       preferredFamilyId: preferredFamilyId,
       guardianPushRegistration: ({
         required String familyId,
@@ -544,6 +614,9 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
       childProfiles: foundationRuntime == null
           ? null
           : RemoteFamilyChildProfileSource(foundationRuntime),
+      childDeletion: foundationRuntime == null
+          ? LocalFamilyChildDeletionSource(_identity)
+          : RemoteFamilyChildDeletionSource(foundationRuntime),
       familyCreation: foundationRuntime == null
           ? null
           : RemoteFamilyCreationSource(foundationRuntime),
@@ -578,12 +651,21 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
     );
     _notificationRouter = FamilyNotificationRouter(router: _router);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        NativeChildTelemetryBridge.addRevocationListener(_onDeviceRevoked);
+      }
       unawaited(_notificationRouter.attach());
       final foundationRuntime = widget.foundationRuntime;
       if (foundationRuntime != null) {
         unawaited(foundationRuntime.registerGuardianPush());
       }
     });
+  }
+
+  void _onDeviceRevoked() {
+    if (!mounted) return;
+    _role.value = AppRole.father;
+    _router.go('/scr-shr-001');
   }
 
   void _syncLegacyRoleFallback() {
@@ -593,6 +675,7 @@ class _FamilyOsAppState extends State<FamilyOsApp> {
 
   @override
   void dispose() {
+    NativeChildTelemetryBridge.removeRevocationListener(_onDeviceRevoked);
     _role.removeListener(_syncLegacyRoleFallback);
     if (_ownsRole) {
       _role.dispose();

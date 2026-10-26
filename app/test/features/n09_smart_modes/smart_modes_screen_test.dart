@@ -104,6 +104,13 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
+      // The clock faces pinned below are 24-hour. These screens read the
+      // device's own hour cycle (shared family formatter), so the fixture says
+      // what the device setting is instead of the screen being frozen to one.
+      builder: (context, child) => MediaQuery(
+        data: const MediaQueryData(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
       theme: buildFamilyTheme(),
       locale: const Locale('ar'),
       supportedLocales: AppLocalizations.supportedLocales,

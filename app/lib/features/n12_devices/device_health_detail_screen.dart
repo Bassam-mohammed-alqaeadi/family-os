@@ -15,6 +15,7 @@ import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
+import 'package:family_os/features/n12_devices/device_capability_ledger_panel.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
 
 /// Widget keys for SCR-FAT-026 / UI-012 acceptance.
@@ -33,6 +34,7 @@ abstract final class DeviceHealthDetailKeys {
   static const offlineBanner = Key('device_health_offline_banner');
   static const sosCta = Key('device_health_detail_sos');
   static const childLean = Key('device_health_detail_child_lean');
+  static const capabilityLedger = Key('device_health_detail_capability_ledger');
   static const missing = Key('device_health_detail_missing');
   static Key permissionRow(DevicePermissionKind kind) =>
       Key('device_health_perm_${kind.name}');
@@ -424,6 +426,16 @@ class _DeviceHealthDetailScreenState extends State<DeviceHealthDetailScreen> {
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 14),
+          // The phone's own account of what it can enforce, and every order that reached it.
+          // Last on the page on purpose: fixing a permission matters more than reading a
+          // ledger, so the repair buttons stay above it.
+          DeviceCapabilityLedgerPanel(
+            key: DeviceHealthDetailKeys.capabilityLedger,
+            childId: snap.childId,
+            deviceId: snap.deviceId,
+            deviceLabel: snap.displayLabel,
           ),
         ],
       ),

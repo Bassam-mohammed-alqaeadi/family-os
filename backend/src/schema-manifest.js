@@ -133,4 +133,36 @@ export const FOUNDATION_SCHEMA_MIGRATIONS = Object.freeze([
     name: '124_geofence_notification_payload_minimization.sql',
     sha256: '44929dc7031ad3bc7614b6613f41c3e0cf331cebcb0e745eb507ed1e44e6c114',
   }),
+  Object.freeze({
+    name: '130_family_minutes_ledger.sql',
+    sha256: '65d4f3b7e1b3633bc253bc297bea4ad5beb5b3c18fa638483358417886c08111',
+  }),
+  Object.freeze({
+    name: '131_family_app_wallets.sql',
+    sha256: 'fa8ac4b4f885cd8ab12a0221e0817c9a742dc9643fe64845a845a580ad1de01e',
+  }),
+  Object.freeze({
+    name: '132_point_ledger_to_minutes.sql',
+    sha256: '21d9c7efdd1ee192a80646d5d243752be8adc486fd1581d1c8ffcfee0b7ee77b',
+  }),
+  Object.freeze({
+    name: '133_screen_time_earned_minutes_switch.sql',
+    sha256: '6ee81d4dd4bde665267c707991f7f3148744541b770b51cd1ca0adf419d2b830',
+  }),
+  Object.freeze({
+    name: '134_usage_consumption_ledger_shape.sql',
+    sha256: '8b39d4cb82b16b0e91ecad0096fcc7866d8570d6a7d9270de3ede4f783b259d5',
+  }),
+  Object.freeze({
+    name: '135_family_customization_profile.sql',
+    sha256: 'd8ac5120899c4885c491c325ad0221d6c460baf18920b5f8f3164c1fac7c5f0f',
+  }),
+  Object.freeze({
+    name: '136_notification_delivery_gating.sql',
+    sha256: '3d92908dec6d937fcad8f69395924fb104a26d8b2e6e8a903fab53d85aeca889',
+  }),
+  Object.freeze({
+    name: '137_notification_preferences_versioning.sql',
+    sha256: 'c11cd4ce4463e5a3fbdc061f6b2aee0b802ce827d3291bf3e66ecdb6cb8e3877',
+  }),
 ]);

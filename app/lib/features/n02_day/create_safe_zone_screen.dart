@@ -15,6 +15,7 @@ import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/capability_status.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/clock_format.dart';
 import 'package:family_os/core/identity/active_child_resolver.dart';
 import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
@@ -1107,11 +1108,21 @@ class _AlertsCard extends StatelessWidget {
   final ValueChanged<int> onDeadlineSelected;
   final VoidCallback? onPickCustomDeadline;
 
-  /// HH:mm for chips / deadline (Western digits — VX-B3).
-  static String formatDeadlineClock(int minutes) {
-    final h = (minutes ~/ 60).clamp(0, 23);
-    final m = (minutes % 60).clamp(0, 59);
-    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+  /// A deadline clock face for the chips and the no-show row.
+  ///
+  /// VX-B3 hand-padded Western digits here while the app had one digit system;
+  /// the family owns that choice now, so this reads through the same shared
+  /// formatter as the notification card and the chat list — a family that
+  /// picked Eastern digits sees them everywhere or nowhere. The hour cycle is
+  /// the phone's own, exactly as it is on the card.
+  static String formatDeadlineClock(BuildContext context, int minutes) {
+    return formatFamilyClock(
+      context,
+      TimeOfDay(
+        hour: (minutes ~/ 60).clamp(0, 23),
+        minute: (minutes % 60).clamp(0, 59),
+      ),
+    );
   }
 
   @override
@@ -1208,12 +1219,12 @@ class _AlertsCard extends StatelessWidget {
                                   : minutes == 450
                                   ? CreateSafeZoneKeys.noShowDeadlineChip730
                                   : CreateSafeZoneKeys.noShowDeadlineChip800,
-                              label: formatDeadlineClock(minutes),
+                              label: formatDeadlineClock(context, minutes),
                               selected: noShowDeadlineMinutes == minutes,
                               enabled: canEdit,
                               semanticsLabel: l10n
                                   .createSafeZoneNoShowDeadlineSemantics(
-                                    formatDeadlineClock(minutes),
+                                    formatDeadlineClock(context, minutes),
                                   ),
                               onTap: () => onDeadlineSelected(minutes),
                               colors: colors,
@@ -1225,7 +1236,7 @@ class _AlertsCard extends StatelessWidget {
                                 noShowDeadlineMinutes != null &&
                                     !CreateSafeZoneScreenState._presetDeadlines
                                         .contains(noShowDeadlineMinutes)
-                                ? formatDeadlineClock(noShowDeadlineMinutes!)
+                                ? formatDeadlineClock(context, noShowDeadlineMinutes!)
                                 : l10n.createSafeZoneNoShowDeadlineCustom,
                             selected:
                                 noShowDeadlineMinutes != null &&

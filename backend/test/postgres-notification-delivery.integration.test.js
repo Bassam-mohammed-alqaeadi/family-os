@@ -66,6 +66,13 @@ async function withFreshDatabase(run) {
   } finally {
     if (pool) await pool.end();
     if (client) await client.end();
+    // A retry wakeup or sweep still in flight can hold a connection after the pool closes;
+    // WITH (FORCE) would kill it and surface as an uncaught error in whichever test runs next.
+    for (let waited = 0; waited < 10_000; waited += 50) {
+      const open = await admin.query(`SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`, [name]);
+      if (open.rows[0].n === 0) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
     await admin.query(`DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
     await admin.end();
   }
@@ -181,6 +188,17 @@ test('real PostgreSQL delivers an SOS despite quiet/history preferences and reco
          (family_id, membership_id, quiet_hours_enabled, quiet_hours_start, quiet_hours_end,
           push_allowed, delivery_mode)
        VALUES ($1, $2, TRUE, '21:00', '07:00', FALSE, 'history_only')`,
+      [FAMILY, MEMBERSHIP],
+    );
+
+    // The family's own numerals profile, written on the customization spine. The
+    // assertion below still expects Arabic-Indic digits — and now it can only pass
+    // if the dispatcher joins this row, which is what makes the profile a real
+    // reader rather than a column nobody reads.
+    await client.query(
+      `INSERT INTO family_customization_profiles
+         (family_id, numerals, updated_by_membership_id)
+       VALUES ($1, 'eastern', $2)`,
       [FAMILY, MEMBERSHIP],
     );
 

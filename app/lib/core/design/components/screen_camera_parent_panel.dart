@@ -51,12 +51,12 @@ class ScreenCameraParentPanel extends StatelessWidget {
     final colors = Theme.of(context).extension<FamilyColors>()!;
     final radii = Theme.of(context).extension<FamilyRadii>()!;
 
-    return DecoratedBox(
+    return Material(
       key: ScreenCameraParentPanelKeys.panel,
-      decoration: BoxDecoration(
-        color: colors.surface,
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radii.card),
-        border: Border.all(color: colors.border),
+        side: BorderSide(color: colors.border),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),

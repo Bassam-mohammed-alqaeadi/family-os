@@ -14,6 +14,56 @@ class NativeChildTelemetryBridge {
     'com.familyos.family_os/native_child_telemetry',
   );
 
+  static final List<VoidCallback> _revocationListeners = [];
+
+  static void addRevocationListener(VoidCallback listener) {
+    _ensureInitialized();
+    _revocationListeners.add(listener);
+  }
+
+  static void removeRevocationListener(VoidCallback listener) {
+    _revocationListeners.remove(listener);
+  }
+
+  static bool _initialized = false;
+  static void _ensureInitialized() {
+    if (_initialized) return;
+    try {
+      // Guard against headless test environments where ServicesBinding is uninitialized.
+      ServicesBinding.instance.defaultBinaryMessenger;
+    } catch (_) {
+      return;
+    }
+    _initialized = true;
+    try {
+      _channel.setMethodCallHandler((call) async {
+        if (call.method == 'onDeviceRevoked') {
+          for (final listener in List<VoidCallback>.from(_revocationListeners)) {
+            try {
+              listener();
+            } catch (_) {}
+          }
+        }
+      });
+    } catch (_) {
+      _initialized = false;
+    }
+  }
+
+  /// Triggers an immediate heartbeat on the native child service.
+  static Future<bool> heartbeat() async {
+    try {
+      final result = await _channel.invokeMethod<bool>('heartbeat');
+      return result == true;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<NativeTelemetryPermissionState>
   requestLocationPermissions() async {
     try {
@@ -233,6 +283,8 @@ class NativeTelemetryStatus {
     required this.configured,
     required this.fineLocationGranted,
     required this.backgroundLocationGranted,
+    this.credentialRevoked = false,
+    this.lastReportOutcome,
   });
 
   const NativeTelemetryStatus.unavailable()
@@ -240,13 +292,17 @@ class NativeTelemetryStatus {
       running = false,
       configured = false,
       fineLocationGranted = false,
-      backgroundLocationGranted = false;
+      backgroundLocationGranted = false,
+      credentialRevoked = false,
+      lastReportOutcome = null;
 
   final bool available;
   final bool running;
   final bool configured;
   final bool fineLocationGranted;
   final bool backgroundLocationGranted;
+  final bool credentialRevoked;
+  final String? lastReportOutcome;
 
   factory NativeTelemetryStatus.fromMap(Map<String, dynamic>? value) =>
       NativeTelemetryStatus(
@@ -255,6 +311,8 @@ class NativeTelemetryStatus {
         configured: value?['configured'] == true,
         fineLocationGranted: value?['fineLocationGranted'] == true,
         backgroundLocationGranted: value?['backgroundLocationGranted'] == true,
+        credentialRevoked: value?['credentialRevoked'] == true,
+        lastReportOutcome: value?['lastReportOutcome'] as String?,
       );
 }
 

@@ -24,6 +24,10 @@ import {
   isCountable,
   remainingMinutes,
   windowContains,
+  createScreenTimePolicyUpdate,
+  createTimeRequestDecision,
+  createDeviceScreenTimeReport,
+  screenTimePolicyView,
 } from '../src/screen-time.js';
 
 const policy = (overrides = {}) => ({ ...DEFAULT_POLICY, ...overrides });
@@ -269,4 +273,417 @@ test('the published defaults are the ones a screen may show before a family deci
   assert.equal(DEFAULT_POLICY.schoolEndMinute, 840);
   assert.equal(DEFAULT_POLICY.bedtimeStartMinute, 1260);
   assert.equal(DEFAULT_POLICY.bedtimeEndMinute, 360);
+});
+
+test('guardian PATCH sets earnedMinutesExtendLimit true/false; default is false for a child with no policy row; a child/handset cannot change it (403)', async () => {
+  // 1. DEFAULT_POLICY and unconfigured policy view must default earnedMinutesExtendLimit to false
+  assert.equal(DEFAULT_POLICY.earnedMinutesExtendLimit, false);
+  const unconfigured = screenTimePolicyView(null, 'child-1');
+  assert.equal(unconfigured.earnedMinutesExtendLimit, false);
+  assert.equal(unconfigured.configured, false);
+
+  // 2. Policy update port mock
+  let storedRow = null;
+  let auditedPayload = null;
+  const mockPort = {
+    idempotent: async (_scope, _key, _hash, fn) => fn({}),
+    authorize: async (_tx, { subject }) => {
+      if (subject === 'child-sub' || subject === 'device-sub') {
+        return { id: 'm-child', role: 'child' };
+      }
+      return { id: 'm-guardian', role: 'primary_guardian' };
+    },
+    readPolicy: async () => storedRow,
+    readChild: async () => ({ id: 'child-1' }),
+    upsertPolicy: async (_tx, { policy: pol }) => {
+      storedRow = {
+        child_id: 'child-1',
+        daily_limit_minutes: pol.dailyLimitMinutes,
+        school_mode_enabled: pol.schoolModeEnabled,
+        school_days: pol.schoolDays,
+        school_start_minute: pol.schoolStartMinute,
+        school_end_minute: pol.schoolEndMinute,
+        bedtime_start_minute: pol.bedtimeStartMinute,
+        bedtime_end_minute: pol.bedtimeEndMinute,
+        timezone_offset_minutes: pol.timezoneOffsetMinutes,
+        earned_minutes_extend_limit: pol.earnedMinutesExtendLimit,
+        version: 1,
+        updated_at: new Date(),
+      };
+      return storedRow;
+    },
+    audit: async (_tx, event) => {
+      auditedPayload = event;
+    },
+  };
+
+  const update = createScreenTimePolicyUpdate({ port: mockPort });
+
+  // Guardian updates earnedMinutesExtendLimit to true
+  const res = await update({
+    principal: { subject: 'guardian-sub' },
+    familyId: 'fam-1',
+    childId: 'child-1',
+    policy: { earnedMinutesExtendLimit: true },
+    idempotencyKey: 'k1',
+    requestHash: 'h1',
+    correlationId: 'c1',
+  });
+  assert.equal(res.policy.earnedMinutesExtendLimit, true);
+  assert.equal(storedRow.earned_minutes_extend_limit, true);
+  assert.equal(auditedPayload.eventType, 'family.screen_time_policy_updated');
+  assert.equal(auditedPayload.payload.earnedMinutesExtendLimit, true);
+
+  // Child / handset caller cannot change it -> 403 screen_time_forbidden
+  await assert.rejects(
+    async () => {
+      await update({
+        principal: { subject: 'child-sub' },
+        familyId: 'fam-1',
+        childId: 'child-1',
+        policy: { earnedMinutesExtendLimit: false },
+        idempotencyKey: 'k2',
+        requestHash: 'h2',
+        correlationId: 'c2',
+      });
+    },
+    (err) => err.status === 403 && err.code === 'screen_time_forbidden',
+  );
+});
+
+test('approving a time request writes a temporary credit row to the ledger, and duplicates are refused', async () => {
+  const ledgerRows = [];
+  const requests = new Map([
+    [
+      'req-1',
+      {
+        id: 'req-1',
+        family_id: 'fam-1',
+        child_id: 'child-1',
+        usage_date: '2026-10-22',
+        status: 'pending',
+        requested_minutes: 20,
+        timezone_offset_minutes: 180,
+        expires_at: new Date('2026-10-22T21:00:00Z'),
+        version: 1,
+        created_at: new Date('2026-10-22T09:00:00Z'),
+      },
+    ],
+    [
+      'req-2',
+      {
+        id: 'req-2',
+        family_id: 'fam-1',
+        child_id: 'child-1',
+        usage_date: '2026-10-22',
+        status: 'pending',
+        requested_minutes: 15,
+        timezone_offset_minutes: 180,
+        expires_at: new Date('2026-10-22T21:00:00Z'),
+        version: 1,
+        created_at: new Date('2026-10-22T09:00:00Z'),
+      },
+    ],
+    [
+      'req-3',
+      {
+        id: 'req-3',
+        family_id: 'fam-1',
+        child_id: 'child-1',
+        usage_date: '2026-10-22',
+        status: 'pending',
+        requested_minutes: 10,
+        timezone_offset_minutes: 180,
+        expires_at: new Date('2026-10-22T21:00:00Z'),
+        version: 1,
+        created_at: new Date('2026-10-22T09:00:00Z'),
+      },
+    ],
+  ]);
+
+  const mockPort = {
+    idempotent: async (_scope, _key, _hash, fn) => fn({}),
+    authorize: async (_tx, _req) => ({ id: 'guardian-mem-1', role: 'primary_guardian' }),
+    readChild: async () => ({ id: 'child-1' }),
+    expirePendingRequests: async () => {},
+    readRequest: async (_tx, { requestId }) => requests.get(requestId) ?? null,
+    decideRequest: async (_tx, { requestId, status, grantedMinutes, actorMembershipId }) => {
+      const existing = requests.get(requestId);
+      existing.status = status;
+      existing.granted_minutes = grantedMinutes;
+      existing.decided_by_membership_id = actorMembershipId;
+      existing.decided_at = new Date();
+      return existing;
+    },
+    recordTimeRequestGrant: async (_tx, entry) => {
+      ledgerRows.push(entry);
+    },
+    audit: async () => {},
+  };
+
+  const decide = createTimeRequestDecision({
+    port: mockPort,
+    now: () => new Date('2026-10-22T10:00:00Z'),
+  });
+
+  // 1. Approving a 20-min request inserts 1 ledger row with the exact fields
+  const res1 = await decide({
+    principal: { subject: 'guardian-sub' },
+    familyId: 'fam-1',
+    childId: 'child-1',
+    requestId: 'req-1',
+    decision: 'approve',
+    grantedMinutes: 20,
+    idempotencyKey: 'k1',
+    requestHash: 'h1',
+    correlationId: 'c1',
+  });
+  assert.equal(res1.request.status, 'approved');
+  assert.equal(res1.request.grantedMinutes, 20);
+  assert.equal(ledgerRows.length, 1, 'approving a 20-min request inserts 1 ledger row');
+  assert.deepEqual(ledgerRows[0], {
+    family_id: 'fam-1',
+    child_id: 'child-1',
+    entry_kind: 'credit',
+    channel: 'time_request_grant',
+    minutes: 20,
+    source_type: 'time_request',
+    source_id: 'req-1',
+    wallet_scope: 'temporary',
+    expires_at: new Date('2026-10-22T21:00:00Z'),
+    metadata: {
+      approved_by: 'guardian-mem-1',
+      request_id: 'req-1',
+    },
+  });
+
+  // 2. Duplicate approval of the same request does not insert a second row
+  await assert.rejects(
+    async () => {
+      await decide({
+        principal: { subject: 'guardian-sub' },
+        familyId: 'fam-1',
+        childId: 'child-1',
+        requestId: 'req-1',
+        decision: 'approve',
+        grantedMinutes: 20,
+        idempotencyKey: 'k1-dup',
+        requestHash: 'h1-dup',
+        correlationId: 'c1-dup',
+      });
+    },
+    (err) => err.status === 409 && err.code === 'time_request_decided',
+  );
+  assert.equal(ledgerRows.length, 1, 'duplicate approval does not insert a second row');
+
+  // 3. Rejection inserts 0 rows
+  const res2 = await decide({
+    principal: { subject: 'guardian-sub' },
+    familyId: 'fam-1',
+    childId: 'child-1',
+    requestId: 'req-2',
+    decision: 'deny',
+    idempotencyKey: 'k2',
+    requestHash: 'h2',
+    correlationId: 'c2',
+  });
+  assert.equal(res2.request.status, 'denied');
+  assert.equal(ledgerRows.length, 1, 'rejection inserts 0 rows');
+
+  // 4. Approval with 0 minutes inserts 0 rows
+  const res3 = await decide({
+    principal: { subject: 'guardian-sub' },
+    familyId: 'fam-1',
+    childId: 'child-1',
+    requestId: 'req-3',
+    decision: 'approve',
+    grantedMinutes: 0,
+    idempotencyKey: 'k3',
+    requestHash: 'h3',
+    correlationId: 'c3',
+  });
+  assert.equal(res3.request.status, 'approved');
+  assert.equal(ledgerRows.length, 1, 'approval with 0 minutes writes NO ledger row');
+});
+
+test('device usage report writes ledger consumption for delta, ignoring zero/negative deltas', async () => {
+  const consumptionRows = [];
+  const storedUsage = new Map(); // key: `${childId}:${appId}:${usageDate}` -> row
+  const storedApps = new Map();
+
+  const mockPort = {
+    idempotent: async (_scope, _key, _hash, fn) => fn({}),
+    readReportingDevice: async () => ({
+      id: 'dev-1',
+      family_id: 'fam-1',
+      child_id: 'child-1',
+      credential_hash: 'hash-1',
+      credential_revoked_at: null,
+    }),
+    credentialMatches: () => true,
+    readChild: async () => ({ id: 'child-1' }),
+    expirePendingRequests: async () => {},
+    readPolicy: async () => ({
+      child_id: 'child-1',
+      family_id: 'fam-1',
+      daily_limit_minutes: 60,
+      timezone_offset_minutes: 180,
+      earned_minutes_extend_limit: false,
+      school_mode_enabled: false,
+      school_days: [],
+      school_start_minute: 480,
+      school_end_minute: 900,
+      bedtime_start_minute: 1260,
+      bedtime_end_minute: 360,
+      version: 1,
+      updated_at: new Date(),
+    }),
+    readUsageForDate: async (_tx, { childId, usageDate }) => {
+      const list = [];
+      for (const row of storedUsage.values()) {
+        if (row.child_id === childId && row.usage_date === usageDate) {
+          list.push(row);
+        }
+      }
+      return list;
+    },
+    readAppRules: async () => [
+      { app_id: 'com.game', status: 'allowed', category: 'games' },
+    ],
+    readGrantedMinutes: async () => 0,
+    readLiveLock: async () => null,
+    readPendingRequest: async () => null,
+    readApps: async () => [
+      { app_id: 'com.game', display_name: 'Game', category: 'games' },
+    ],
+    upsertUsage: async (_tx, { rows }) => {
+      for (const r of rows) {
+        const key = `${r.childId}:${r.appId}:${r.usageDate}`;
+        const existing = storedUsage.get(key);
+        const usedMinutes = existing ? Math.max(existing.used_minutes, r.usedMinutes) : r.usedMinutes;
+        storedUsage.set(key, {
+          id: r.id,
+          family_id: r.familyId,
+          child_id: r.childId,
+          app_id: r.appId,
+          usage_date: r.usageDate,
+          used_minutes: usedMinutes,
+          reported_by_device_id: r.deviceId,
+          reported_at: new Date(),
+          category: 'games',
+        });
+      }
+    },
+    upsertApps: async () => {},
+    recordUsageConsumption: async (_tx, entry) => {
+      consumptionRows.push(entry);
+    },
+  };
+
+  let mockTime = new Date('2026-10-22T10:00:00.000Z');
+  const report = createDeviceScreenTimeReport({
+    port: mockPort,
+    now: () => mockTime,
+  });
+
+  // 1. First report with 15 mins -> 1 row with minutes = 15
+  await report({
+    deviceCredential: 'cred',
+    deviceId: 'dev-1',
+    usage: [{ appId: 'com.game', usedMinutes: 15 }],
+    apps: [],
+    requestMinutes: null,
+    requestReasonCode: null,
+    idempotencyKey: 'k-rep-1',
+    requestHash: 'h-rep-1',
+    correlationId: 'c-rep-1',
+  });
+
+  assert.equal(consumptionRows.length, 1, 'first report with 15 mins inserts 1 row');
+  assert.equal(consumptionRows[0].family_id, 'fam-1');
+  assert.equal(consumptionRows[0].child_id, 'child-1');
+  assert.equal(consumptionRows[0].entry_kind, 'consumption');
+  assert.equal(consumptionRows[0].channel, 'usage_consumption');
+  assert.equal(consumptionRows[0].minutes, 15);
+  assert.equal(consumptionRows[0].wallet_scope, 'daily');
+  assert.equal(consumptionRows[0].source_type, 'device_report');
+
+  // 2. Second report with 15 mins -> 0 new rows (delta 0)
+  mockTime = new Date('2026-10-22T10:05:00.000Z');
+  await report({
+    deviceCredential: 'cred',
+    deviceId: 'dev-1',
+    usage: [{ appId: 'com.game', usedMinutes: 15 }],
+    apps: [],
+    requestMinutes: null,
+    requestReasonCode: null,
+    idempotencyKey: 'k-rep-2',
+    requestHash: 'h-rep-2',
+    correlationId: 'c-rep-2',
+  });
+  assert.equal(consumptionRows.length, 1, 'second report with same 15 mins writes 0 new rows');
+
+  // 3. Third report with 10 mins (handset clock reset) -> 0 new rows (delta 0, never negative)
+  mockTime = new Date('2026-10-22T10:10:00.000Z');
+  await report({
+    deviceCredential: 'cred',
+    deviceId: 'dev-1',
+    usage: [{ appId: 'com.game', usedMinutes: 10 }],
+    apps: [],
+    requestMinutes: null,
+    requestReasonCode: null,
+    idempotencyKey: 'k-rep-3',
+    requestHash: 'h-rep-3',
+    correlationId: 'c-rep-3',
+  });
+  assert.equal(consumptionRows.length, 1, 'third report with lower usage (10 mins) writes 0 new rows');
+
+  // 4. Fourth report with 25 mins -> 1 row with minutes = 10 (25 - 15)
+  mockTime = new Date('2026-10-22T10:15:00.000Z');
+  await report({
+    deviceCredential: 'cred',
+    deviceId: 'dev-1',
+    usage: [{ appId: 'com.game', usedMinutes: 25 }],
+    apps: [],
+    requestMinutes: null,
+    requestReasonCode: null,
+    idempotencyKey: 'k-rep-4',
+    requestHash: 'h-rep-4',
+    correlationId: 'c-rep-4',
+  });
+  assert.equal(consumptionRows.length, 2, 'fourth report with 25 mins inserts 1 row');
+  assert.equal(consumptionRows[1].minutes, 10, 'delta is 25 - 15 = 10');
+  assert.equal(consumptionRows[1].channel, 'usage_consumption');
+  assert.equal(consumptionRows[1].entry_kind, 'consumption');
+  assert.equal(consumptionRows[1].wallet_scope, 'daily');
+});
+
+test('single formula for remaining minutes and phone state (worked example)', () => {
+  const policyOff = policy({ dailyLimitMinutes: 60, earnedMinutesExtendLimit: false });
+  const policyOn = policy({ dailyLimitMinutes: 60, earnedMinutesExtendLimit: true });
+
+  // limit 60, grant 20, earned 15, usage 50
+  // switch OFF -> activeGrants = 20, remaining = max(0, 60 + 20 - 50) = 30
+  const stateOff = evaluateScreenState({
+    policy: policyOff,
+    grantMinutes: 20,
+    earnedMinutes: 15,
+    phoneConsumption: 50,
+    now: at('2026-10-07T12:00:00.000Z'),
+  });
+  assert.equal(stateOff.grantedMinutes, 20);
+  assert.equal(stateOff.remainingMinutes, 30);
+  assert.equal(stateOff.kind, 'limited');
+
+  // switch ON -> activeGrants = 35, remaining = max(0, 60 + 35 - 50) = 45
+  const stateOn = evaluateScreenState({
+    policy: policyOn,
+    grantMinutes: 20,
+    earnedMinutes: 15,
+    phoneConsumption: 50,
+    now: at('2026-10-07T12:00:00.000Z'),
+  });
+  assert.equal(stateOn.grantedMinutes, 35);
+  assert.equal(stateOn.remainingMinutes, 45);
+  assert.equal(stateOn.kind, 'limited');
 });

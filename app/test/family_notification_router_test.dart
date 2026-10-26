@@ -54,7 +54,32 @@ void main() {
       expect(pending?.route, '/scr-fat-026?deviceId=$_device');
     });
 
+    test('a child task claim routes to the one screen that can answer it', () {
+      final pending = PendingAlert.fromData(<String, dynamic>{
+        'type': 'family.task_claimed',
+        'copyKey': 'task.claimed',
+        'childId': _child,
+        'occurredAt': '2026-10-26T22:30:00Z',
+      });
+
+      expect(pending?.channelId, 'familyos_family_alerts');
+      expect(pending?.route, '/scr-fat-054');
+      expect(pending?.childId, _child);
+      expect(PendingAlert.validateRoute(pending?.route), '/scr-fat-054');
+      // An ordinary alert never chooses an emergency destination, whatever its payload carries.
+      expect(PendingAlert.fromData(<String, dynamic>{
+        'type': 'family.task_claimed',
+        'copyKey': 'task.claimed',
+        'alertId': _alert,
+      })?.route, '/scr-fat-054');
+    });
+
     test('unknown or mismatched events fail closed and a route ignores coordinate fields', () {
+      expect(PendingAlert.fromData(<String, dynamic>{
+        'type': 'family.task_claimed',
+        'copyKey': 'sos.raised',
+        'childId': _child,
+      }), isNull);
       expect(PendingAlert.fromData(<String, dynamic>{
         'type': 'family.chat_message_sent',
         'copyKey': 'chat.message',
@@ -82,7 +107,8 @@ void main() {
   });
 
   group('notification route allow-list', () {
-    test('accepts only the three internal alert routes with UUID query parameters', () {
+    test('accepts only the four internal alert routes with their pinned parameters', () {
+      expect(PendingAlert.validateRoute('/scr-fat-054'), '/scr-fat-054');
       expect(PendingAlert.validateRoute('/scr-fat-018?alertId=$_alert&childId=$_child'),
           '/scr-fat-018?alertId=$_alert&childId=$_child');
       expect(PendingAlert.validateRoute('/scr-fat-014?childId=$_child'),
@@ -98,6 +124,8 @@ void main() {
       expect(PendingAlert.validateRoute('/scr-fat-018?alertId=bad&childId=$_child'), isNull);
       expect(PendingAlert.validateRoute('/scr-fat-018?alertId=$_alert&alertId=$_alert&childId=$_child'), isNull);
       expect(PendingAlert.validateRoute('/scr-fat-014?childId=$_child#fragment'), isNull);
+      // The task board is reached empty or not at all: a parameter is a reason to refuse the tap.
+      expect(PendingAlert.validateRoute('/scr-fat-054?childId=$_child'), isNull);
     });
   });
 }

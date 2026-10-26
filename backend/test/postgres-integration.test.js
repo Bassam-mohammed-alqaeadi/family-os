@@ -55,6 +55,13 @@ async function withFreshDatabase(run) {
       await client.end();
     }
   } finally {
+    // A retry wakeup or sweep still in flight can hold a connection after the store closes;
+    // WITH (FORCE) would kill it and surface as an uncaught error in whichever test runs next.
+    for (let waited = 0; waited < 10_000; waited += 50) {
+      const open = await admin.query(`SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`, [name]);
+      if (open.rows[0].n === 0) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
     await admin.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
     await admin.end();
   }
@@ -2367,6 +2374,25 @@ test('the family sets the minutes, the phone reports what it measured, and only 
         assert.equal(stale.status, 409);
         assert.equal(stale.body.error.code, 'screen_time_stale_version');
 
+        // Guardian can toggle earnedMinutesExtendLimit
+        const switchOn = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: guard('w5a-policy-switch-on'),
+          body: { earnedMinutesExtendLimit: true },
+        });
+        assert.equal(switchOn.status, 200);
+        assert.equal(switchOn.body.policy.earnedMinutesExtendLimit, true);
+        assert.equal(switchOn.body.policy.version, 3);
+
+        // A child cannot change the policy (403 screen_time_forbidden)
+        const childAttempt = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: authorized('test-child', { 'idempotency-key': 'w5a-policy-child-forbidden' }),
+          body: { earnedMinutesExtendLimit: false },
+        });
+        assert.equal(childAttempt.status, 403);
+        assert.equal(childAttempt.body.error.code, 'screen_time_forbidden');
+
         // 4. The handset reports what it measured and what is installed, in one call. The
         //    response is the same state a guardian reads, computed from the same rows.
         const report = (key, body) =>
@@ -2475,7 +2501,12 @@ test('the family sets the minutes, the phone reports what it measured, and only 
         // The guardian's read and the handset's read are the same answer, compared field by
         // field rather than described: that is the difference between one rule and two.
         const guardianRead = await jsonRequest(baseUrl, screenPath, { headers: authorized('test-primary') });
-        assert.deepEqual(guardianRead.body.state, firstReport.body.state);
+        // minuteOfDay is the wall clock at each read, so it may tick between the two reads. Every
+        // policy field must match exactly; the clock field must agree to within a minute.
+        const { minuteOfDay: guardianMinute, ...guardianPolicy } = guardianRead.body.state;
+        const { minuteOfDay: firstMinute, ...firstPolicy } = firstReport.body.state;
+        assert.deepEqual(guardianPolicy, firstPolicy);
+        assert.ok(Math.abs(guardianMinute - firstMinute) <= 1, `clock moved ${guardianMinute - firstMinute} minutes between reads`);
         assert.deepEqual(guardianRead.body.usage, firstReport.body.usage);
 
         // 5. Minutes never shrink. A second report - a real one, with its own key - that
@@ -2678,8 +2709,8 @@ test('the family sets the minutes, the phone reports what it measured, and only 
         await assert.rejects(
           () => client.query(
             `INSERT INTO family_child_app_usage_daily (id, family_id, child_id, app_id, usage_date, used_minutes)
-             VALUES (gen_random_uuid(), $1, $2, 'com.example.puzzle', CURRENT_DATE, 5)`,
-            [familyId, childId],
+             VALUES (gen_random_uuid(), $1, $2, 'com.example.puzzle', $3, 5)`,
+            [familyId, childId, familyLocalParts(new Date(), household.timezoneOffsetMinutes).date],
           ),
           /duplicate key value violates unique constraint/i,
           'one row per app per day is what makes a cumulative figure trustworthy',
@@ -2924,6 +2955,22 @@ test('the lock has an author, the question has an answer, and the credential is 
         assert.equal(approved.body.request.grantedMinutes, 20);
         assert.equal(approved.body.request.decidedByMembershipId, household.primaryMembershipId);
 
+        const { rows: ledgerGrantRows } = await client.query(
+          `SELECT channel, minutes, wallet_scope, source_type, source_id, actor_membership_id
+             FROM family_minutes_ledger
+            WHERE child_id = $1 AND source_type = 'time_request' AND source_id = $2`,
+          [childId, pendingId],
+        );
+        assert.equal(ledgerGrantRows.length, 1);
+        assert.deepEqual(ledgerGrantRows[0], {
+          channel: 'time_request_grant',
+          minutes: 20,
+          wallet_scope: 'temporary',
+          source_type: 'time_request',
+          source_id: pendingId,
+          actor_membership_id: household.primaryMembershipId,
+        });
+
         // The granted minutes extend the day they were granted for, on the state a handset
         // reads as well as the state a parent reads.
         const afterGrant = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
@@ -2989,8 +3036,8 @@ test('the lock has an author, the question has an answer, and the credential is 
             `INSERT INTO family_child_time_requests
                (id, family_id, child_id, usage_date, requested_minutes, requested_by_kind,
                 expires_at)
-             VALUES (gen_random_uuid(), $1, $2, CURRENT_DATE, 10, 'guardian', NOW() + INTERVAL '1 hour')`,
-            [familyId, childId],
+             VALUES (gen_random_uuid(), $1, $2, $3, 10, 'guardian', NOW() + INTERVAL '1 hour')`,
+            [familyId, childId, familyLocalParts(new Date(), household.timezoneOffsetMinutes).date],
           ),
           /violates check constraint/i,
           'a request attributed to a guardian must name the guardian',
@@ -3000,8 +3047,8 @@ test('the lock has an author, the question has an answer, and the credential is 
             `INSERT INTO family_child_time_requests
                (id, family_id, child_id, usage_date, requested_minutes, requested_by_kind,
                 requested_by_membership_id, expires_at)
-             VALUES (gen_random_uuid(), $1, $2, CURRENT_DATE, 10, 'child', $3, NOW() + INTERVAL '1 hour')`,
-            [familyId, childId, household.primaryMembershipId],
+             VALUES (gen_random_uuid(), $1, $2, $3, 10, 'child', $4, NOW() + INTERVAL '1 hour')`,
+            [familyId, childId, familyLocalParts(new Date(), household.timezoneOffsetMinutes).date, household.primaryMembershipId],
           ),
           /violates check constraint/i,
           "a request from the child's own handset does not name a guardian",
@@ -3581,15 +3628,24 @@ test('a chore is claimed by a child, confirmed by a guardian, and the points can
         assert.equal(again.status, 409);
         assert.equal(again.body.error.code, 'task_claim_not_pending');
 
-        // 7. And the storage layer refuses it too, which is what makes the refusal a rule
-        //    rather than a code path: the same claim cannot produce a second entry.
+        // 7. S3 D2: a confirmation credits minutes, and the points table is history only - the
+        //    confirmation wrote no new point row. The storage layer refuses a second credit for
+        //    the same claim, which is what makes the refusal a rule rather than a code path.
+        const pointRowsForClaim = await client.query(
+          'SELECT COUNT(*)::int AS n FROM family_point_ledger WHERE claim_id = $1',
+          [confirmed.body.task.claim.id],
+        );
+        assert.equal(pointRowsForClaim.rows[0].n, 0, 'no new point row: the points table is history only');
         await assert.rejects(
           () => client.query(
-            `INSERT INTO family_point_ledger (id, family_id, child_id, points, reason, claim_id, awarded_by_membership_id)
-             VALUES (gen_random_uuid(), $1, $2, 15, 'task_confirmed', $3, $4)`,
+            `INSERT INTO family_minutes_ledger
+               (id, family_id, child_id, entry_kind, channel, minutes, wallet_scope, source_type, source_id,
+                actor_membership_id, balance_after_minutes, created_at)
+             VALUES (gen_random_uuid(), $1, $2, 'credit', 'family_task_child', 15, 'free',
+                     'family_task_claim', $3, $4, 15, NOW())`,
             [familyId, childId, confirmed.body.task.claim.id, primaryMembershipId],
           ),
-          /one_entry_per_claim/,
+          /one_row_per_source/,
         );
 
         // 8. A number the client tries to send is refused as an unknown field: the reward is
@@ -4879,3 +4935,367 @@ test('a paired handset reports a fix the family reads back, and only a definitiv
     }
   });
 });
+
+test('S3 D3: the minutes routes over HTTP - who may write, which fields are refused, and the balance that results', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 's3d3');
+        const { familyId, childId, deviceAuth } = household;
+        // The app inventory arrives from the handset's own screen-time report (W5), which has its
+        // own tests. This journey tests the minutes surface alone, so it seeds the one app it uses.
+        await client.query(
+          `INSERT INTO family_child_apps (id, family_id, child_id, app_id, display_name, category)
+           VALUES (gen_random_uuid(), $1, $2, 'com.game', 'com.game', 'games')`,
+          [familyId, childId],
+        );
+        const base = `/v1/families/${familyId}/children/${childId}/minutes`;
+        const post = (path, subject, key, body, headers = {}) => jsonRequest(baseUrl, path, {
+          method: 'POST',
+          headers: { ...(subject ? authorized(subject) : {}), 'idempotency-key': key, ...headers },
+          body,
+        });
+        const get = (path, subject, headers = {}) => jsonRequest(baseUrl, path, {
+          headers: { ...(subject ? authorized(subject) : {}), ...headers },
+        });
+
+        // 1. A primary guardian credits athkar. A replay with the same key returns the same answer
+        //    and writes nothing new.
+        const athkar = { channel: 'athkar', minutes: 30, source: { type: 'athkar', id: 's3d3-athkar-1' } };
+        const earned = await post(`${base}/earn`, 'test-primary', 's3d3-earn-1', athkar);
+        assert.equal(earned.status, 201, JSON.stringify(earned.body));
+        assert.equal(earned.body.balance.total, 30);
+        const replay = await post(`${base}/earn`, 'test-primary', 's3d3-earn-1', athkar);
+        assert.equal(replay.status, 201);
+        assert.equal(replay.body.entry.id, earned.body.entry.id, 'a replay answers with the first write');
+
+        // 2. A co-guardian may earn in an allowed channel. The child may not write at all.
+        const quran = await post(`${base}/earn`, 'test-co', 's3d3-earn-2',
+          { channel: 'quran_portion', minutes: 20, source: { type: 'quran', id: 's3d3-quran-1' } });
+        assert.equal(quran.status, 201, JSON.stringify(quran.body));
+        assert.equal(quran.body.balance.total, 50);
+        const childWrites = await post(`${base}/earn`, 'test-child', 's3d3-earn-child', athkar);
+        assert.equal(childWrites.status, 403, 'a child is not a guardian');
+        assert.equal(childWrites.body.error.code, 'minutes_forbidden');
+        // 2b. The child's handset holds a valid credential, and still may not credit minutes:
+        //     earning is a guardian's act, whatever device carries the request.
+        const handsetEarns = await post(`${base}/earn`, null, 's3d3-earn-handset', athkar, deviceAuth);
+        // The platform's convention for a guardian route: only a bearer token is a principal, so a
+        // device credential is refused as unauthenticated (401) before any role rule is reached.
+        // The matrix in the card says 403; this is the one place the two differ, and it is declared.
+        assert.equal(handsetEarns.status, 401, JSON.stringify(handsetEarns.body));
+        assert.equal(handsetEarns.body.error.code, 'authentication_required');
+
+        // 3. Closed fields: an unknown key is refused before the economy sees it.
+        const extra = await post(`${base}/earn`, 'test-primary', 's3d3-extra',
+          { ...athkar, source: { type: 'athkar', id: 's3d3-extra' }, points: 999 });
+        assert.equal(extra.status, 400);
+        assert.equal(extra.body.error.code, 'invalid_request');
+        const nestedExtra = await post(`${base}/earn`, 'test-primary', 's3d3-nested',
+          { channel: 'athkar', minutes: 5, source: { type: 'athkar', id: 'n-1', owner: 'me' } });
+        assert.equal(nestedExtra.status, 400, 'an unknown key inside source is refused too');
+
+        // 4. The economy's own limits answer with the codes the card names.
+        const tooMany = await post(`${base}/earn`, 'test-primary', 's3d3-too-many',
+          { channel: 'athkar', minutes: 1441, source: { type: 'athkar', id: 's3d3-1441' } });
+        assert.equal(tooMany.body.error.code, 'minutes_invalid_amount');
+
+        // 5. Grants: a co-guardian is held to 30 per request; the primary has no such ceiling.
+        const coOver = await post(`${base}/grants`, 'test-co', 's3d3-grant-over',
+          { minutes: 31, scope: 'free' });
+        assert.equal(coOver.status, 403);
+        assert.equal(coOver.body.error.code, 'minutes_grant_ceiling');
+        const coGrant = await post(`${base}/grants`, 'test-co', 's3d3-grant-ok', { minutes: 30, scope: 'free' });
+        assert.equal(coGrant.status, 201, JSON.stringify(coGrant.body));
+        assert.equal(coGrant.body.balance.total, 80);
+        const mismatch = await post(`${base}/grants`, 'test-primary', 's3d3-grant-expiry',
+          { minutes: 5, scope: 'daily', expiresAt: '2030-01-01T00:00:00Z' });
+        assert.equal(mismatch.body.error.code, 'minutes_expiry_scope_mismatch');
+
+        // 6. The handset spends. Its credential names it; no body names it, and another family's
+        //    or no credential is refused.
+        const spent = await post(`${base}/consume`, null, 's3d3-consume-1',
+          { appId: 'com.game', minutes: 20, sessionId: 's3d3-session-1' }, deviceAuth);
+        assert.equal(spent.status, 201, JSON.stringify(spent.body));
+        assert.equal(spent.body.balance.total, 60);
+        const bearerOnly = await post(`${base}/consume`, 'test-primary', 's3d3-consume-bearer',
+          { appId: 'com.game', minutes: 1, sessionId: 's3d3-x' });
+        assert.equal(bearerOnly.status, 403);
+        assert.equal(bearerOnly.body.error.code, 'device_credential_rejected');
+        const overCeiling = await post(`${base}/consume`, null, 's3d3-consume-ceiling',
+          { appId: 'com.game', minutes: 1441, sessionId: 's3d3-y' }, deviceAuth);
+        assert.equal(overCeiling.body.error.code, 'minutes_invalid_amount', 'above the per-entry ceiling of 1440');
+        const tooLittle = await post(`${base}/consume`, null, 's3d3-consume-short',
+          { appId: 'com.game', minutes: 1440, sessionId: 's3d3-z' }, deviceAuth);
+        assert.equal(tooLittle.status, 409);
+        assert.equal(tooLittle.body.error.code, 'minutes_insufficient');
+
+        // 7. Allocation moves minutes between app and free only, and creates none.
+        const moved = await post(`${base}/allocations`, 'test-primary', 's3d3-alloc-1',
+          { from: { scope: 'free' }, to: { scope: 'app', appId: 'com.game' }, minutes: 10, reason: 'تنظيم' });
+        assert.equal(moved.status, 201, JSON.stringify(moved.body));
+        assert.equal(moved.body.balance.total, 60, 'an allocation moves minutes; the total is unchanged');
+        const daily = await post(`${base}/allocations`, 'test-primary', 's3d3-alloc-daily',
+          { from: { scope: 'daily' }, to: { scope: 'free' }, minutes: 5 });
+        assert.equal(daily.body.error.code, 'minutes_invalid_scope');
+
+        // 8. Reversal: the primary only, once per credit, with a reason, never above what remains.
+        const target = quran.body.entry.id;
+        const byCo = await post(`${base}/reversals`, 'test-co', 's3d3-rev-co',
+          { targetEntryId: target, minutes: 5, reason: 'خطأ' });
+        assert.equal(byCo.status, 403);
+        assert.equal(byCo.body.error.code, 'minutes_forbidden');
+        const noReason = await post(`${base}/reversals`, 'test-primary', 's3d3-rev-none',
+          { targetEntryId: target, minutes: 5 });
+        assert.equal(noReason.status, 400, 'a reversal without a reason is refused');
+        const tooMuch = await post(`${base}/reversals`, 'test-primary', 's3d3-rev-big',
+          { targetEntryId: target, minutes: 21, reason: 'خطأ' });
+        assert.equal(tooMuch.body.error.code, 'minutes_reversal_exceeds_balance');
+        const reversed = await post(`${base}/reversals`, 'test-primary', 's3d3-rev-1',
+          { targetEntryId: target, minutes: 5, reason: 'خطأ في الإدخال' });
+        assert.equal(reversed.status, 201, JSON.stringify(reversed.body));
+        assert.equal(reversed.body.balance.total, 55);
+        const again = await post(`${base}/reversals`, 'test-primary', 's3d3-rev-2',
+          { targetEntryId: target, minutes: 5, reason: 'خطأ في الإدخال' });
+        assert.equal(again.body.error.code, 'minutes_duplicate_source', 'a credit is reversed once');
+
+        // 9. Reads: guardians see the ledger and the balance; the child sees its own balance on
+        //    its handset, and nothing of the ledger.
+        const page = await get(`${base}/ledger?limit=2`, 'test-co');
+        assert.equal(page.status, 200, JSON.stringify(page.body));
+        assert.equal(page.body.entries.length, 2);
+        assert.ok(page.body.nextCursor, 'more rows exist beyond the first page');
+        const rest = await get(`${base}/ledger?limit=100&cursor=${encodeURIComponent(page.body.nextCursor)}`, 'test-co');
+        assert.equal(rest.status, 200);
+        const everything = [...page.body.entries, ...rest.body.entries];
+        assert.ok(everything.some((row) => row.entryKind === 'reversal'), 'the correction is in the record');
+        assert.ok(everything.some((row) => row.id === target), 'the original credit is still in the record');
+
+        const childLedger = await get(`${base}/ledger`, 'test-child');
+        assert.equal(childLedger.status, 403);
+        const badQuery = await get(`${base}/ledger?sort=asc`, 'test-primary');
+        assert.equal(badQuery.body.error.code, 'invalid_request');
+
+        const guardianBalance = await get(`${base}/balance`, 'test-co');
+        assert.equal(guardianBalance.status, 200);
+        assert.equal(guardianBalance.body.total, 55);
+        assert.equal(guardianBalance.body.apps.find((app) => app.appId === 'com.game')?.minutes, 10);
+
+        const handset = await get(`/v1/devices/${household.deviceId}/minutes-balance`, null, deviceAuth);
+        assert.equal(handset.status, 200, JSON.stringify(handset.body));
+        assert.equal(handset.body.total, 55, 'the handset and the guardian read the same balance');
+        assert.equal(handset.body.apps.find((app) => app.appId === 'com.game')?.minutes, 10);
+        const handsetBad = await get(`/v1/devices/${household.deviceId}/minutes-balance`, null,
+          { authorization: 'Device not-the-credential-value-at-all-000' });
+        assert.equal(handsetBad.status, 403);
+
+        // 10. The table is append-only: the economy's rows are never rewritten by a read.
+        const stored = await client.query(
+          'SELECT COALESCE(SUM(minutes),0)::int AS n FROM family_minutes_ledger WHERE child_id = $1 AND entry_kind = \'credit\'',
+          [childId],
+        );
+        // The 10 minutes the allocation moved into the app wallet are an in-leg credit there, so
+        // the credit rows are what was credited plus that transfer - and the total did not change.
+        assert.equal(stored.rows[0].n, 30 + 20 + 30 + 10, 'credits: the three sources, plus the allocation in-leg');
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});
+
+test('phone usage counts what the handset measured, not what a wallet already paid for', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 'w5c');
+        const { familyId, childId, deviceId, deviceAuth } = household;
+        const screenPath = `/v1/families/${familyId}/children/${childId}/screen-time`;
+        const minutesPath = `/v1/families/${familyId}/children/${childId}/minutes`;
+
+        // 2. PATCH screen-time with dailyLimitMinutes: 60 (earned_minutes_extend_limit remains default false)
+        const patched = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5c-policy-1' }),
+          body: { dailyLimitMinutes: 60 },
+        });
+        assert.equal(patched.status, 200, JSON.stringify(patched.body));
+
+        // 3. Handset reports initial zero usage and declares app in child inventory
+        const initialReport = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w5c-report-0' },
+          body: {
+            usage: [{ appId: 'com.w5c.game', usedMinutes: 0 }],
+            apps: [{ appId: 'com.w5c.game', displayName: 'لعبة', category: 'games' }],
+          },
+        });
+        assert.equal(initialReport.status, 201, JSON.stringify(initialReport.body));
+
+        // 4. Primary guardian grants 30 to app wallet
+        const granted = await jsonRequest(baseUrl, `${minutesPath}/grants`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5c-grant-1' }),
+          body: { minutes: 30, scope: 'app', appId: 'com.w5c.game', reason: 'w5c' },
+        });
+        assert.equal(granted.status, 201, JSON.stringify(granted.body));
+
+        // 5. Child device consumes 10 from app wallet
+        const spent = await jsonRequest(baseUrl, `${minutesPath}/consume`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w5c-consume-1' },
+          body: { appId: 'com.w5c.game', minutes: 10, sessionId: 'w5c-session-1' },
+        });
+        assert.equal(spent.status, 201, JSON.stringify(spent.body));
+
+        // 6. Handset reports 40 minutes usage
+        const reportUsage = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w5c-report-40' },
+          body: {
+            usage: [{ appId: 'com.w5c.game', usedMinutes: 40 }],
+            apps: [],
+          },
+        });
+        assert.equal(reportUsage.status, 201, JSON.stringify(reportUsage.body));
+
+        // 7. GET screen-time policy & usage
+        const read = await jsonRequest(baseUrl, screenPath, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(read.status, 200, JSON.stringify(read.body));
+        assert.equal(
+          read.body.usage.countableUsedMinutes,
+          40,
+          'a wallet spend must not be counted as phone usage twice',
+        );
+        assert.equal(
+          read.body.state.remainingMinutes,
+          20,
+          'a wallet spend must not be counted as phone usage twice',
+        );
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});
+
+test('the earned-minutes switch changes the phone\'s remaining minutes and never touches the earned balance', { skip }, async () => {
+  await withFreshDatabase(async (client) => {
+    await migrate(client);
+    const store = new PostgresFoundationStore({
+      connectionString: withDatabase(DATABASE_URL, client.database),
+    });
+    const app = createApp({
+      store,
+      authVerifier: new TestAuthVerifier(),
+      readiness: () => ({ ready: true, missing: [] }),
+    });
+    try {
+      await withServer(app, async (baseUrl) => {
+        const household = await seedScreenTimeFamily(baseUrl, client, 'w5d');
+        const { familyId, childId, deviceId, deviceAuth } = household;
+        const screenPath = `/v1/families/${familyId}/children/${childId}/screen-time`;
+        const minutesPath = `/v1/families/${familyId}/children/${childId}/minutes`;
+
+        // 2. PATCH screen-time { dailyLimitMinutes: 60, timezoneOffsetMinutes: household.timezoneOffsetMinutes }
+        const patchPolicy = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5d-policy-1' }),
+          body: {
+            dailyLimitMinutes: 60,
+            timezoneOffsetMinutes: household.timezoneOffsetMinutes,
+          },
+        });
+        assert.equal(patchPolicy.status, 200, JSON.stringify(patchPolicy.body));
+
+        // 3. Grant 20 earned minutes by primary guardian
+        const earnRes = await jsonRequest(baseUrl, `${minutesPath}/earn`, {
+          method: 'POST',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5d-earn-1' }),
+          body: {
+            channel: 'quran_portion',
+            minutes: 20,
+            source: { type: 'quran', id: 'w5d-quran-1' },
+          },
+        });
+        assert.equal(earnRes.status, 201, JSON.stringify(earnRes.body));
+
+        // 4. Device reports 40 minutes usage for entertainment app
+        const report = await jsonRequest(baseUrl, `/v1/devices/${deviceId}/screen-time`, {
+          method: 'POST',
+          headers: { ...deviceAuth, 'idempotency-key': 'w5d-report-1' },
+          body: {
+            usage: [{ appId: 'com.w5d.game', usedMinutes: 40 }],
+            apps: [{ appId: 'com.w5d.game', displayName: 'لعبة ترفيهية', category: 'games' }],
+          },
+        });
+        assert.equal(report.status, 201, JSON.stringify(report.body));
+
+        // 5. GET screen-time -> remainingMinutes === 20 (switch is false)
+        const read1 = await jsonRequest(baseUrl, screenPath, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(read1.status, 200, JSON.stringify(read1.body));
+        assert.equal(read1.body.state.remainingMinutes, 20, 'when switch is off, remaining is 60 - 40 = 20');
+
+        // 6. PATCH { earnedMinutesExtendLimit: true } -> remainingMinutes === 40
+        const patchTrue = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5d-policy-switch-on' }),
+          body: { earnedMinutesExtendLimit: true },
+        });
+        assert.equal(patchTrue.status, 200, JSON.stringify(patchTrue.body));
+        const read2 = await jsonRequest(baseUrl, screenPath, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(read2.status, 200, JSON.stringify(read2.body));
+        assert.equal(read2.body.state.remainingMinutes, 40, 'when switch is on, remaining is 60 + 20 - 40 = 40');
+
+        // 7. PATCH { earnedMinutesExtendLimit: false } -> remainingMinutes === 20
+        const patchFalse = await jsonRequest(baseUrl, screenPath, {
+          method: 'PATCH',
+          headers: authorized('test-primary', { 'idempotency-key': 'w5d-policy-switch-off' }),
+          body: { earnedMinutesExtendLimit: false },
+        });
+        assert.equal(patchFalse.status, 200, JSON.stringify(patchFalse.body));
+        const read3 = await jsonRequest(baseUrl, screenPath, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(read3.status, 200, JSON.stringify(read3.body));
+        assert.equal(read3.body.state.remainingMinutes, 20, 'when switch is toggled back off, remaining is 60 - 40 = 20');
+
+        // 8. GET .../minutes/balance -> total === 20
+        const balance = await jsonRequest(baseUrl, `${minutesPath}/balance`, {
+          headers: authorized('test-primary'),
+        });
+        assert.equal(balance.status, 200, JSON.stringify(balance.body));
+        assert.equal(balance.body.total, 20, 'phone consumption against daily limit never touches the earned wallet balance');
+      });
+    } finally {
+      await store.close();
+    }
+  });
+});
+
+
+

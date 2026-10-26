@@ -10,11 +10,15 @@ const _notificationUuid =
     r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89a-fA-F][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$';
 final _notificationUuidPattern = RegExp(_notificationUuid);
 
-/// A strictly validated, in-app destination for one of the four S1 safety alerts.
+/// A strictly validated, in-app destination for one of the reviewed family alerts.
 ///
 /// FCM text is never used to make a route. The only routing inputs are the closed event/copy-key
 /// pairs and the opaque UUIDs the backend resolved for that event. No coordinates or names are
 /// accepted from notification data.
+///
+/// A child's pending task claim lands on the family's task screen, which is the one screen that can
+/// answer it. It carries no identifiers in its route: the screen reads the family's own queue, so
+/// there is nothing for a forged payload to point at.
 final class PendingAlert {
   const PendingAlert._({
     required this.eventType,
@@ -105,6 +109,16 @@ final class PendingAlert {
         occurredAt: occurredAt,
       );
     }
+    if (type == 'family.task_claimed' && copyKey == 'task.claimed') {
+      return PendingAlert._(
+        eventType: type,
+        copyKey: copyKey,
+        channelId: 'familyos_family_alerts',
+        route: '/scr-fat-054',
+        childId: _isUuid(childId) ? childId : null,
+        occurredAt: occurredAt,
+      );
+    }
     return null;
   }
 
@@ -137,6 +151,10 @@ final class PendingAlert {
             !_isUuid(uri.queryParameters['deviceId'])) {
           return null;
         }
+        break;
+      case '/scr-fat-054':
+        // The task board takes no parameters, so any parameter at all is a reason to refuse it.
+        if (keys.isNotEmpty) return null;
         break;
       default:
         return null;

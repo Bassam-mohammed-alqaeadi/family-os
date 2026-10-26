@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../i18n/app_localizations.dart';
 import 'tag.dart';
 
-/// S0 spine: honest badge for a single device capability row reported by the
-/// server (migration 117).
+/// S0 spine: the honest word for one capability a device reported about itself.
 ///
-/// R4 / Principle 2 — the badge reflects what the ledger says, NEVER what a
-/// toggle implies. A capability that is `unsupported` or `permission_needed`
-/// renders as a muted explanatory chip, not a disabled toggle that pretends
-/// the parent is in control.
+/// R4 / Principle 2 — the badge reflects what the ledger says, NEVER what a toggle implies. A
+/// capability that is `unsupported` or `permission_needed` renders as a muted explanatory chip,
+/// not a disabled control that pretends the parent is in control.
 ///
-/// Labels are intentionally plain Arabic-first text; they move into ARB the
-/// moment a screen starts using them live (R4 — Arabic first, in ARB).
+/// The wording is deliberately about the handset rather than about our system: a parent reading
+/// "this phone cannot do it" knows what to do (change phone, or stop relying on it), while
+/// "unsupported" leaves them asking by whom. Every screen that shows a device capability uses these
+/// six words, so the same state never appears under two different names — the reason the labels
+/// moved out of this component's source and into ARB when the ledger screen became their first user.
 enum DeviceCapabilityHonestyState {
   confirmed,
   awaitingSetup,
@@ -35,32 +37,28 @@ class DeviceCapabilityHonestyBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, variant) = switch (state) {
-      DeviceCapabilityHonestyState.confirmed => (
-          labelOverride ?? 'مؤكَّد',
-          TagVariant.g,
-        ),
-      DeviceCapabilityHonestyState.awaitingSetup => (
-          labelOverride ?? 'ينتظر الإعداد',
-          TagVariant.a,
-        ),
-      DeviceCapabilityHonestyState.permissionNeeded => (
-          labelOverride ?? 'إذن مطلوب',
-          TagVariant.a,
-        ),
-      DeviceCapabilityHonestyState.unsupported => (
-          labelOverride ?? 'غير مدعوم على هذا الجهاز',
-          TagVariant.p,
-        ),
-      DeviceCapabilityHonestyState.revoked => (
-          labelOverride ?? 'تم سحب الإذن',
-          TagVariant.p,
-        ),
-      DeviceCapabilityHonestyState.unknown => (
-          labelOverride ?? 'غير معروف',
-          TagVariant.p,
-        ),
+    final l10n = AppLocalizations.of(context);
+    final label =
+        labelOverride ??
+        (switch (state) {
+          DeviceCapabilityHonestyState.confirmed => l10n.capabilityStateConfirmed,
+          DeviceCapabilityHonestyState.awaitingSetup => l10n
+              .capabilityStateAwaitingSetup,
+          DeviceCapabilityHonestyState.permissionNeeded => l10n
+              .capabilityStatePermissionNeeded,
+          DeviceCapabilityHonestyState.unsupported => l10n
+              .capabilityStateUnsupported,
+          DeviceCapabilityHonestyState.revoked => l10n.capabilityStateRevoked,
+          DeviceCapabilityHonestyState.unknown => l10n.capabilityStateUnknown,
+        });
+    final variant = switch (state) {
+      DeviceCapabilityHonestyState.confirmed => TagVariant.g,
+      DeviceCapabilityHonestyState.awaitingSetup => TagVariant.a,
+      DeviceCapabilityHonestyState.permissionNeeded => TagVariant.a,
+      DeviceCapabilityHonestyState.unsupported => TagVariant.p,
+      DeviceCapabilityHonestyState.revoked => TagVariant.p,
+      DeviceCapabilityHonestyState.unknown => TagVariant.p,
     };
-    return Tag(label: label, variant: variant);
+    return Tag(key: key, label: label, variant: variant);
   }
 }

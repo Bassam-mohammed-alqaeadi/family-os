@@ -85,6 +85,41 @@ enum FoundationGateChildCreateResult {
   networkUnavailable,
 }
 
+enum FoundationGateChildDeleteResult {
+  deleted,
+  invalidInput,
+  notFound,
+  conflict,
+  accessDenied,
+  sessionInvalid,
+  serviceUnavailable,
+  networkUnavailable,
+}
+
+class FoundationGateChildRemovalResult {
+  const FoundationGateChildRemovalResult({
+    required this.childId,
+    required this.displayName,
+    required this.archivedAt,
+    required this.locationFixesErased,
+    required this.geofenceEventsErased,
+    required this.deviceSnapshotsErased,
+    required this.sosFixReferencesErased,
+    required this.consentsWithdrawn,
+    required this.devicesRevoked,
+  });
+
+  final String childId;
+  final String displayName;
+  final DateTime archivedAt;
+  final int locationFixesErased;
+  final int geofenceEventsErased;
+  final int deviceSnapshotsErased;
+  final int sosFixReferencesErased;
+  final int consentsWithdrawn;
+  final int devicesRevoked;
+}
+
 enum FoundationGateApiFailure {
   unauthenticated,
   accessDenied,

@@ -1,12 +1,7 @@
 import 'dart:convert';
 
-import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/minutes.dart';
-import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/fs_foundation/local_database.dart';
-import 'package:family_os/core/policy/wallet_ledger.dart';
-import 'package:family_os/core/screen_time/screen_time_local_persistence.dart';
-import 'package:family_os/features/n03_screen_time/stage1_child_scope.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_models.dart';
 import 'package:family_os/features/n16_tasks/family_tasks_repository.dart';
 
@@ -15,12 +10,8 @@ final class LocalFamilyTasksRepository implements FamilyTasksRepository {
   LocalFamilyTasksRepository(
     this._db, {
     this.namespace = kvNamespace,
-    WalletLedger? walletLedger,
-    ChildId Function(String assigneeNameKey)? resolveChildId,
     DateTime Function()? clock,
-  }) : _walletLedger = walletLedger,
-       _resolveChildId = resolveChildId,
-       _clock = clock ?? DateTime.now;
+  }) : _clock = clock ?? DateTime.now;
 
   static const kvNamespace = 'family_tasks';
   static const _snapKey = 'snapshot';
@@ -28,8 +19,6 @@ final class LocalFamilyTasksRepository implements FamilyTasksRepository {
 
   final FamilyLocalDatabase _db;
   final String namespace;
-  final WalletLedger? _walletLedger;
-  final ChildId Function(String assigneeNameKey)? _resolveChildId;
   final DateTime Function() _clock;
 
   Future<FamilyTasksSnapshot> _read() async {
@@ -76,7 +65,6 @@ final class LocalFamilyTasksRepository implements FamilyTasksRepository {
         motherHelpTasks: snap.motherHelpTasks,
       ),
     );
-    await _depositReward(task);
   }
 
   @override
@@ -153,25 +141,5 @@ final class LocalFamilyTasksRepository implements FamilyTasksRepository {
         ],
       ),
     );
-  }
-
-  Future<void> _depositReward(FamilyChildTask task) async {
-    if (task.reward.isZero) return;
-    if (task.assigneeNameKey == 'mother') return;
-    try {
-      final ledger =
-          _walletLedger ??
-          WalletLedger(await ScreenTimeLocalPersistence.openPolicyRepository());
-      final childId =
-          _resolveChildId?.call(task.assigneeNameKey) ?? activeScopedChildId();
-      await ledger.earn(
-        childId: childId,
-        appId: 'family_tasks',
-        assignee: AppRole.child,
-        fatherSetReward: task.reward,
-      );
-    } catch (_) {
-      // Soft-fail deposit — task already completed in Local store.
-    }
   }
 }

@@ -1,0 +1,184 @@
+{
+  "_comment": [
+    "Message table for the family-customization profile card on the settings hub (programme room",
+    "طابع العائلة, slice 2). Applied once with:",
+    "  python3 tool/arb_messages.py tool/messages/n12_family_customization.json",
+    "Arabic is the template language; English is the fallback. Every value is written for a parent,",
+    "never for an engineer, and no value carries a digit a family might want written their way —",
+    "those come from the app's own numeral reader at runtime.",
+    "Day names are NOT here on purpose: the app already owns seven of them (screenTimeServerDay*)",
+    "and a second set would be two truths about what Friday is called.",
+    "Keep this file after applying: it is the reviewable record of what was added and why."
+  ],
+  "messages": [
+    {
+      "key": "familyCustomizationTitle",
+      "ar": "طابع عائلتك",
+      "en": "Your family's character",
+      "desc": "Settings hub — the card that holds a family's own week, rest days, addressing words and digits."
+    },
+    {
+      "key": "familyCustomizationIntro",
+      "ar": "أسبوعكم، أيام راحتكم، كلمات أبنائكم، وأرقامكم. ما تختارونه هنا تقرأه الشاشات كلها.",
+      "en": "Your week, your rest days, the words your children use, and your digits. Every screen reads what you choose here.",
+      "desc": "Says what the card changes, so a parent knows it is a setting and not a summary."
+    },
+    {
+      "key": "familyCustomizationWeekStartLabel",
+      "ar": "بأي يوم يبدأ أسبوعكم",
+      "en": "Which day your week starts on",
+      "desc": "The family's own first day of the week."
+    },
+    {
+      "key": "familyCustomizationRestDaysLabel",
+      "ar": "أيام الراحة",
+      "en": "Rest days",
+      "desc": "Which days this family rests on."
+    },
+    {
+      "key": "familyCustomizationRestDaysHint",
+      "ar": "يوم واحد على الأقل — كل حسابٍ في التطبيق يقيس أسبوعه عليها.",
+      "en": "At least one day — every count in the app measures its week against these.",
+      "desc": "Why an empty rest list is not offered, stated as a fact rather than a scold."
+    },
+    {
+      "key": "familyCustomizationNumeralsLabel",
+      "ar": "أرقامكم",
+      "en": "Your digits",
+      "desc": "How this family wants numbers written."
+    },
+    {
+      "key": "familyCustomizationNumeralsWestern",
+      "ar": "أرقام لاتينية",
+      "en": "Western digits",
+      "desc": "The choice the app has always drawn. No digits in the value: the shape is shown by the preview line."
+    },
+    {
+      "key": "familyCustomizationNumeralsEastern",
+      "ar": "أرقام شرقية",
+      "en": "Eastern digits",
+      "desc": "The choice a family may now take. No digits in the value — see the Western label's note."
+    },
+    {
+      "key": "familyCustomizationNumeralsPreview",
+      "ar": "هكذا تبدو أرقامكم: {sample}",
+      "en": "This is how your numbers look: {sample}",
+      "desc": "Live preview of the family's own digits, rendered by the app's numeral reader.",
+      "placeholders": [["sample", "String"]]
+    },
+    {
+      "key": "familyCustomizationWordsLabel",
+      "ar": "كيف ينادي أبناؤكم أهلهم",
+      "en": "What your children call their family",
+      "desc": "The four addressing words this family chooses."
+    },
+    {
+      "key": "familyCustomizationWordsHint",
+      "ar": "كلمة واحدة قصيرة لكل دور. اتركوا الحقل فارغاً ليعود كما كان في التطبيق.",
+      "en": "One short word for each role. Leave a field empty to return it to the app's own word.",
+      "desc": "Explains both the limit and how to undo a word, in one line."
+    },
+    {
+      "key": "familyCustomizationWordFather",
+      "ar": "كلمة الأبناء لأبيهم",
+      "en": "What children call their father",
+      "desc": "Label for the father's addressing word."
+    },
+    {
+      "key": "familyCustomizationWordMother",
+      "ar": "كلمة الأبناء لأمهم",
+      "en": "What children call their mother",
+      "desc": "Label for the mother's addressing word."
+    },
+    {
+      "key": "familyCustomizationWordGuardian",
+      "ar": "كلمة الأبناء لوصيّهم",
+      "en": "What children call their other guardian",
+      "desc": "Label for the added guardian's addressing word."
+    },
+    {
+      "key": "familyCustomizationWordChild",
+      "ar": "كيف تُنادى بطاقات الأبناء",
+      "en": "How a child's card is addressed",
+      "desc": "Label for the word a child's row is shown with."
+    },
+    {
+      "key": "familyCustomizationDefaultNote",
+      "ar": "لم تُغيّروا شيئاً بعد — هذا ما يبدأ به التطبيق لكل عائلة.",
+      "en": "Nothing has been changed yet — this is where every family starts.",
+      "desc": "Shown when the family has no stored profile, so a default is never read as a decision."
+    },
+    {
+      "key": "familyCustomizationSave",
+      "ar": "احفظوا طابع العائلة",
+      "en": "Save your family's character",
+      "desc": "The card's only write action."
+    },
+    {
+      "key": "familyCustomizationSavedNote",
+      "ar": "حُفظ اختياركم، وهو ما تقرأه الشاشات الآن.",
+      "en": "Your choice is saved, and it is what the screens read now.",
+      "desc": "Confirmation that the change reached the family's record."
+    },
+    {
+      "key": "familyCustomizationRefreshCta",
+      "ar": "أعيدوا القراءة",
+      "en": "Read it again",
+      "desc": "Retry when there was nothing to show."
+    },
+    {
+      "key": "familyCustomizationNoServerNote",
+      "ar": "لا عائلة متصلة على هذا الجهاز، فلم نسأل أحداً عن طابعكم.",
+      "en": "No family is connected on this device, so nobody was asked about your character.",
+      "desc": "Honest state: nothing was read because there was nobody to ask."
+    },
+    {
+      "key": "familyCustomizationUnreachableNote",
+      "ar": "لم يُجب أحد. ما ترونه آخرُ ما قرأناه، وليس تأكيداً من الآن.",
+      "en": "Nobody answered. What you see is the last thing we read, not a confirmation from now.",
+      "desc": "Honest state: the connection did not answer."
+    },
+    {
+      "key": "familyCustomizationAccessDeniedNote",
+      "ar": "حسابك لا يطّلع على طابع هذه العائلة من هنا.",
+      "en": "Your account does not open this family's character from here.",
+      "desc": "The family said this account may not read its profile."
+    },
+    {
+      "key": "familyCustomizationUnreadableNote",
+      "ar": "جاءنا جوابٌ لم نفهمه، ولم نخمّن بدله.",
+      "en": "An answer arrived that we could not read, and we did not guess at one.",
+      "desc": "A malformed reply is reported as a defect, never as an empty profile."
+    },
+    {
+      "key": "familyCustomizationStaleNote",
+      "ar": "غيّر أحدكم الطابع بعد أن فتحتموه. أعدنا لكم أحدث ما عند العائلة — راجعوه ثم احفظوا إن شئتم.",
+      "en": "Someone in your family changed this after you opened it. We brought back their version — check it, then save if you still want to.",
+      "desc": "A version conflict, stated as what happened and what to do next."
+    },
+    {
+      "key": "familyCustomizationNotPrimaryNote",
+      "ar": "تعديل الطابع لصاحب العائلة أولاً؛ ما ترونه هنا قراءةٌ فقط.",
+      "en": "Only the family's first guardian changes this. What you see here is a read.",
+      "desc": "The write was refused because the profile is read by every system in the app."
+    },
+    {
+      "key": "familyCustomizationNoRestDayNote",
+      "ar": "لا يُترك أسبوعٌ بلا يوم راحة.",
+      "en": "A week is never left without a rest day.",
+      "desc": "The floor, said the same way whether it came from the tap or from the record."
+    },
+    {
+      "key": "familyCustomizationWordRefusedNote",
+      "ar": "كلمة واحدة قصيرة، من غير أرقام ولا رموز غريبة.",
+      "en": "One short word, with no digits and no odd marks in it.",
+      "desc": "The addressing word a family typed was refused."
+    },
+    {
+      "key": "familyCustomizationRefusedNote",
+      "ar": "رفض التطبيق هذا التعديل.",
+      "en": "The app would not take that change.",
+      "desc": "A refusal with no reason this build can name — said plainly, never dressed up."
+    }
+  ]
+}

@@ -40,6 +40,14 @@ class FamilyOsApplication : Application() {
                 vibrationEnabled = false,
             ),
             ChannelSpec(
+                id = CHANNEL_ALERTS,
+                name = getString(R.string.familyos_alerts_channel_name),
+                description = getString(R.string.familyos_alerts_channel_description),
+                color = Color.rgb(76, 141, 246),
+                importance = NotificationManager.IMPORTANCE_DEFAULT,
+                vibrationEnabled = false,
+            ),
+            ChannelSpec(
                 id = CHANNEL_CHAT,
                 name = getString(R.string.familyos_chat_channel_name),
                 description = getString(R.string.familyos_chat_channel_description),
@@ -80,5 +88,6 @@ class FamilyOsApplication : Application() {
         const val CHANNEL_GEOFENCE = "familyos_geofence_alerts"
         const val CHANNEL_PROTECTION = "familyos_protection_alerts"
         const val CHANNEL_CHAT = "familyos_chat_nudges"
+        const val CHANNEL_ALERTS = "familyos_family_alerts"
     }
 }

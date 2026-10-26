@@ -4,6 +4,7 @@ import 'package:family_os/core/domain/child_id.dart';
 import 'package:family_os/core/domain/identity_ids.dart';
 import 'package:family_os/core/domain/mother_level.dart';
 import 'package:family_os/core/domain/role.dart';
+import 'package:family_os/core/runtime/family_child_deletion_source.dart';
 import 'package:family_os/core/runtime/family_child_profile_source.dart';
 import 'package:family_os/core/runtime/family_creation_source.dart';
 import 'package:family_os/core/runtime/family_device_revocation.dart';
@@ -15,6 +16,9 @@ import 'package:family_os/core/runtime/runtime_data_origin.dart';
 import 'device_lifecycle.dart';
 import 'family_calendar_api_client.dart';
 import 'family_chat_api_client.dart';
+import 'family_capability_api_client.dart';
+import 'family_command_api_client.dart';
+import 'family_customization_api_client.dart';
 import 'family_creation_api_client.dart';
 import 'family_device_api_client.dart';
 import 'family_invite_code_api_client.dart';
@@ -76,6 +80,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FamilyTasksApiClient? tasksApi,
     FamilyCalendarApiClient? calendarApi,
     FamilyChatApiClient? chatApi,
+    FamilyCapabilityApiClient? capabilityApi,
+    FamilyCommandApiClient? commandApi,
+    FamilyCustomizationApiClient? customizationApi,
     String? preferredFamilyId,
     GuardianPushRegistrationCallback? guardianPushRegistration,
     GuardianPushUnregistrationCallback? guardianPushUnregistration,
@@ -93,6 +100,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _tasksApi = tasksApi,
        _calendarApi = calendarApi,
        _chatApi = chatApi,
+       _capabilityApi = capabilityApi,
+       _commandApi = commandApi,
+       _customizationApi = customizationApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _guardianPushRegistration = guardianPushRegistration,
        _guardianPushUnregistration = guardianPushUnregistration,
@@ -116,6 +126,12 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyTasksApiClient? _tasksApi;
   final FamilyCalendarApiClient? _calendarApi;
   final FamilyChatApiClient? _chatApi;
+  final FamilyCapabilityApiClient? _capabilityApi;
+  final FamilyCommandApiClient? _commandApi;
+
+  /// The family's own profile: the day its week opens with, which days rest, the words its
+  /// children use for its guardians, and how its numbers are written.
+  final FamilyCustomizationApiClient? _customizationApi;
   final String? _preferredFamilyId;
   final GuardianPushRegistrationCallback? _guardianPushRegistration;
   final GuardianPushUnregistrationCallback? _guardianPushUnregistration;
@@ -165,6 +181,20 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   /// protected storage; this runtime exposes only the typed client, never the secret.
   FamilyChatApiClient? get chatApi => _chatApi;
 
+  /// The device capability ledger's client: what each handset said it can do, and when it said so.
+  /// Null when this build has no server to ask - and the ledger screen says that out loud instead
+  /// of drawing capabilities nobody reported.
+  FamilyCapabilityApiClient? get capabilityApi => _capabilityApi;
+
+  /// The command bus's client: the orders a family issued to a device, and the receipt each one
+  /// came back with. Read here, never written from here: the phone answers to the server, and a
+  /// second door into the same power would leave two truths about whether a child's phone stopped.
+  FamilyCommandApiClient? get commandApi => _commandApi;
+
+  /// The customization profile's client. Null when this build has no server to ask, and the
+  /// screen says that rather than drawing a week nobody chose.
+  FamilyCustomizationApiClient? get customizationApi => _customizationApi;
+
   /// Best-effort push registration for the active guardian session.
   ///
   /// The app composition root owns the optional FCM implementation and passes it through this
@@ -212,6 +242,9 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     required String password,
   }) async {
     await _controller.signUp(email: email, password: password);
+    if (_controller.phase == FoundationGatePhase.signInFailed) {
+      throw const FoundationGateIdentityException();
+    }
     await _selectConfiguredFamily();
     final snapshot = await _refreshIdentitySnapshot();
     await registerGuardianPush();
@@ -536,6 +569,59 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
         FamilyChildProfileCreateFailure.serviceUnavailable,
       FoundationGateChildCreateResult.networkUnavailable =>
         FamilyChildProfileCreateFailure.networkUnavailable,
+    };
+  }
+
+  /// Removes one child profile only after server confirmation succeeds.
+  Future<FamilyChildDeleteResult> deleteChild({
+    required FamilyId familyId,
+    required ChildId childId,
+    String? idempotencyKey,
+  }) async {
+    await refreshIdentity();
+    final selected = _controller.selectedFamily;
+    if (!_identityValue.isRemoteAuthoritative ||
+        !_identityValue.isPrimaryOwner ||
+        selected == null ||
+        selected.id != familyId.value) {
+      return const FamilyChildDeleteResult.failed(
+        FamilyChildDeleteFailure.unavailable,
+      );
+    }
+
+    final result = await _controller.deleteChild(
+      familyId: familyId.value,
+      childId: childId.value,
+      idempotencyKey: idempotencyKey,
+    );
+
+    if (result == FoundationGateChildDeleteResult.deleted) {
+      _publishCurrentRemoteRoster(familyId);
+      return const FamilyChildDeleteResult.success();
+    }
+    return FamilyChildDeleteResult.failed(_mapDeleteFailure(result));
+  }
+
+  FamilyChildDeleteFailure _mapDeleteFailure(
+    FoundationGateChildDeleteResult result,
+  ) {
+    return switch (result) {
+      FoundationGateChildDeleteResult.deleted =>
+        FamilyChildDeleteFailure.unavailable,
+      FoundationGateChildDeleteResult.invalidInput =>
+        FamilyChildDeleteFailure.invalidInput,
+      FoundationGateChildDeleteResult.notFound =>
+        FamilyChildDeleteFailure.notFound,
+      FoundationGateChildDeleteResult.conflict =>
+        FamilyChildDeleteFailure.conflict,
+      FoundationGateChildDeleteResult.accessDenied =>
+        FamilyChildDeleteFailure.accessDenied,
+      FoundationGateChildDeleteResult.sessionInvalid =>
+        FamilyChildDeleteFailure.sessionInvalid,
+      FoundationGateChildDeleteResult.serviceUnavailable =>
+        FamilyChildDeleteFailure.serviceUnavailable,
+      FoundationGateChildDeleteResult.networkUnavailable =>
+        FamilyChildDeleteFailure.networkUnavailable,
     };
   }
 
@@ -1048,6 +1134,27 @@ final class RemoteFamilyChildProfileSource implements FamilyChildProfileSource {
 
   @override
   void dispose() => _runtime.dispose();
+}
+
+final class RemoteFamilyChildDeletionSource
+    implements FamilyChildDeletionSource {
+  RemoteFamilyChildDeletionSource(this._runtime);
+
+  final MainAppFoundationRuntime _runtime;
+
+  @override
+  Future<FamilyChildDeleteResult> deleteChild({
+    required FamilyId familyId,
+    required ChildId childId,
+    String? idempotencyKey,
+  }) => _runtime.deleteChild(
+    familyId: familyId,
+    childId: childId,
+    idempotencyKey: idempotencyKey,
+  );
+
+  @override
+  void dispose() {}
 }
 
 final class RemoteFamilyCreationSource implements FamilyCreationSource {

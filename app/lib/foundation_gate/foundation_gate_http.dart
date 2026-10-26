@@ -44,6 +44,12 @@ abstract interface class FoundationGateHttpTransport {
     required Map<String, String> headers,
     required String body,
   });
+
+  /// Deletes one server-addressed resource.
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  });
 }
 
 class PackageFoundationGateHttpTransport
@@ -98,6 +104,18 @@ class PackageFoundationGateHttpTransport
     required String body,
   }) async {
     final response = await _client.put(uri, headers: headers, body: body);
+    return FoundationGateHttpResponse(
+      statusCode: response.statusCode,
+      body: response.body,
+    );
+  }
+
+  @override
+  Future<FoundationGateHttpResponse> delete(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    final response = await _client.delete(uri, headers: headers);
     return FoundationGateHttpResponse(
       statusCode: response.statusCode,
       body: response.body,

@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import 'pairing_contract.generated.dart';
+
 /// Localized user-facing copy for the real native child-device hand-off.
 ///
 /// This is deliberately presentation-only: it carries no pairing state,
@@ -42,8 +44,8 @@ class NativeChildPairingCopy {
       ? 'ينتهي في ${value.toLocal()}. لا يمكن استخدامه مرة أخرى بعد نجاح ربط جهاز الابن.'
       : 'Expires at ${value.toLocal()}. It cannot be used again after a successful child-device claim.';
   String get pairingCodeHint => isArabic
-      ? 'ستة أحرف، مثال: ABC DEF'
-      : 'Six characters, for example ABC DEF';
+      ? 'ستة أرقام'
+      : 'Six digits';
 
   String get copyCode => isArabic ? 'نسخ الرمز' : 'Copy code';
 
@@ -69,6 +71,9 @@ class NativeChildPairingCopy {
   String childModeStartFailed(String reason) => isArabic
       ? 'تعذر بدء وضع الابن: $reason'
       : 'Child Mode could not start: $reason';
+  String get pairingRateLimited => isArabic
+      ? 'محاولات كثيرة. انتظر ${PairingContract.claimWindowMinutes} دقائق ثم حاول مرة أخرى.'
+      : 'Too many attempts. Wait ${PairingContract.claimWindowMinutes} minutes, then try again.';
   String get pairingClaimFailed => isArabic
       ? 'رمز الربط غير صالح أو منتهٍ أو مستخدم سابقًا، أو أن الخادم غير متاح.'
       : 'The pairing code is invalid, expired, already used, or the server is unavailable.';
@@ -85,6 +90,10 @@ class NativeChildPairingCopy {
   String get stopChildMode => isArabic
       ? 'إيقاف وضع الابن على هذا الجهاز'
       : 'Stop Child Mode on this device';
+
+  String get deviceUnlinkedFromFamily => isArabic
+      ? 'تم فصل هذا الجهاز عن العائلة.'
+      : 'This device has been unlinked from the family.';
 
   // ── QR Code pairing strings ──────────────────────────────────────────────
 

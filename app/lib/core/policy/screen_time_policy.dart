@@ -99,6 +99,7 @@ final class ScreenTimePolicy {
   factory ScreenTimePolicy({
     int dailyCapMinutes = 120,
     bool allowWalletOverflow = false,
+    bool earnedMinutesExtendLimit = false,
     int usedMinutesToday = 0,
     List<AppWallet> wallets = const [],
   }) {
@@ -119,6 +120,7 @@ final class ScreenTimePolicy {
     return ScreenTimePolicy._(
       dailyCapMinutes: dailyCapMinutes,
       allowWalletOverflow: allowWalletOverflow,
+      earnedMinutesExtendLimit: earnedMinutesExtendLimit,
       usedMinutesToday: usedMinutesToday,
       wallets: List<AppWallet>.unmodifiable(wallets),
     );
@@ -127,6 +129,7 @@ final class ScreenTimePolicy {
   const ScreenTimePolicy._({
     required this.dailyCapMinutes,
     required this.allowWalletOverflow,
+    required this.earnedMinutesExtendLimit,
     required this.usedMinutesToday,
     required this.wallets,
   });
@@ -145,6 +148,9 @@ final class ScreenTimePolicy {
 
   /// Ruling B / SET-024 default: false — wallet does not open past cap.
   final bool allowWalletOverflow;
+
+  /// When true, earned minutes extend daily entertainment cap.
+  final bool earnedMinutesExtendLimit;
 
   /// Mock daily usage (SET-002 Stage-1; real metering later).
   final int usedMinutesToday;
@@ -165,12 +171,15 @@ final class ScreenTimePolicy {
   ScreenTimePolicy copyWith({
     int? dailyCapMinutes,
     bool? allowWalletOverflow,
+    bool? earnedMinutesExtendLimit,
     int? usedMinutesToday,
     List<AppWallet>? wallets,
   }) {
     return ScreenTimePolicy(
       dailyCapMinutes: dailyCapMinutes ?? this.dailyCapMinutes,
       allowWalletOverflow: allowWalletOverflow ?? this.allowWalletOverflow,
+      earnedMinutesExtendLimit:
+          earnedMinutesExtendLimit ?? this.earnedMinutesExtendLimit,
       usedMinutesToday: usedMinutesToday ?? this.usedMinutesToday,
       wallets: wallets ?? this.wallets,
     );
@@ -195,6 +204,7 @@ final class ScreenTimePolicy {
   Map<String, Object?> toJson() => {
     'dailyCapMinutes': dailyCapMinutes,
     'allowWalletOverflow': allowWalletOverflow,
+    'earnedMinutesExtendLimit': earnedMinutesExtendLimit,
     'usedMinutesToday': usedMinutesToday,
     'wallets': wallets.map((w) => w.toJson()).toList(),
   };
@@ -215,6 +225,8 @@ final class ScreenTimePolicy {
     return ScreenTimePolicy(
       dailyCapMinutes: cap is int && cap >= 0 ? cap : 120,
       allowWalletOverflow: json['allowWalletOverflow'] as bool? ?? false,
+      earnedMinutesExtendLimit:
+          json['earnedMinutesExtendLimit'] as bool? ?? false,
       usedMinutesToday: used is int && used >= 0 ? used : 0,
       wallets: wallets.isEmpty ? ScreenTimePolicy.defaults().wallets : wallets,
     );
@@ -226,6 +238,7 @@ final class ScreenTimePolicy {
       other is ScreenTimePolicy &&
           dailyCapMinutes == other.dailyCapMinutes &&
           allowWalletOverflow == other.allowWalletOverflow &&
+          earnedMinutesExtendLimit == other.earnedMinutesExtendLimit &&
           usedMinutesToday == other.usedMinutesToday &&
           listEquals(wallets, other.wallets);
 
@@ -233,6 +246,7 @@ final class ScreenTimePolicy {
   int get hashCode => Object.hash(
     dailyCapMinutes,
     allowWalletOverflow,
+    earnedMinutesExtendLimit,
     usedMinutesToday,
     Object.hashAll(wallets),
   );

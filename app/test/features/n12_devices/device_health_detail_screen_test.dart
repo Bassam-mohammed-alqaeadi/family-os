@@ -12,6 +12,10 @@ import 'package:family_os/core/identity/identity_scope.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
 import 'package:family_os/features/n12_devices/device_health_detail_screen.dart';
 import 'package:family_os/features/n12_devices/device_health_seam.dart';
+import 'package:family_os/features/n12_devices/device_capability_ledger_panel.dart';
+import 'package:family_os/features/n12_devices/device_ledger_server_authority.dart';
+
+import 'support/device_ledger_fake_server.dart';
 
 void main() {
   tearDown(AppToast.dismiss);
@@ -224,6 +228,88 @@ void main() {
     expect(find.byKey(DeviceHealthDetailKeys.missing), findsOneWidget);
     expect(find.byKey(DeviceHealthDetailKeys.body), findsNothing);
   });
+  testWidgets('SCR-FAT-026 · the capability ledger is on this screen, and speaks for the phone', (
+    tester,
+  ) async {
+    // The column this slice exists to close: the spine's two endpoints already had typed clients,
+    // and no screen imported them. So the proof is not that a panel can render a fixture — it is
+    // that a parent who opens a device from the real route meets the phone's own account there, and
+    // that the numbers on it came from the server rather than from this handset's health record.
+    final transport = DeviceLedgerFakeTransport();
+    transport.answer(
+      deviceLedgerCapabilitiesPath,
+      200,
+      deviceLedgerCapabilitiesJson(),
+    );
+    transport.answer(deviceLedgerCommandsPath, 200, deviceLedgerCommandsJson([]));
+    DeviceLedgerAuthority.bind(deviceLedgerAuthorityFor(transport));
+    addTearDown(() => DeviceLedgerAuthority.bind(null));
+
+    final seam = FakeDeviceHealthSeam(
+      initial: const [
+        DeviceHealthSnapshot(
+          deviceId: deviceLedgerDeviceId,
+          // The stage-one family scope is what this screen asks the seam under; the child and
+          // device ids are the server's, so the ledger has something real to read.
+          familyId: 'fam_stage1',
+          childId: deviceLedgerChildId,
+          displayLabel: 'ابن ١',
+          modelLabel: 'Redmi Note 13',
+          level: DeviceHealthLevel.atRisk,
+          permissions: [],
+          lastHeartbeatAgoLabel: '٩ د',
+        ),
+      ],
+    );
+    addTearDown(seam.dispose);
+
+    await _pumpDetail(
+      tester,
+      seam: seam,
+      deviceId: deviceLedgerDeviceId,
+      role: AppRole.father,
+    );
+
+    expect(find.byKey(DeviceHealthDetailKeys.capabilityLedger), findsOneWidget);
+    expect(find.byKey(DeviceLedgerKeys.panel), findsOneWidget);
+    expect(find.byKey(DeviceLedgerKeys.capabilitiesCard), findsOneWidget);
+    expect(find.text('1 تعمل، و2 تنتظر إعدادك'), findsOneWidget);
+    expect(find.text('يعمل على الهاتف'), findsOneWidget);
+    // Two reads, both of them the server's, in the order the contract defines — and no third
+    // request invented by the screen.
+    expect(transport.calls, const [
+      'GET $deviceLedgerCapabilitiesPath',
+      'GET $deviceLedgerCommandsPath',
+    ]);
+    expect(find.text('إيقاف الهاتف فوراً بأمرك'), findsOneWidget);
+  });
+
+  testWidgets('SCR-FAT-026 · the ledger says so when the record is a stage-one placeholder', (
+    tester,
+  ) async {
+    // The demo seam keys devices `dev_a`/`child_a`. Handing that to the spine would produce a 404
+    // the screen would have to dress up as a finding about the child's phone, so it is refused
+    // before it is sent — and the screen says what is actually true: no linked child record.
+    final transport = DeviceLedgerFakeTransport();
+    DeviceLedgerAuthority.bind(deviceLedgerAuthorityFor(transport));
+    addTearDown(() => DeviceLedgerAuthority.bind(null));
+
+    final seam = FakeDeviceHealthSeam.demo();
+    addTearDown(seam.dispose);
+
+    await _pumpDetail(
+      tester,
+      seam: seam,
+      deviceId: 'dev_a',
+      role: AppRole.father,
+    );
+
+    expect(find.byKey(DeviceHealthDetailKeys.capabilityLedger), findsOneWidget);
+    expect(find.text('هذا السجل غير مربوط بابن على الخادم'), findsOneWidget);
+    expect(find.byKey(DeviceLedgerKeys.capabilitiesCard), findsNothing);
+    expect(transport.calls, isEmpty);
+  });
+
 }
 
 Future<void> _pumpDetail(

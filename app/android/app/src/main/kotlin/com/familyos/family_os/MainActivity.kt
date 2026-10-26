@@ -2,7 +2,10 @@ package com.familyos.family_os
 
 import android.Manifest
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -31,7 +34,9 @@ import java.util.concurrent.TimeUnit
  */
 class MainActivity : FlutterActivity() {
     private var pendingPermissionResult: MethodChannel.Result? = null
+    private var telemetryMethodChannel: MethodChannel? = null
     private var notificationMethodChannel: MethodChannel? = null
+    private var pendingNotificationPermissionResult: MethodChannel.Result? = null
     private var pendingNotificationRoute: String? = null
     private val chatExecutor = Executors.newSingleThreadExecutor()
     private val chatHttpClient = OkHttpClient.Builder()
@@ -40,15 +45,23 @@ class MainActivity : FlutterActivity() {
         .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
+    private val revocationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            telemetryMethodChannel?.invokeMethod("onDeviceRevoked", null)
+        }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TELEMETRY_CHANNEL)
-            .setMethodCallHandler { call, result ->
+        telemetryMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, TELEMETRY_CHANNEL).apply {
+            setMethodCallHandler { call, result ->
                 when (call.method) {
                     "requestLocationPermissions" -> requestLocationPermissions(result)
                     "configureAndStart" -> configureAndStart(call, result)
                     "startConfigured" -> startConfiguredTelemetry(result)
                     "chatRequest" -> proxyFamilyChatRequest(call, result)
+                    "minutesBalanceRequest" -> proxyMinutesBalanceRequest(call, result)
+                    "screenTimeStateRequest" -> proxyScreenTimeStateRequest(result)
                     "consentRequest" -> proxyFamilyConsentRequest(call, result)
                     "capabilitySnapshot" -> capabilitySnapshot(result)
                     "stop" -> stopTelemetry(result)
@@ -56,9 +69,24 @@ class MainActivity : FlutterActivity() {
                     "protectionState" -> protectionState(result)
                     "batteryGuidance" -> batteryGuidance(result)
                     "openBatterySettings" -> openBatterySettings(result)
+                    "heartbeat" -> {
+                        ChildTelemetryService.activeInstance?.heartbeatNow()
+                        result.success(true)
+                    }
                     else -> result.notImplemented()
                 }
             }
+        }
+        try {
+            ContextCompat.registerReceiver(
+                this,
+                revocationReceiver,
+                IntentFilter(ChildTelemetryService.ACTION_DEVICE_REVOKED),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+        } catch (_: Exception) {
+            // Best effort
+        }
         notificationMethodChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             NOTIFICATION_CHANNEL,
@@ -67,6 +95,8 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "showForegroundNotification" -> showForegroundNotification(call, result)
                     "consumeNotificationRoute" -> result.success(consumeNotificationRoute())
+                    "notificationPermissionStatus" -> result.success(notificationPermissionState())
+                    "requestNotificationPermission" -> requestNotificationPermission(result)
                     else -> result.notImplemented()
                 }
             }
@@ -118,7 +148,53 @@ class MainActivity : FlutterActivity() {
                 if (hasFineLocation()) requestBackgroundLocation() else completePermissionRequest()
             }
             REQUEST_BACKGROUND_LOCATION -> completePermissionRequest()
+            REQUEST_NOTIFICATION_PERMISSION -> completeNotificationPermissionRequest()
         }
+    }
+
+    /**
+     * Whether the system will display anything for this app at all.
+     *
+     * The notification permission exists from API 33 on; below it there is no runtime question to
+     * ask, so "granted" is the truthful answer rather than an optimistic one. This is the state the
+     * guardian's own notification card reads: a parent who refused the system prompt must not be
+     * shown a page that promises delivery, whatever the family settings say.
+     */
+    private fun hasNotificationPermission(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
+
+    private fun notificationPermissionState(): String =
+        if (hasNotificationPermission()) "granted" else "denied"
+
+    private fun requestNotificationPermission(result: MethodChannel.Result) {
+        if (hasNotificationPermission()) {
+            result.success(notificationPermissionState())
+            return
+        }
+        if (pendingNotificationPermissionResult != null) {
+            result.error(
+                "notification_permission_request_in_progress",
+                "A notification permission request is already active.",
+                null,
+            )
+            return
+        }
+        pendingNotificationPermissionResult = result
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            REQUEST_NOTIFICATION_PERMISSION,
+        )
+    }
+
+    private fun completeNotificationPermissionRequest() {
+        val pending = pendingNotificationPermissionResult ?: return
+        pendingNotificationPermissionResult = null
+        pending.success(notificationPermissionState())
     }
 
     private fun completePermissionRequest() {
@@ -388,6 +464,73 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    /// The child's own balance, read with the device credential that never leaves this layer.
+    /// Only the scope check and the GET happen here; the body returns exactly as the server wrote it.
+    private fun proxyMinutesBalanceRequest(call: MethodCall, result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
+        if (config == null) {
+            result.error("device_minutes_not_configured", "No paired device session is available.", null)
+            return
+        }
+        val requestedDeviceId = call.argument<String>("deviceId")?.trim()
+        if (requestedDeviceId != config.deviceId) {
+            result.error("device_minutes_scope_mismatch", "The device scope does not match this paired handset.", null)
+            return
+        }
+        chatExecutor.execute {
+            try {
+                val request = Request.Builder()
+                    .url("${config.apiOrigin}/v1/devices/${config.deviceId}/minutes-balance")
+                    .header("Authorization", "Device ${config.deviceCredential}")
+                    .header("Accept", "application/json")
+                    .get()
+                    .build()
+                val answer = chatHttpClient.newCall(request).execute().use { response ->
+                    mapOf(
+                        "statusCode" to response.code,
+                        "body" to (response.body?.string() ?: ""),
+                    )
+                }
+                runOnUiThread { result.success(answer) }
+            } catch (_: Exception) {
+                // Credentials and balance bodies are never logged.
+                runOnUiThread {
+                    result.error("device_minutes_unreachable", "The minutes service did not answer.", null)
+                }
+            }
+        }
+    }
+
+    private fun proxyScreenTimeStateRequest(result: MethodChannel.Result) {
+        val config = TelemetryConfigStore(this).read()
+        if (config == null) {
+            result.error("device_screen_time_not_configured", "No paired device session is available.", null)
+            return
+        }
+        chatExecutor.execute {
+            try {
+                val request = Request.Builder()
+                    .url("${config.apiOrigin}/v1/devices/${config.deviceId}/screen-time")
+                    .header("Authorization", "Device ${config.deviceCredential}")
+                    .header("Accept", "application/json")
+                    .get()
+                    .build()
+                val answer = chatHttpClient.newCall(request).execute().use { response ->
+                    mapOf(
+                        "statusCode" to response.code,
+                        "body" to (response.body?.string() ?: ""),
+                    )
+                }
+                runOnUiThread { result.success(answer) }
+            } catch (_: Exception) {
+                // Credential and response body are never logged.
+                runOnUiThread {
+                    result.error("device_screen_time_unreachable", "The screen time service did not answer.", null)
+                }
+            }
+        }
+    }
+
     private fun familyChatRequestSpec(
         operation: String,
         deviceId: String,
@@ -515,6 +658,11 @@ class MainActivity : FlutterActivity() {
         !value.isNullOrBlank() && value.length <= 128
 
     override fun onDestroy() {
+        try {
+            unregisterReceiver(revocationReceiver)
+        } catch (_: Exception) {
+            // Already unregistered or not registered
+        }
         chatExecutor.shutdownNow()
         super.onDestroy()
     }
@@ -545,6 +693,7 @@ class MainActivity : FlutterActivity() {
             FamilyOsApplication.CHANNEL_GEOFENCE,
             FamilyOsApplication.CHANNEL_PROTECTION,
             FamilyOsApplication.CHANNEL_CHAT,
+            FamilyOsApplication.CHANNEL_ALERTS,
         )
         if (title.isNullOrEmpty() || title.length > 160 || body.isNullOrEmpty() || body.length > 240 ||
             channelId == null || channelId !in allowedChannels || !isValidNotificationRoute(route)) {
@@ -565,6 +714,7 @@ class MainActivity : FlutterActivity() {
             FamilyOsApplication.CHANNEL_SOS -> ContextCompat.getColor(this, R.color.familyos_sos_notification)
             FamilyOsApplication.CHANNEL_GEOFENCE -> ContextCompat.getColor(this, R.color.familyos_geofence_notification)
             FamilyOsApplication.CHANNEL_PROTECTION -> ContextCompat.getColor(this, R.color.familyos_protection_notification)
+            FamilyOsApplication.CHANNEL_ALERTS -> ContextCompat.getColor(this, R.color.familyos_alerts_notification)
             else -> ContextCompat.getColor(this, R.color.familyos_chat_notification)
         }
         val openApp = Intent(this, MainActivity::class.java).apply {
@@ -585,7 +735,9 @@ class MainActivity : FlutterActivity() {
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setCategory(NotificationCompat.CATEGORY_EVENT)
             .setPriority(
-                if (channelId == FamilyOsApplication.CHANNEL_CHAT) NotificationCompat.PRIORITY_DEFAULT
+                if (channelId == FamilyOsApplication.CHANNEL_CHAT
+                    || channelId == FamilyOsApplication.CHANNEL_ALERTS
+                ) NotificationCompat.PRIORITY_DEFAULT
                 else NotificationCompat.PRIORITY_HIGH,
             )
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
@@ -595,7 +747,8 @@ class MainActivity : FlutterActivity() {
         when (channelId) {
             FamilyOsApplication.CHANNEL_SOS, FamilyOsApplication.CHANNEL_GEOFENCE ->
                 builder.setDefaults(NotificationCompat.DEFAULT_SOUND or NotificationCompat.DEFAULT_VIBRATE)
-            FamilyOsApplication.CHANNEL_CHAT -> builder.setDefaults(NotificationCompat.DEFAULT_SOUND)
+            FamilyOsApplication.CHANNEL_CHAT,
+            FamilyOsApplication.CHANNEL_ALERTS -> builder.setDefaults(NotificationCompat.DEFAULT_SOUND)
         }
         val notification = builder.build()
         try {
@@ -622,6 +775,8 @@ class MainActivity : FlutterActivity() {
                 validUuid(uri.getQueryParameter("childId"))
             "/scr-fat-026" -> keys == setOf("deviceId") && exactlyOne("deviceId") &&
                 validUuid(uri.getQueryParameter("deviceId"))
+            // The task board is reached empty; any parameter at all is a reason to refuse the tap.
+            "/scr-fat-054" -> keys.isEmpty()
             else -> false
         }
     }
@@ -704,6 +859,7 @@ class MainActivity : FlutterActivity() {
         private const val NOTIFICATION_CHANNEL = "com.familyos.family_os/family_notifications"
         private const val REQUEST_FOREGROUND_LOCATION = 8101
         private const val REQUEST_BACKGROUND_LOCATION = 8102
+        private const val REQUEST_NOTIFICATION_PERMISSION = 8103
         const val EXTRA_FLUTTER_ROUTE = "flutter_route"
         const val EXTRA_FLUTTER_AUDIT = "flutter_audit"
         private const val EXTRA_NOTIFICATION_ROUTE = "family_notification_route"

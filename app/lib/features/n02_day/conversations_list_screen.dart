@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart' as intl;
 
 import 'package:family_os/app/role_controller.dart';
 import 'package:family_os/app/shell_tab_more_tools.dart';
@@ -15,6 +14,7 @@ import 'package:family_os/core/design/components/tag.dart';
 import 'package:family_os/core/design/tokens.dart';
 import 'package:family_os/core/domain/role.dart';
 import 'package:family_os/core/i18n/app_localizations.dart';
+import 'package:family_os/core/i18n/clock_format.dart';
 import 'package:family_os/core/policy/chat_availability.dart';
 import 'package:family_os/core/identity/sos_sender.dart';
 import 'package:family_os/core/policy/sos_fire.dart';
@@ -861,8 +861,7 @@ class _ConversationRow extends StatelessWidget {
           );
     final timeLabel = thread.lastMessageAt == null
         ? thread.timeLabel
-        : intl.DateFormat.Hm(l10n.localeName)
-            .format(thread.lastMessageAt!.toLocal());
+        : formatFamilyClockFromDateTime(context, thread.lastMessageAt!.toLocal());
 
     return RowTile(
       key: ConversationsListKeys.row(thread.id),

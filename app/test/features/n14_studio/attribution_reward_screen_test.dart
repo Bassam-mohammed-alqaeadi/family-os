@@ -41,8 +41,11 @@ void main() {
       find.byKey(AttributionRewardKeys.rewardSwitch('play')),
       findsOneWidget,
     );
-    expect(find.textContaining('20 minutes to their wallet'), findsOneWidget);
-    expect(find.textContaining('+15 play minutes'), findsOneWidget);
+    // The amounts are the parent's own (control panel), shown as set.
+    // No row states a minute figure as granted; the amounts sit in the parent's fields.
+    expect(find.textContaining('20 minutes to their wallet'), findsNothing);
+    expect(find.textContaining('+15 play minutes'), findsNothing);
+    expect(find.byWidgetPredicate((w) => w is EditableText && w.controller.text == '20'), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(AttributionRewardKeys.assignCta));
     await tester.pumpAndSettle();
@@ -51,6 +54,31 @@ void main() {
     AppToast.dismiss();
     await tester.pumpAndSettle();
     expect(nav, contains('SCR-FAT-046'));
+  });
+
+  testWidgets('the parent sets the reward minutes; out-of-range values are refused', (tester) async {
+    final nav = <String>[];
+    final repo = InMemoryAttributionRewardRepository(
+      seed: attributionRewardPrototypeFixture(),
+    );
+    await _pump(tester, repository: repo, onNavigate: nav.add);
+
+    await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '30');
+    await tester.pumpAndSettle();
+    expect(find.byWidgetPredicate((w) => w is EditableText && w.controller.text == '30'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '99999');
+    await tester.pumpAndSettle();
+    expect(find.byWidgetPredicate((w) => w is EditableText && w.controller.text == '30'), findsOneWidget);
+
+    // 0 is accepted: it turns the reward off locally (never counted), and a positive amount
+    // typed back turns it on again.
+    await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '0');
+    await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(find.byKey(AttributionRewardKeys.rewardSwitch('wallet'))).value, isFalse);
+    await tester.enterText(find.byKey(const Key('reward_minutes_wallet')), '12');
+    await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(find.byKey(AttributionRewardKeys.rewardSwitch('wallet'))).value, isTrue);
   });
 
   testWidgets('library CTA → FAT-046', (tester) async {
