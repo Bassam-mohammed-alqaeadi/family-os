@@ -132,12 +132,12 @@ void main() {
       -300,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(NotificationPrefsKeys.quietHoursSwitch));
+    await _tapKey(tester, NotificationPrefsKeys.quietHoursSwitch);
     await tester.pumpAndSettle();
     expect(find.byKey(NotificationPrefsKeys.quietStart), findsOneWidget);
     expect(find.byKey(NotificationPrefsKeys.quietEnd), findsOneWidget);
 
-    await tester.tap(find.byKey(NotificationPrefsKeys.save));
+    await _tapKey(tester, NotificationPrefsKeys.save);
     await tester.pump();
     expect(find.text('تم حفظ إعدادات الإشعارات'), findsOneWidget);
     await _settleToast(tester);
@@ -162,7 +162,7 @@ void main() {
       200,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(NotificationPrefsKeys.childRequestsSwitch));
+    await _tapKey(tester, NotificationPrefsKeys.childRequestsSwitch);
     await tester.pumpAndSettle();
     await _settleToast(tester);
 
@@ -171,7 +171,7 @@ void main() {
       300,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(NotificationPrefsKeys.summaryDigestSwitch));
+    await _tapKey(tester, NotificationPrefsKeys.summaryDigestSwitch);
     await tester.pumpAndSettle();
     await _settleToast(tester);
 
@@ -237,9 +237,9 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.byKey(NotificationPrefsKeys.quietHoursSwitch));
+      await _tapKey(tester, NotificationPrefsKeys.quietHoursSwitch);
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(NotificationPrefsKeys.save));
+      await _tapKey(tester, NotificationPrefsKeys.save);
       await tester.pump();
       await _settleToast(tester);
 
@@ -337,7 +337,7 @@ void main() {
       );
 
       expect(find.byType(SettingsPersistToggle), findsWidgets);
-      await tester.tap(find.byKey(NotificationPrefsKeys.quietHoursSwitch));
+      await _tapKey(tester, NotificationPrefsKeys.quietHoursSwitch);
       await tester.pumpAndSettle();
 
       expect(find.text('تم حفظ إعدادات الإشعارات'), findsOneWidget);
@@ -359,7 +359,7 @@ void main() {
         memberId: 'father',
       );
 
-      await tester.tap(find.byKey(NotificationPrefsKeys.quietHoursSwitch));
+      await _tapKey(tester, NotificationPrefsKeys.quietHoursSwitch);
       await tester.pumpAndSettle();
 
       expect(find.byKey(SettingsPersistToggleKeys.error), findsOneWidget);
@@ -396,6 +396,17 @@ final class _FailingNotificationPrefsRepository
 
 Future<void> _settleToast(WidgetTester tester) async {
   await tester.pump(const Duration(seconds: 4));
+  await tester.pumpAndSettle();
+}
+
+/// The screen's cards grew taller with the polished surface (provenance tags, the computed state
+/// line), so a control can now sit below the fold. A tap that lands on empty canvas only warns —
+/// the repo's own `ensureVisible` idiom is what makes these acceptance taps reach what they name.
+Future<void> _tapKey(WidgetTester tester, Key key) async {
+  final target = find.byKey(key);
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.tap(target);
   await tester.pumpAndSettle();
 }
 
