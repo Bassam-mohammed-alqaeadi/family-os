@@ -305,7 +305,7 @@ class _AuditRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       container: true,
-      label: '${_title()} · ${_subtitle()}',
+      label: '${_title()} · ${_subtitle(context)}',
       child: Padding(
         key: AuditLogKeys.entry(entry.id),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -329,7 +329,7 @@ class _AuditRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    _subtitle(),
+                    _subtitle(context),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -371,7 +371,7 @@ class _AuditRow extends StatelessWidget {
     };
   }
 
-  String _subtitle() {
+  String _subtitle(BuildContext context) {
     final when = _formatWhen(context, entry.at);
     final actor = _actorLabel();
     final detail = _detailLabel();

@@ -472,7 +472,7 @@ void main() {
     expect(
       find.byKey(NotificationPrefsKeys.devicePermissionRequest),
       findsNothing,
-      'an answered question stops being a button',
+      reason: 'an answered question stops being a button',
     );
   });
 
