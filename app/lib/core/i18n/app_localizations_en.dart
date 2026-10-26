@@ -14036,4 +14036,90 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get familyCustomizationRefusedNote =>
       'The app would not take that change.';
+
+  @override
+  String get settingsClockAm => 'AM';
+
+  @override
+  String get settingsClockPm => 'PM';
+
+  @override
+  String get notificationPrefsTimeUnset => 'Not set';
+
+  @override
+  String get notificationPrefsUndo => 'Undo';
+
+  @override
+  String get notificationPrefsDraftBadge => 'Not saved yet';
+
+  @override
+  String get notificationPrefsSaveTimes => 'Save the quiet time';
+
+  @override
+  String notificationPrefsQuietDurationHours(String hours) {
+    return 'Quiet length: $hours hours';
+  }
+
+  @override
+  String notificationPrefsQuietDurationMinutes(String minutes) {
+    return 'Quiet length: $minutes minutes';
+  }
+
+  @override
+  String notificationPrefsQuietDurationBoth(String hours, String minutes) {
+    return 'Quiet length: $hours h $minutes min';
+  }
+
+  @override
+  String get notificationPrefsQuietCrossesMidnight =>
+      'It runs from tonight into tomorrow morning';
+
+  @override
+  String get notificationPrefsQuietNowInside =>
+      'You are inside your quiet time now: only emergency calls reach you';
+
+  @override
+  String get notificationPrefsQuietNowOutside =>
+      'You are outside your quiet time now: ordinary alerts arrive as they happen';
+
+  @override
+  String get notificationPrefsQuietOffState =>
+      'Quiet time is off: every alert arrives as it happens';
+
+  @override
+  String get notificationPrefsEqualTimes =>
+      'Start and end are the same time — pick two different times so the silence can begin and end';
+
+  @override
+  String get notificationPrefsChildReadOnly =>
+      'Your parent owns these notification settings — you can read them, not change them';
+
+  @override
+  String get notificationPrefsAlwaysArrive =>
+      'Always arrive: emergency calls, arriving at a place, leaving it, device protection reports';
+
+  @override
+  String get notificationPrefsLaterStep => 'Fifteen minutes later';
+
+  @override
+  String get notificationPrefsEarlierStep => 'Fifteen minutes earlier';
+
+  @override
+  String get notificationPrefsTapTimeHint => 'Tap to pick a time';
+
+  @override
+  String get notificationPrefsSaveFailedDraft =>
+      'Your change is not saved yet — you can try again, and we keep what you picked';
+
+  @override
+  String get notificationPrefsStoredLocally =>
+      'Saved on this phone alone — your other devices cannot read it';
+
+  @override
+  String get notificationPrefsStoredInFamily =>
+      'In your family\'s account — every device of yours reads it';
+
+  @override
+  String get notificationPrefsNoDeliveryYet =>
+      'No notifications are sent in this build — your choices are stored until sending begins';
 }

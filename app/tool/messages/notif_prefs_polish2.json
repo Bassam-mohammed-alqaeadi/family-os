@@ -1,0 +1,23 @@
+[
+  {
+    "key": "notificationPrefsStoredLocally",
+    "ar": "محفوظٌ على هذا الجهاز وحده — لا يراه الحساب الذي يقرأه بقية أجهزتك",
+    "en": "Saved on this phone alone — the account the rest of your devices read does not see it",
+    "desc": "أمانة المصدر: تشرح للشاشة أين تُحفظ الإعدادات اليوم.",
+    "placeholders": []
+  },
+  {
+    "key": "notificationPrefsStoredInFamily",
+    "ar": "في حساب عائلتك — كل أجهزتك تقرؤها",
+    "en": "In your family's account — every device of yours reads it",
+    "desc": "تُعرض حين تصير الإعدادات خوادمية، فلا تُكذب الشاشة على نفسها.",
+    "placeholders": []
+  },
+  {
+    "key": "notificationPrefsNoDeliveryYet",
+    "ar": "لا تُرسَل إشعارات في هذا الإصدار — اختياراتك تُحفظ إلى أن يبدأ الإرسال",
+    "en": "No notifications are sent in this build — your choices are stored until sending begins",
+    "desc": "صدقٌ صريح بدل وعدٍ لا ينفَّذ.",
+    "placeholders": []
+  }
+]

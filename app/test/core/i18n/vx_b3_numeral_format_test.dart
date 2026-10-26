@@ -54,4 +54,17 @@ void main() {
     expect(formatAppInt(14), '14',
         reason: 'showing both options must not change the family’s own answer');
   });
+
+  test('padding is done in Western digits first, so a leading zero wears the family shape', () {
+    expect(formatAppIntPadded(7), '07');
+    expect(formatAppIntPadded(-5), '-05');
+    expect(formatAppIntPadded(1994, width: 4), '1994');
+
+    AppNumerals.applyFamilyChoice(AppNumeralSystem.eastern);
+    expect(formatAppIntPadded(7), '٠٧');
+    expect(formatAppIntPadded(-5), '-٠٥');
+    // The trap this exists for: padding after formatting hangs a Western zero in front of an
+    // Eastern digit, which is a family's clock written by two hands.
+    expect(formatAppInt(7).padLeft(2, '0'), isNot(formatAppIntPadded(7)));
+  });
 }

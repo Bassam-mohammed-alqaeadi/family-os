@@ -24494,6 +24494,144 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'رفض التطبيق هذا التعديل.'**
   String get familyCustomizationRefusedNote;
+
+  /// كلمة ما قبل الظهر في الساعة ذات الاثنتي عشرة ساعة.
+  ///
+  /// In ar, this message translates to:
+  /// **'ص'**
+  String get settingsClockAm;
+
+  /// كلمة ما بعد الظهر في الساعة ذات الاثنتي عشرة ساعة.
+  ///
+  /// In ar, this message translates to:
+  /// **'م'**
+  String get settingsClockPm;
+
+  /// يُعرض مكان وقتٍ لم يختره الأب بعد، بدل أن تختلقه الشاشة.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُحدَّد'**
+  String get notificationPrefsTimeUnset;
+
+  /// يزيل التغيير الذي لم يُحفظ بعد.
+  ///
+  /// In ar, this message translates to:
+  /// **'تراجع'**
+  String get notificationPrefsUndo;
+
+  /// ينبّه الوالد إلى أن التعديل لا يزال على الشاشة ولم يصل إلى حسابه.
+  ///
+  /// In ar, this message translates to:
+  /// **'تغيير غير محفوظ'**
+  String get notificationPrefsDraftBadge;
+
+  /// زرّ الحفظ حين يكون وقت الصمت هو المتغيّر.
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظ وقت الصمت'**
+  String get notificationPrefsSaveTimes;
+
+  /// طول نافذة الصمت إذا كانت ساعات كاملة.
+  ///
+  /// In ar, this message translates to:
+  /// **'مدة الصمت: {hours} ساعة'**
+  String notificationPrefsQuietDurationHours(String hours);
+
+  /// طول نافذة الصمت إذا كانت أقل من ساعة.
+  ///
+  /// In ar, this message translates to:
+  /// **'مدة الصمت: {minutes} دقيقة'**
+  String notificationPrefsQuietDurationMinutes(String minutes);
+
+  /// طول نافذة الصمت بالساعات والدقائق.
+  ///
+  /// In ar, this message translates to:
+  /// **'مدة الصمت: {hours} ساعة و{minutes} دقيقة'**
+  String notificationPrefsQuietDurationBoth(String hours, String minutes);
+
+  /// توضيح حين تكون النهاية قبل البداية في الساعة.
+  ///
+  /// In ar, this message translates to:
+  /// **'يمتدّ من مساء اليوم إلى فجر الغد'**
+  String get notificationPrefsQuietCrossesMidnight;
+
+  /// حالة الصمت الحاضرة، محسوبةً لا متخيَّلة.
+  ///
+  /// In ar, this message translates to:
+  /// **'الآن أنت داخل وقت الصمت: لا يصلك إلا نداء الاستغاثة'**
+  String get notificationPrefsQuietNowInside;
+
+  /// حالة الوصول الحاضرة حين لا يكون الصمت فعّالاً.
+  ///
+  /// In ar, this message translates to:
+  /// **'الآن أنت خارج وقت الصمت: تصلك التنبيهات العادية لحظة حدوثها'**
+  String get notificationPrefsQuietNowOutside;
+
+  /// حالة الوصول الحاضرة حين يكون وقت الصمت مطفأً.
+  ///
+  /// In ar, this message translates to:
+  /// **'وقت الصمت متوقف: كل تنبيه يصلك لحظة حدوثه'**
+  String get notificationPrefsQuietOffState;
+
+  /// سبب مسمّى لرفض الحفظ حين يتساوى الوقتان.
+  ///
+  /// In ar, this message translates to:
+  /// **'البداية والنهاية الوقت نفسه — اختر وقتين مختلفين ليبدأ الصمت ويتوقف'**
+  String get notificationPrefsEqualTimes;
+
+  /// سبب القراءة فقط للطفل، بدل مفاتيح معطّلة بلا تفسير.
+  ///
+  /// In ar, this message translates to:
+  /// **'إعدادات الإشعارات هنا يملكها والدك — يمكنك قراءتها دون أن تغيّرها'**
+  String get notificationPrefsChildReadOnly;
+
+  /// جردٌ صادق لما لا يمكن إسكاته، لا وعدٌ عام.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصلك دائماً: الاستغاثة، دخول المنطقة، خروجها، تقرير حماية الجهاز'**
+  String get notificationPrefsAlwaysArrive;
+
+  /// زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار.
+  ///
+  /// In ar, this message translates to:
+  /// **'تأخير ربع ساعة'**
+  String get notificationPrefsLaterStep;
+
+  /// زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار.
+  ///
+  /// In ar, this message translates to:
+  /// **'تقديم ربع ساعة'**
+  String get notificationPrefsEarlierStep;
+
+  /// يُقرأ بصوتٍ مع حالة الوقت، ولا يظهر على الشاشة.
+  ///
+  /// In ar, this message translates to:
+  /// **'اضغط لاختيار وقت'**
+  String get notificationPrefsTapTimeHint;
+
+  /// أمانة الفشل: لا تُرجَع الشاشة إلى القيمة القديمة بصمت.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُحفظ التغيير بعد — يمكنك المحاولة مرة أخرى، وسنبقي ما اخترته'**
+  String get notificationPrefsSaveFailedDraft;
+
+  /// أمانة المصدر: تشرح للشاشة أين تُحفظ الإعدادات اليوم.
+  ///
+  /// In ar, this message translates to:
+  /// **'محفوظٌ على هذا الجهاز وحده — لا يراه الحساب الذي يقرأه بقية أجهزتك'**
+  String get notificationPrefsStoredLocally;
+
+  /// تُعرض حين تصير الإعدادات خوادمية، فلا تُكذب الشاشة على نفسها.
+  ///
+  /// In ar, this message translates to:
+  /// **'في حساب عائلتك — كل أجهزتك تقرؤها'**
+  String get notificationPrefsStoredInFamily;
+
+  /// صدقٌ صريح بدل وعدٍ لا ينفَّذ.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا تُرسَل إشعارات في هذا الإصدار — اختياراتك تُحفظ إلى أن يبدأ الإرسال'**
+  String get notificationPrefsNoDeliveryYet;
 }
 
 class _AppLocalizationsDelegate

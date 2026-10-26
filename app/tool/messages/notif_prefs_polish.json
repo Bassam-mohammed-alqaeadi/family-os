@@ -1,0 +1,144 @@
+[
+  {
+    "key": "settingsClockAm",
+    "ar": "ص",
+    "en": "AM",
+    "desc": "كلمة ما قبل الظهر في الساعة ذات الاثنتي عشرة ساعة."
+  },
+  {
+    "key": "settingsClockPm",
+    "ar": "م",
+    "en": "PM",
+    "desc": "كلمة ما بعد الظهر في الساعة ذات الاثنتي عشرة ساعة."
+  },
+  {
+    "key": "notificationPrefsTimeUnset",
+    "ar": "لم يُحدَّد",
+    "en": "Not set",
+    "desc": "يُعرض مكان وقتٍ لم يختره الأب بعد، بدل أن تختلقه الشاشة."
+  },
+  {
+    "key": "notificationPrefsUndo",
+    "ar": "تراجع",
+    "en": "Undo",
+    "desc": "يزيل التغيير الذي لم يُحفظ بعد."
+  },
+  {
+    "key": "notificationPrefsDraftBadge",
+    "ar": "تغيير غير محفوظ",
+    "en": "Not saved yet",
+    "desc": "ينبّه الوالد إلى أن التعديل لا يزال على الشاشة ولم يصل إلى حسابه."
+  },
+  {
+    "key": "notificationPrefsSaveTimes",
+    "ar": "احفظ وقت الصمت",
+    "en": "Save the quiet time",
+    "desc": "زرّ الحفظ حين يكون وقت الصمت هو المتغيّر."
+  },
+  {
+    "key": "notificationPrefsQuietDurationHours",
+    "ar": "مدة الصمت: {hours} ساعة",
+    "en": "Quiet length: {hours} hours",
+    "desc": "طول نافذة الصمت إذا كانت ساعات كاملة.",
+    "placeholders": [
+      [
+        "hours",
+        "String"
+      ]
+    ]
+  },
+  {
+    "key": "notificationPrefsQuietDurationMinutes",
+    "ar": "مدة الصمت: {minutes} دقيقة",
+    "en": "Quiet length: {minutes} minutes",
+    "desc": "طول نافذة الصمت إذا كانت أقل من ساعة.",
+    "placeholders": [
+      [
+        "minutes",
+        "String"
+      ]
+    ]
+  },
+  {
+    "key": "notificationPrefsQuietDurationBoth",
+    "ar": "مدة الصمت: {hours} ساعة و{minutes} دقيقة",
+    "en": "Quiet length: {hours} h {minutes} min",
+    "desc": "طول نافذة الصمت بالساعات والدقائق.",
+    "placeholders": [
+      [
+        "hours",
+        "String"
+      ],
+      [
+        "minutes",
+        "String"
+      ]
+    ]
+  },
+  {
+    "key": "notificationPrefsQuietCrossesMidnight",
+    "ar": "يمتدّ من مساء اليوم إلى فجر الغد",
+    "en": "It runs from tonight into tomorrow morning",
+    "desc": "توضيح حين تكون النهاية قبل البداية في الساعة."
+  },
+  {
+    "key": "notificationPrefsQuietNowInside",
+    "ar": "الآن أنت داخل وقت الصمت: لا يصلك إلا نداء الاستغاثة",
+    "en": "You are inside your quiet time now: only emergency calls reach you",
+    "desc": "حالة الصمت الحاضرة، محسوبةً لا متخيَّلة."
+  },
+  {
+    "key": "notificationPrefsQuietNowOutside",
+    "ar": "الآن أنت خارج وقت الصمت: تصلك التنبيهات العادية لحظة حدوثها",
+    "en": "You are outside your quiet time now: ordinary alerts arrive as they happen",
+    "desc": "حالة الوصول الحاضرة حين لا يكون الصمت فعّالاً."
+  },
+  {
+    "key": "notificationPrefsQuietOffState",
+    "ar": "وقت الصمت متوقف: كل تنبيه يصلك لحظة حدوثه",
+    "en": "Quiet time is off: every alert arrives as it happens",
+    "desc": "حالة الوصول الحاضرة حين يكون وقت الصمت مطفأً."
+  },
+  {
+    "key": "notificationPrefsEqualTimes",
+    "ar": "البداية والنهاية الوقت نفسه — اختر وقتين مختلفين ليبدأ الصمت ويتوقف",
+    "en": "Start and end are the same time — pick two different times so the silence can begin and end",
+    "desc": "سبب مسمّى لرفض الحفظ حين يتساوى الوقتان."
+  },
+  {
+    "key": "notificationPrefsChildReadOnly",
+    "ar": "إعدادات الإشعارات هنا يملكها والدك — يمكنك قراءتها دون أن تغيّرها",
+    "en": "Your parent owns these notification settings — you can read them, not change them",
+    "desc": "سبب القراءة فقط للطفل، بدل مفاتيح معطّلة بلا تفسير."
+  },
+  {
+    "key": "notificationPrefsAlwaysArrive",
+    "ar": "تصلك دائماً: الاستغاثة، دخول المنطقة، خروجها، تقرير حماية الجهاز",
+    "en": "Always arrive: emergency calls, arriving at a place, leaving it, device protection reports",
+    "desc": "جردٌ صادق لما لا يمكن إسكاته، لا وعدٌ عام."
+  },
+  {
+    "key": "notificationPrefsLaterStep",
+    "ar": "تأخير ربع ساعة",
+    "en": "Fifteen minutes later",
+    "desc": "زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار."
+  },
+  {
+    "key": "notificationPrefsEarlierStep",
+    "ar": "تقديم ربع ساعة",
+    "en": "Fifteen minutes earlier",
+    "desc": "زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار."
+  },
+  {
+    "key": "notificationPrefsTapTimeHint",
+    "ar": "اضغط لاختيار وقت",
+    "en": "Tap to pick a time",
+    "desc": "يُقرأ بصوتٍ مع حالة الوقت، ولا يظهر على الشاشة."
+  },
+  {
+    "key": "notificationPrefsSaveFailedDraft",
+    "ar": "لم يُحفظ التغيير بعد — يمكنك المحاولة مرة أخرى، وسنبقي ما اخترته",
+    "en": "Your change is not saved yet — you can try again, and we keep what you picked",
+    "desc": "أمانة الفشل: لا تُرجَع الشاشة إلى القيمة القديمة بصمت."
+  }
+]

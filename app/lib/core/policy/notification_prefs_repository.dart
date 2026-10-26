@@ -10,6 +10,14 @@ abstract class NotificationPrefsRepository {
 
   Future<void> save(NotificationPrefs prefs);
 
+  /// Where this row actually lives, as far as the screen is allowed to know.
+  ///
+  /// `false` is the honest default: the local KV repository stores on the handset, and the family
+  /// account has no idea the preference exists. A screen must not print "saved for your family"
+  /// while that is true, so it asks instead of asserting — and the day a server-backed repository
+  /// replaces this one, it flips the word by overriding this getter, with no copy to hunt down.
+  bool get serverBacked => false;
+
   /// Always rejected — SOS receipt is ungradeable (doc 20 / SET-011 / SET-021).
   ///
   /// Guardians (`father` / `mother` / `guardian`) especially cannot write

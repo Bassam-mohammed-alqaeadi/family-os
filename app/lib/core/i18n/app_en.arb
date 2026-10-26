@@ -17672,5 +17672,115 @@
   "familyCustomizationRefusedNote": "The app would not take that change.",
   "@familyCustomizationRefusedNote": {
     "description": "A refusal with no reason this build can name — said plainly, never dressed up."
+  },
+  "settingsClockAm": "AM",
+  "@settingsClockAm": {
+    "description": "كلمة ما قبل الظهر في الساعة ذات الاثنتي عشرة ساعة."
+  },
+  "settingsClockPm": "PM",
+  "@settingsClockPm": {
+    "description": "كلمة ما بعد الظهر في الساعة ذات الاثنتي عشرة ساعة."
+  },
+  "notificationPrefsTimeUnset": "Not set",
+  "@notificationPrefsTimeUnset": {
+    "description": "يُعرض مكان وقتٍ لم يختره الأب بعد، بدل أن تختلقه الشاشة."
+  },
+  "notificationPrefsUndo": "Undo",
+  "@notificationPrefsUndo": {
+    "description": "يزيل التغيير الذي لم يُحفظ بعد."
+  },
+  "notificationPrefsDraftBadge": "Not saved yet",
+  "@notificationPrefsDraftBadge": {
+    "description": "ينبّه الوالد إلى أن التعديل لا يزال على الشاشة ولم يصل إلى حسابه."
+  },
+  "notificationPrefsSaveTimes": "Save the quiet time",
+  "@notificationPrefsSaveTimes": {
+    "description": "زرّ الحفظ حين يكون وقت الصمت هو المتغيّر."
+  },
+  "notificationPrefsQuietDurationHours": "Quiet length: {hours} hours",
+  "@notificationPrefsQuietDurationHours": {
+    "description": "طول نافذة الصمت إذا كانت ساعات كاملة.",
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationPrefsQuietDurationMinutes": "Quiet length: {minutes} minutes",
+  "@notificationPrefsQuietDurationMinutes": {
+    "description": "طول نافذة الصمت إذا كانت أقل من ساعة.",
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationPrefsQuietDurationBoth": "Quiet length: {hours} h {minutes} min",
+  "@notificationPrefsQuietDurationBoth": {
+    "description": "طول نافذة الصمت بالساعات والدقائق.",
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationPrefsQuietCrossesMidnight": "It runs from tonight into tomorrow morning",
+  "@notificationPrefsQuietCrossesMidnight": {
+    "description": "توضيح حين تكون النهاية قبل البداية في الساعة."
+  },
+  "notificationPrefsQuietNowInside": "You are inside your quiet time now: only emergency calls reach you",
+  "@notificationPrefsQuietNowInside": {
+    "description": "حالة الصمت الحاضرة، محسوبةً لا متخيَّلة."
+  },
+  "notificationPrefsQuietNowOutside": "You are outside your quiet time now: ordinary alerts arrive as they happen",
+  "@notificationPrefsQuietNowOutside": {
+    "description": "حالة الوصول الحاضرة حين لا يكون الصمت فعّالاً."
+  },
+  "notificationPrefsQuietOffState": "Quiet time is off: every alert arrives as it happens",
+  "@notificationPrefsQuietOffState": {
+    "description": "حالة الوصول الحاضرة حين يكون وقت الصمت مطفأً."
+  },
+  "notificationPrefsEqualTimes": "Start and end are the same time — pick two different times so the silence can begin and end",
+  "@notificationPrefsEqualTimes": {
+    "description": "سبب مسمّى لرفض الحفظ حين يتساوى الوقتان."
+  },
+  "notificationPrefsChildReadOnly": "Your parent owns these notification settings — you can read them, not change them",
+  "@notificationPrefsChildReadOnly": {
+    "description": "سبب القراءة فقط للطفل، بدل مفاتيح معطّلة بلا تفسير."
+  },
+  "notificationPrefsAlwaysArrive": "Always arrive: emergency calls, arriving at a place, leaving it, device protection reports",
+  "@notificationPrefsAlwaysArrive": {
+    "description": "جردٌ صادق لما لا يمكن إسكاته، لا وعدٌ عام."
+  },
+  "notificationPrefsLaterStep": "Fifteen minutes later",
+  "@notificationPrefsLaterStep": {
+    "description": "زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار."
+  },
+  "notificationPrefsEarlierStep": "Fifteen minutes earlier",
+  "@notificationPrefsEarlierStep": {
+    "description": "زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار."
+  },
+  "notificationPrefsTapTimeHint": "Tap to pick a time",
+  "@notificationPrefsTapTimeHint": {
+    "description": "يُقرأ بصوتٍ مع حالة الوقت، ولا يظهر على الشاشة."
+  },
+  "notificationPrefsSaveFailedDraft": "Your change is not saved yet — you can try again, and we keep what you picked",
+  "@notificationPrefsSaveFailedDraft": {
+    "description": "أمانة الفشل: لا تُرجَع الشاشة إلى القيمة القديمة بصمت."
+  },
+  "notificationPrefsStoredLocally": "Saved on this phone alone — your other devices cannot read it",
+  "@notificationPrefsStoredLocally": {
+    "description": "أمانة المصدر: تشرح للشاشة أين تُحفظ الإعدادات اليوم."
+  },
+  "notificationPrefsStoredInFamily": "In your family's account — every device of yours reads it",
+  "@notificationPrefsStoredInFamily": {
+    "description": "تُعرض حين تصير الإعدادات خوادمية، فلا تُكذب الشاشة على نفسها."
+  },
+  "notificationPrefsNoDeliveryYet": "No notifications are sent in this build — your choices are stored until sending begins",
+  "@notificationPrefsNoDeliveryYet": {
+    "description": "صدقٌ صريح بدل وعدٍ لا ينفَّذ."
   }
 }

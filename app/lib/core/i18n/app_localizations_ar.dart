@@ -13797,4 +13797,90 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get familyCustomizationRefusedNote => 'رفض التطبيق هذا التعديل.';
+
+  @override
+  String get settingsClockAm => 'ص';
+
+  @override
+  String get settingsClockPm => 'م';
+
+  @override
+  String get notificationPrefsTimeUnset => 'لم يُحدَّد';
+
+  @override
+  String get notificationPrefsUndo => 'تراجع';
+
+  @override
+  String get notificationPrefsDraftBadge => 'تغيير غير محفوظ';
+
+  @override
+  String get notificationPrefsSaveTimes => 'احفظ وقت الصمت';
+
+  @override
+  String notificationPrefsQuietDurationHours(String hours) {
+    return 'مدة الصمت: $hours ساعة';
+  }
+
+  @override
+  String notificationPrefsQuietDurationMinutes(String minutes) {
+    return 'مدة الصمت: $minutes دقيقة';
+  }
+
+  @override
+  String notificationPrefsQuietDurationBoth(String hours, String minutes) {
+    return 'مدة الصمت: $hours ساعة و$minutes دقيقة';
+  }
+
+  @override
+  String get notificationPrefsQuietCrossesMidnight =>
+      'يمتدّ من مساء اليوم إلى فجر الغد';
+
+  @override
+  String get notificationPrefsQuietNowInside =>
+      'الآن أنت داخل وقت الصمت: لا يصلك إلا نداء الاستغاثة';
+
+  @override
+  String get notificationPrefsQuietNowOutside =>
+      'الآن أنت خارج وقت الصمت: تصلك التنبيهات العادية لحظة حدوثها';
+
+  @override
+  String get notificationPrefsQuietOffState =>
+      'وقت الصمت متوقف: كل تنبيه يصلك لحظة حدوثه';
+
+  @override
+  String get notificationPrefsEqualTimes =>
+      'البداية والنهاية الوقت نفسه — اختر وقتين مختلفين ليبدأ الصمت ويتوقف';
+
+  @override
+  String get notificationPrefsChildReadOnly =>
+      'إعدادات الإشعارات هنا يملكها والدك — يمكنك قراءتها دون أن تغيّرها';
+
+  @override
+  String get notificationPrefsAlwaysArrive =>
+      'تصلك دائماً: الاستغاثة، دخول المنطقة، خروجها، تقرير حماية الجهاز';
+
+  @override
+  String get notificationPrefsLaterStep => 'تأخير ربع ساعة';
+
+  @override
+  String get notificationPrefsEarlierStep => 'تقديم ربع ساعة';
+
+  @override
+  String get notificationPrefsTapTimeHint => 'اضغط لاختيار وقت';
+
+  @override
+  String get notificationPrefsSaveFailedDraft =>
+      'لم يُحفظ التغيير بعد — يمكنك المحاولة مرة أخرى، وسنبقي ما اخترته';
+
+  @override
+  String get notificationPrefsStoredLocally =>
+      'محفوظٌ على هذا الجهاز وحده — لا تقرأه بقية أجهزتك';
+
+  @override
+  String get notificationPrefsStoredInFamily =>
+      'في حساب عائلتك — كل أجهزتك تقرؤها';
+
+  @override
+  String get notificationPrefsNoDeliveryYet =>
+      'لا تُرسَل إشعارات في هذا الإصدار — اختياراتك تُحفظ إلى أن يبدأ الإرسال';
 }

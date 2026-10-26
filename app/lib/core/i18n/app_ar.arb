@@ -17687,5 +17687,115 @@
   "familyCustomizationRefusedNote": "رفض التطبيق هذا التعديل.",
   "@familyCustomizationRefusedNote": {
     "description": "A refusal with no reason this build can name — said plainly, never dressed up."
+  },
+  "settingsClockAm": "ص",
+  "@settingsClockAm": {
+    "description": "كلمة ما قبل الظهر في الساعة ذات الاثنتي عشرة ساعة."
+  },
+  "settingsClockPm": "م",
+  "@settingsClockPm": {
+    "description": "كلمة ما بعد الظهر في الساعة ذات الاثنتي عشرة ساعة."
+  },
+  "notificationPrefsTimeUnset": "لم يُحدَّد",
+  "@notificationPrefsTimeUnset": {
+    "description": "يُعرض مكان وقتٍ لم يختره الأب بعد، بدل أن تختلقه الشاشة."
+  },
+  "notificationPrefsUndo": "تراجع",
+  "@notificationPrefsUndo": {
+    "description": "يزيل التغيير الذي لم يُحفظ بعد."
+  },
+  "notificationPrefsDraftBadge": "تغيير غير محفوظ",
+  "@notificationPrefsDraftBadge": {
+    "description": "ينبّه الوالد إلى أن التعديل لا يزال على الشاشة ولم يصل إلى حسابه."
+  },
+  "notificationPrefsSaveTimes": "احفظ وقت الصمت",
+  "@notificationPrefsSaveTimes": {
+    "description": "زرّ الحفظ حين يكون وقت الصمت هو المتغيّر."
+  },
+  "notificationPrefsQuietDurationHours": "مدة الصمت: {hours} ساعة",
+  "@notificationPrefsQuietDurationHours": {
+    "description": "طول نافذة الصمت إذا كانت ساعات كاملة.",
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationPrefsQuietDurationMinutes": "مدة الصمت: {minutes} دقيقة",
+  "@notificationPrefsQuietDurationMinutes": {
+    "description": "طول نافذة الصمت إذا كانت أقل من ساعة.",
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationPrefsQuietDurationBoth": "مدة الصمت: {hours} ساعة و{minutes} دقيقة",
+  "@notificationPrefsQuietDurationBoth": {
+    "description": "طول نافذة الصمت بالساعات والدقائق.",
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationPrefsQuietCrossesMidnight": "يمتدّ من مساء اليوم إلى فجر الغد",
+  "@notificationPrefsQuietCrossesMidnight": {
+    "description": "توضيح حين تكون النهاية قبل البداية في الساعة."
+  },
+  "notificationPrefsQuietNowInside": "الآن أنت داخل وقت الصمت: لا يصلك إلا نداء الاستغاثة",
+  "@notificationPrefsQuietNowInside": {
+    "description": "حالة الصمت الحاضرة، محسوبةً لا متخيَّلة."
+  },
+  "notificationPrefsQuietNowOutside": "الآن أنت خارج وقت الصمت: تصلك التنبيهات العادية لحظة حدوثها",
+  "@notificationPrefsQuietNowOutside": {
+    "description": "حالة الوصول الحاضرة حين لا يكون الصمت فعّالاً."
+  },
+  "notificationPrefsQuietOffState": "وقت الصمت متوقف: كل تنبيه يصلك لحظة حدوثه",
+  "@notificationPrefsQuietOffState": {
+    "description": "حالة الوصول الحاضرة حين يكون وقت الصمت مطفأً."
+  },
+  "notificationPrefsEqualTimes": "البداية والنهاية الوقت نفسه — اختر وقتين مختلفين ليبدأ الصمت ويتوقف",
+  "@notificationPrefsEqualTimes": {
+    "description": "سبب مسمّى لرفض الحفظ حين يتساوى الوقتان."
+  },
+  "notificationPrefsChildReadOnly": "إعدادات الإشعارات هنا يملكها والدك — يمكنك قراءتها دون أن تغيّرها",
+  "@notificationPrefsChildReadOnly": {
+    "description": "سبب القراءة فقط للطفل، بدل مفاتيح معطّلة بلا تفسير."
+  },
+  "notificationPrefsAlwaysArrive": "تصلك دائماً: الاستغاثة، دخول المنطقة، خروجها، تقرير حماية الجهاز",
+  "@notificationPrefsAlwaysArrive": {
+    "description": "جردٌ صادق لما لا يمكن إسكاته، لا وعدٌ عام."
+  },
+  "notificationPrefsLaterStep": "تأخير ربع ساعة",
+  "@notificationPrefsLaterStep": {
+    "description": "زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار."
+  },
+  "notificationPrefsEarlierStep": "تقديم ربع ساعة",
+  "@notificationPrefsEarlierStep": {
+    "description": "زرّ ضبط الوقت بدقة دون فتح نافذة الاختيار."
+  },
+  "notificationPrefsTapTimeHint": "اضغط لاختيار وقت",
+  "@notificationPrefsTapTimeHint": {
+    "description": "يُقرأ بصوتٍ مع حالة الوقت، ولا يظهر على الشاشة."
+  },
+  "notificationPrefsSaveFailedDraft": "لم يُحفظ التغيير بعد — يمكنك المحاولة مرة أخرى، وسنبقي ما اخترته",
+  "@notificationPrefsSaveFailedDraft": {
+    "description": "أمانة الفشل: لا تُرجَع الشاشة إلى القيمة القديمة بصمت."
+  },
+  "notificationPrefsStoredLocally": "محفوظٌ على هذا الجهاز وحده — لا تقرأه بقية أجهزتك",
+  "@notificationPrefsStoredLocally": {
+    "description": "أمانة المصدر: تشرح للشاشة أين تُحفظ الإعدادات اليوم."
+  },
+  "notificationPrefsStoredInFamily": "في حساب عائلتك — كل أجهزتك تقرؤها",
+  "@notificationPrefsStoredInFamily": {
+    "description": "تُعرض حين تصير الإعدادات خوادمية، فلا تُكذب الشاشة على نفسها."
+  },
+  "notificationPrefsNoDeliveryYet": "لا تُرسَل إشعارات في هذا الإصدار — اختياراتك تُحفظ إلى أن يبدأ الإرسال",
+  "@notificationPrefsNoDeliveryYet": {
+    "description": "صدقٌ صريح بدل وعدٍ لا ينفَّذ."
   }
 }

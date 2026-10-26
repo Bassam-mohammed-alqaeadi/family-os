@@ -72,6 +72,19 @@ String formatAppNumber(num value) =>
 String formatAppInt(int value) =>
     _mapDigits(value.toString(), toEastern: AppNumerals.isEastern);
 
+/// [value] padded to [width] digits, in the digits this family chose.
+///
+/// Padding happens on Western digits first, so a family reading `٠٧` gets the leading zero in
+/// *their* digits — `formatAppInt(7).padLeft(2, '0')` would hang a Western `0` in front of an
+/// Eastern `٧`, which is the mistake this exists to prevent. Clocks and dates are the callers.
+String formatAppIntPadded(int value, {int width = 2}) {
+  final digits = value.abs().toString().padLeft(width, '0');
+  return _mapDigits(
+    value < 0 ? '-$digits' : digits,
+    toEastern: AppNumerals.isEastern,
+  );
+}
+
 /// Converts any Eastern Arabic-Indic digits in [raw] to Western 0–9.
 ///
 /// This is the input direction, and it does not consult a family's choice: a field that received
