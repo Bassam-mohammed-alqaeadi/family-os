@@ -395,17 +395,27 @@ void main() {
     tester,
   ) async {
     final spine = FamilyCustomizationFakeSpine(stored: true);
-    await _pumpCard(tester, authority: familyCustomizationAuthorityFor(spine), locale: const Locale('en'));
+    await _pumpCard(
+      tester,
+      authority: familyCustomizationAuthorityFor(spine),
+      locale: const Locale('en'),
+    );
 
-    expect(find.text("Your family's character"), findsOneWidget);
-    expect(find.text('At least one day — every count in the app measures its week against these.'),
-        findsOneWidget);
+    expect(find.text('Your family\'s character'), findsOneWidget);
+    expect(
+      find.text(
+        'At least one day — every count in the app measures its week against these.',
+      ),
+      findsOneWidget,
+    );
     expect(
       _chosen(tester, FamilyCustomizationKeys.weekStartDay(FamilyCustomizationDay.sunday)),
       isTrue,
     );
-    expect(Directionality.of(tester.element(find.byKey(FamilyCustomizationKeys.card)))),
-        TextDirection.ltr);
+    expect(
+      Directionality.of(tester.element(find.byKey(FamilyCustomizationKeys.card))),
+      TextDirection.ltr,
+    );
     expect(tester.takeException(), isNull);
   });
 }

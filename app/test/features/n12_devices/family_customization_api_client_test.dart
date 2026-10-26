@@ -13,7 +13,7 @@
 // spine stores, so a round trip here is a round trip through the same laws the real one enforces.
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:family_os/features/n12_devices/support/family_customization_fake_server.dart';
+import 'support/family_customization_fake_server.dart';
 import 'package:family_os/foundation_gate/family_customization_api_client.dart';
 import 'package:family_os/foundation_gate/foundation_gate_http.dart';
 import 'package:family_os/foundation_gate/foundation_gate_models.dart';

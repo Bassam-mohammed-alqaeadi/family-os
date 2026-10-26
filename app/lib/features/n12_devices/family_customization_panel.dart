@@ -209,6 +209,10 @@ class _FamilyCustomizationSectionState extends State<FamilyCustomizationSection>
     final authority = _authority;
     final profile = _profile;
     if (authority == null || profile == null || _busy || !_canSave) return;
+    // The sentences are taken before the await, not after it: a screen that asks the world a
+    // question and then reads the widget tree to answer it is a screen that can be asked to speak
+    // to a state that no longer exists.
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _busy = true;
       _note = null;
@@ -250,11 +254,10 @@ class _FamilyCustomizationSectionState extends State<FamilyCustomizationSection>
         _profile = answer.profile;
         _adoptDrafts(answer.profile!);
         _noteIsGood = true;
-        _note =
-            AppLocalizations.of(context).familyCustomizationSavedNote;
+        _note = l10n.familyCustomizationSavedNote;
       } else {
         _noteIsGood = false;
-        _note = _refusalNote(answer.refusal);
+        _note = _refusalNote(l10n, answer.refusal);
       }
     });
     // A stale version means somebody else in this family wrote first. Their answer is the one
@@ -264,15 +267,17 @@ class _FamilyCustomizationSectionState extends State<FamilyCustomizationSection>
       await _load();
       if (mounted) {
         setState(() {
-          _note = _refusalNote(FamilyCustomizationRefusal.staleVersion);
+          _note = _refusalNote(l10n, FamilyCustomizationRefusal.staleVersion);
           _noteIsGood = false;
         });
       }
     }
   }
 
-  String _refusalNote(FamilyCustomizationRefusal refusal) {
-    final l10n = AppLocalizations.of(context);
+  String _refusalNote(
+    AppLocalizations l10n,
+    FamilyCustomizationRefusal refusal,
+  ) {
     return switch (refusal) {
       FamilyCustomizationRefusal.staleVersion =>
         l10n.familyCustomizationStaleNote,
@@ -401,6 +406,17 @@ class _FamilyCustomizationSectionState extends State<FamilyCustomizationSection>
               _Group(
                 key: FamilyCustomizationKeys.numeralsGroup,
                 label: l10n.familyCustomizationNumeralsLabel,
+                footer: Text(
+                  key: FamilyCustomizationKeys.numeralsPreview,
+                  l10n.familyCustomizationNumeralsPreview(
+                    _previewFor(_numeralsDraft ?? profile.numerals),
+                  ),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: colors.ink2,
+                  ),
+                ),
                 children: [
                   ChoiceChip(
                     key: FamilyCustomizationKeys.numeral(
@@ -428,17 +444,6 @@ class _FamilyCustomizationSectionState extends State<FamilyCustomizationSection>
                           ),
                   ),
                 ],
-                footer: Text(
-                  key: FamilyCustomizationKeys.numeralsPreview,
-                  l10n.familyCustomizationNumeralsPreview(
-                    _previewFor(_numeralsDraft ?? profile.numerals),
-                  ),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: colors.ink2,
-                  ),
-                ),
               ),
               _Group(
                 key: FamilyCustomizationKeys.wordsGroup,

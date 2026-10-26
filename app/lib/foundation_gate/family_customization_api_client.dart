@@ -264,12 +264,13 @@ class FamilyCustomizationApiClient {
     String? serverMessage;
     try {
       final decoded = jsonDecode(response.body);
-      if (decoded is Map<String, Object?> &&
-          decoded['error'] is Map<String, Object?>) {
-        final error = decoded['error']! as Map<String, Object?>;
-        if (error['code'] is String) serverCode = error['code']! as String;
-        if (error['message'] is String) {
-          serverMessage = error['message']! as String;
+      if (decoded is Map<String, Object?>) {
+        final Object? envelope = decoded['error'];
+        if (envelope is Map<String, Object?>) {
+          final Object? code = envelope['code'];
+          final Object? message = envelope['message'];
+          if (code is String) serverCode = code;
+          if (message is String) serverMessage = message;
         }
       }
     } catch (_) {
@@ -338,14 +339,15 @@ class FamilyCustomizationApiClient {
       final labels = <FamilyGuardianLabelKey, String>{};
       for (final entry in rawLabels.entries) {
         final key = FamilyGuardianLabelKey.parse(entry.key);
-        if (key == null || entry.value is! String) throw const FormatException();
-        final text = (entry.value! as String).trim();
+        final Object? value = entry.value;
+        if (key == null || value is! String) throw const FormatException();
+        final text = value.trim();
         if (text.isEmpty) throw const FormatException();
         labels[key] = text;
       }
 
       final updatedAt = _nullableDateTime(raw['updatedAt']);
-      final updatedBy = raw['updatedByMembershipId'];
+      final Object? updatedBy = raw['updatedByMembershipId'];
       if (updatedBy != null && updatedBy is! String) throw const FormatException();
 
       return FamilyCustomizationProfile(
