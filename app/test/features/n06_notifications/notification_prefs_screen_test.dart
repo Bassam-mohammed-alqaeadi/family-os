@@ -377,6 +377,9 @@ void main() {
 final class _FailingNotificationPrefsRepository
     implements NotificationPrefsRepository {
   @override
+  bool get serverBacked => false;
+
+  @override
   Future<NotificationPrefs> load(String memberId) async =>
       NotificationPrefs.defaults(memberId: memberId);
 

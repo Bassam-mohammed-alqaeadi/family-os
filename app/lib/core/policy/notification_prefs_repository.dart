@@ -10,13 +10,18 @@ abstract class NotificationPrefsRepository {
 
   Future<void> save(NotificationPrefs prefs);
 
-  /// Where this row actually lives, as far as the screen is allowed to know.
+  /// Where the rows this repository writes actually live.
   ///
-  /// `false` is the honest default: the local KV repository stores on the handset, and the family
-  /// account has no idea the preference exists. A screen must not print "saved for your family"
-  /// while that is true, so it asks instead of asserting — and the day a server-backed repository
-  /// replaces this one, it flips the word by overriding this getter, with no copy to hunt down.
-  bool get serverBacked => false;
+  /// A question the screen is not allowed to guess: a display that printed "saved in your family's
+  /// account" while the local KV repository was storing on the handset would be the app reassuring
+  /// a parent about something it never did. `false` is what the handset-backed repositories are, and
+  /// `true` is what the family-account row will be — the day one arrives it answers for itself and
+  /// every screen's wording follows, with no copy to hunt down.
+  ///
+  /// Deliberately abstract rather than defaulted: every implementer must answer, so a new
+  /// repository cannot inherit a claim it has not earned. Five answer it today, and the analyzer
+  /// is what keeps the sixth honest.
+  bool get serverBacked;
 
   /// Always rejected — SOS receipt is ungradeable (doc 20 / SET-011 / SET-021).
   ///
@@ -72,6 +77,9 @@ final class PrefsNotificationPrefsRepository
 
   final NotificationPrefsStore _store;
 
+  @override
+  bool get serverBacked => false;
+
   static String _key(String memberId) => 'notification_prefs:$memberId';
 
   @override
@@ -119,6 +127,10 @@ final class InMemoryNotificationPrefsRepository
       };
 
   final Map<String, NotificationPrefs> _byMember;
+
+  /// A test store is a handset store: nothing reaches a family account from here.
+  @override
+  bool get serverBacked => false;
 
   @override
   Future<NotificationPrefs> load(String memberId) async {

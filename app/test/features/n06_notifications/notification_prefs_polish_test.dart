@@ -88,6 +88,9 @@ final class _ServerBackedRepository implements NotificationPrefsRepository {
 /// A repository that refuses to write, so the screen's failure honesty is testable.
 final class _FailingRepository implements NotificationPrefsRepository {
   @override
+  bool get serverBacked => false;
+
+  @override
   Future<NotificationPrefs> load(String memberId) async =>
       const NotificationPrefs(
         memberId: 'father',
