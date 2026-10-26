@@ -18,6 +18,7 @@ import 'family_calendar_api_client.dart';
 import 'family_chat_api_client.dart';
 import 'family_capability_api_client.dart';
 import 'family_command_api_client.dart';
+import 'family_customization_api_client.dart';
 import 'family_creation_api_client.dart';
 import 'family_device_api_client.dart';
 import 'family_invite_code_api_client.dart';
@@ -81,6 +82,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
     FamilyChatApiClient? chatApi,
     FamilyCapabilityApiClient? capabilityApi,
     FamilyCommandApiClient? commandApi,
+    FamilyCustomizationApiClient? customizationApi,
     String? preferredFamilyId,
     GuardianPushRegistrationCallback? guardianPushRegistration,
     GuardianPushUnregistrationCallback? guardianPushUnregistration,
@@ -100,6 +102,7 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
        _chatApi = chatApi,
        _capabilityApi = capabilityApi,
        _commandApi = commandApi,
+       _customizationApi = customizationApi,
        _preferredFamilyId = preferredFamilyId?.trim(),
        _guardianPushRegistration = guardianPushRegistration,
        _guardianPushUnregistration = guardianPushUnregistration,
@@ -125,6 +128,10 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   final FamilyChatApiClient? _chatApi;
   final FamilyCapabilityApiClient? _capabilityApi;
   final FamilyCommandApiClient? _commandApi;
+
+  /// The family's own profile: the day its week opens with, which days rest, the words its
+  /// children use for its guardians, and how its numbers are written.
+  final FamilyCustomizationApiClient? _customizationApi;
   final String? _preferredFamilyId;
   final GuardianPushRegistrationCallback? _guardianPushRegistration;
   final GuardianPushUnregistrationCallback? _guardianPushUnregistration;
@@ -183,6 +190,10 @@ final class MainAppFoundationRuntime extends ChangeNotifier {
   /// came back with. Read here, never written from here: the phone answers to the server, and a
   /// second door into the same power would leave two truths about whether a child's phone stopped.
   FamilyCommandApiClient? get commandApi => _commandApi;
+
+  /// The customization profile's client. Null when this build has no server to ask, and the
+  /// screen says that rather than drawing a week nobody chose.
+  FamilyCustomizationApiClient? get customizationApi => _customizationApi;
 
   /// Best-effort push registration for the active guardian session.
   ///

@@ -81,6 +81,10 @@ export function familyCustomizationView(row) {
       ...FAMILY_CUSTOMIZATION_DEFAULTS,
       restDays: [...FAMILY_CUSTOMIZATION_DEFAULTS.restDays],
       guardianLabels: {},
+      // The contract requires these keys on every profile, and the honest value for a family that
+      // has never written one is null - not an absent field a client must guess around.
+      updatedAt: null,
+      updatedByMembershipId: null,
     };
   }
   return {

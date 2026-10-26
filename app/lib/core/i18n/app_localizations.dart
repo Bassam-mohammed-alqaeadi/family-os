@@ -24326,6 +24326,174 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'يظهر {shown} من {total}، الأحدث أولاً'**
   String deviceLedgerOrdersShown(int shown, int total);
+
+  /// Settings hub — the card that holds a family's own week, rest days, addressing words and digits.
+  ///
+  /// In ar, this message translates to:
+  /// **'طابع عائلتك'**
+  String get familyCustomizationTitle;
+
+  /// Says what the card changes, so a parent knows it is a setting and not a summary.
+  ///
+  /// In ar, this message translates to:
+  /// **'أسبوعكم، أيام راحتكم، كلمات أبنائكم، وأرقامكم. ما تختارونه هنا تقرأه الشاشات كلها.'**
+  String get familyCustomizationIntro;
+
+  /// The family's own first day of the week.
+  ///
+  /// In ar, this message translates to:
+  /// **'بأي يوم يبدأ أسبوعكم'**
+  String get familyCustomizationWeekStartLabel;
+
+  /// Which days this family rests on.
+  ///
+  /// In ar, this message translates to:
+  /// **'أيام الراحة'**
+  String get familyCustomizationRestDaysLabel;
+
+  /// Why an empty rest list is not offered, stated as a fact rather than a scold.
+  ///
+  /// In ar, this message translates to:
+  /// **'يوم واحد على الأقل — كل حسابٍ في التطبيق يقيس أسبوعه عليها.'**
+  String get familyCustomizationRestDaysHint;
+
+  /// How this family wants numbers written.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرقامكم'**
+  String get familyCustomizationNumeralsLabel;
+
+  /// The choice the app has always drawn. No digits in the value: the shape is shown by the preview line.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرقام لاتينية'**
+  String get familyCustomizationNumeralsWestern;
+
+  /// The choice a family may now take. No digits in the value — see the Western label's note.
+  ///
+  /// In ar, this message translates to:
+  /// **'أرقام شرقية'**
+  String get familyCustomizationNumeralsEastern;
+
+  /// Live preview of the family's own digits, rendered by the app's numeral reader.
+  ///
+  /// In ar, this message translates to:
+  /// **'هكذا تبدو أرقامكم: {sample}'**
+  String familyCustomizationNumeralsPreview(String sample);
+
+  /// The four addressing words this family chooses.
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف ينادي أبناؤكم أهلهم'**
+  String get familyCustomizationWordsLabel;
+
+  /// Explains both the limit and how to undo a word, in one line.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة واحدة قصيرة لكل دور. اتركوا الحقل فارغاً ليعود كما كان في التطبيق.'**
+  String get familyCustomizationWordsHint;
+
+  /// Label for the father's addressing word.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة الأبناء لأبيهم'**
+  String get familyCustomizationWordFather;
+
+  /// Label for the mother's addressing word.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة الأبناء لأمهم'**
+  String get familyCustomizationWordMother;
+
+  /// Label for the added guardian's addressing word.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة الأبناء لوصيّهم'**
+  String get familyCustomizationWordGuardian;
+
+  /// Label for the word a child's row is shown with.
+  ///
+  /// In ar, this message translates to:
+  /// **'كيف تُنادى بطاقات الأبناء'**
+  String get familyCustomizationWordChild;
+
+  /// Shown when the family has no stored profile, so a default is never read as a decision.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم تُغيّروا شيئاً بعد — هذا ما يبدأ به التطبيق لكل عائلة.'**
+  String get familyCustomizationDefaultNote;
+
+  /// The card's only write action.
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظوا طابع العائلة'**
+  String get familyCustomizationSave;
+
+  /// Confirmation that the change reached the family's record.
+  ///
+  /// In ar, this message translates to:
+  /// **'حُفظ اختياركم، وهو ما تقرأه الشاشات الآن.'**
+  String get familyCustomizationSavedNote;
+
+  /// Retry when there was nothing to show.
+  ///
+  /// In ar, this message translates to:
+  /// **'أعيدوا القراءة'**
+  String get familyCustomizationRefreshCta;
+
+  /// Honest state: nothing was read because there was nobody to ask.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا عائلة متصلة على هذا الجهاز، فلم نسأل أحداً عن طابعكم.'**
+  String get familyCustomizationNoServerNote;
+
+  /// Honest state: the connection did not answer.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يُجب أحد. ما ترونه آخرُ ما قرأناه، وليس تأكيداً من الآن.'**
+  String get familyCustomizationUnreachableNote;
+
+  /// The family said this account may not read its profile.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسابك لا يطّلع على طابع هذه العائلة من هنا.'**
+  String get familyCustomizationAccessDeniedNote;
+
+  /// A malformed reply is reported as a defect, never as an empty profile.
+  ///
+  /// In ar, this message translates to:
+  /// **'جاءنا جوابٌ لم نفهمه، ولم نخمّن بدله.'**
+  String get familyCustomizationUnreadableNote;
+
+  /// A version conflict, stated as what happened and what to do next.
+  ///
+  /// In ar, this message translates to:
+  /// **'غيّر أحدكم الطابع بعد أن فتحتموه. أعدنا لكم أحدث ما عند العائلة — راجعوه ثم احفظوا إن شئتم.'**
+  String get familyCustomizationStaleNote;
+
+  /// The write was refused because the profile is read by every system in the app.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعديل الطابع لصاحب العائلة أولاً؛ ما ترونه هنا قراءةٌ فقط.'**
+  String get familyCustomizationNotPrimaryNote;
+
+  /// The floor, said the same way whether it came from the tap or from the record.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يُترك أسبوعٌ بلا يوم راحة.'**
+  String get familyCustomizationNoRestDayNote;
+
+  /// The addressing word a family typed was refused.
+  ///
+  /// In ar, this message translates to:
+  /// **'كلمة واحدة قصيرة، من غير أرقام ولا رموز غريبة.'**
+  String get familyCustomizationWordRefusedNote;
+
+  /// A refusal with no reason this build can name — said plainly, never dressed up.
+  ///
+  /// In ar, this message translates to:
+  /// **'رفض التطبيق هذا التعديل.'**
+  String get familyCustomizationRefusedNote;
 }
 
 class _AppLocalizationsDelegate

@@ -22,7 +22,7 @@
 | السطح | الشكل |
 |---|---|
 | `GET /v1/families/{familyId}/customization` | `{profile}` — الصف المحفوظ، أو العرض الافتراضي بـ`source: "default"` إن لم تكتب العائلة شيئاً بعد. لأيِّ عضو وليٍّ نشط. |
-| `PATCH /v1/families/{familyId}/customization` | `{expectedVersion, weekStartDay?, restDays?, labels?}` → `{profile}` بالنسخة الجديدة. للكاتب الأساسي وحده. |
+| `PATCH /v1/families/{familyId}/customization` | `{expectedVersion, weekStartDay?, restDays?, numerals?, labels?}` → `{profile}` بالنسخة الجديدة. للكاتب الأساسي وحده. |
 
 أيَّام الراحة تُرسَل أسماءً (`"fri"`) وتعود قائمةً مرتَّبةً قياسياً من `sun` إلى `sat`؛ لا أرقام أيَّام
 على السلك، ولا تكرار ممكن (كلُّ يومٍ عمودٌ واحد في القاعدة).
@@ -77,7 +77,7 @@
 | `backend/src/validation.js` → `familyCustomizationInput` | البوابة: مفردات مغلقة، كلمات قصيرة، `expectedVersion` إلزامي |
 | `backend/src/app.js` (المساران + `familyCustomization` في `createApp`) | الوصل، `requireUuid`، بلا معاملات بحث، وربط `correlationId` |
 | `backend/openapi/foundation.v1.json` | ١١٤ مساراً و٢٣٣ مخططاً — منها ٦ مخططاتٍ لهذا العقد |
-| `backend/src/schema-manifest.js` | `135` وبصمته `720952cf…` |
+| `backend/src/schema-manifest.js` | `135` وبصمته `d8ac512…` (أُعيد حسابها يوم أُضيف `numerals`) |
 
 ## Enforcing Tests
 
@@ -87,18 +87,34 @@
 | `backend/test/postgres-family-customization.test.js` | ٦ قوانين على PostgreSQL حقيقي (PGlite): الهجرات ٠٠١–١٣٥ تُطبَّق، الافتراضات، رفض أسبوع بلا راحة، رفض اليوم المغلوط، رفض المفتاح الخامس والكلمة الطويلة/Fارغة/الرقمية، رفض محرِّرٍ من عائلة أخرى، و`upsert` المحروس بثلاث حالات |
 | `backend/test/family-customization-routes.test.js` | ٣ رحلات HTTP: الباب (UUID بلا استعلام)، الجسم المحوَّل إلى `change` + نسخة + `correlationId`، وأسماء الرفض 403/409/400 كما قالها المالك |
 | `backend/test/openapi-contract.test.js` | انحراف صفر في الاتجاهين: كل مسارٍ مسجَّل معلَن، وكل معلَن مسجَّل |
+| `app/test/features/n12_devices/family_customization_api_client_test.dart` | العميل لا يخترع: الافتراضي «افتراضي»، الرفض باسمه، والقوائم تقرأ قياسيةً أو تُرفض |
+| `app/test/features/n12_devices/family_customization_server_authority_test.dart` | الحالات الصادقة، و**المحرِّك**: اختيار العائلة يصل `AppNumerals` عند القراءة والكتابة، ويُنسَى مع الجلسة |
+| `app/test/features/n12_devices/family_customization_panel_test.dart` | ١٢ رحلة على ٣٢٠×٦٠٠ عند ٢٫٠ بالعربية والإنجليزية: آخرُ قراءةٍ تبقى مُسمَّاة، وآخرُ راحةٍ لا تُنزع، والمسودة المرفوضة تُطرَح |
+| `app/test/features/n12_devices/support/family_customization_fake_server.dart` | العمود الفقري للاختبار: يخزِّن ويرفض بقوانين العقد نفسها — ولا يُبنى عليه ادّعاء |
 
-## App Surface
+## App Surface (الشريحة ٢)
 
-**لم يُبنَ بعد** — هذه الشريحة خادمٌ فقط. العميل (`family_customization_api_client.dart`)، والسلطة
-بحالاتها الصادقة، وبطاقة «طابع عائلتك» على شاشة العائلة، ورحلات الاختبار عند ٢٫٠ بالعربية: الشريحة ٢.
-الأعمدة ٢–٥ من خمسة تبقى ⬜ حتى ذلك الحين، ولا يُدّعى أن النظام «حقيقي» الآن.
+| الطبقة | الملف | ما تملكه |
+|---|---|---|
+| عميل | `app/lib/foundation_gate/family_customization_api_client.dart` | مفردات مغلقة (٧ أيام، نظاما أرقام، ٤ كلمات)، قراءةٌ قياسية أو رفض، ورفضٌ يحفظ `serverCode` كي تقول الشاشة «أعد القراءة» لا « فشل» |
+| سلطة | `app/lib/features/n12_devices/family_customization_server_authority.dart` | ست حالات صادقة، وبابٌ واحد يمرّ منه اختيارُ العائلة للأرقام إلى `AppNumerals` — يُطبَّق عند كل قراءةٍ وكتابة ناجحتين، ويُمحى مع فكّ الربط |
+| شاشة | `app/lib/features/n12_devices/family_customization_panel.dart` | بطاقة «طابع عائلتك» داخل `settings_hub_screen.dart` — بلا مسارٍ جديد ولا لمسٍ لـ`router.dart` |
+| نصوص | `app/lib/core/i18n/app_ar.arb` + `app_en.arb` | ٢٨ مفتاحاً (٤٠٦٣ لكلتا اللغتين، تكافؤٌ تام) — وأسماء الأيام مُعادٌ استخدامها من `screenTimeServerDay*`، لا نسخةً ثانية |
+
+**ما لا يُدَّعى:** الأعمدة ١–٤ مكتملةٌ محلياً؛ CI لم يُقرأ بعد على هذا الدفع، والفحص على الهاتف (العمود ٥)
+لم يجرِ. النظام «حقيقي» عند ٥/٥ فقط.
 
 ## Phone Evidence
 
-لا سطر بعد. ما يمسّ الهاتف هنا هو عرضٌ لا إنفاذ: شبكة أسبوع وكلمات. يُضاف سطرٌ مؤرَّخ في
-`docs/safety_phase/PHONE_CHECKS.md` يوم تُفتح الشاشة: أن يرى الأب يومَي راحتهما، وأن تتبدّل الكلمة
-في شاشة ابنه لا في شاشةً وحدها.
+لا سطر بعد — والشاشة صارت تُفتح، فالفحص هو المتأخر لا الشاشة. أربعة أسطر مؤرَّخة في
+`docs/safety_phase/PHONE_CHECKS.md` تُغلق هذه الغرفة:
+
+1. أن يرى الأب يومَي راحتهما **وبداية أسبوعه** في شاشة ابنه، لا في شاشته وحدها (مبدأ مصدرٍ واحد).
+2. أن تتبدّل كلمة «بابا» فتظهر في شاشة الطفل من قراءةٍ واحدة، بغير تخزينٍ محليٍّ يخدعه.
+3. أن يرفض الهاتف محاولة تعديلٍ من وليٍّ مشارك بكلمةٍ مسموعة واحدة، لا بدوامة تحميل.
+4. **أن تتبدّل أرقام العائلة كلها** (لوحات الدقائق، التقويم، البطاقات) حين تختار العائلة الشرقية —
+   وأن تعود لاتينيةً حين تسجّل عائلةٌ أخرى الدخول. هذه هي العبارة التي تحوّل المفتاح من ديكورٍ إلى
+   قرار؛ إن لم تتحقق على الجهاز، فالعمود ٢–٤ يُعاد فتحه لا هذه البطاقة تُغلق.
 
 ## Change Rule
 

@@ -17555,5 +17555,122 @@
         "type": "int"
       }
     }
+  },
+  "familyCustomizationTitle": "Your family's character",
+  "@familyCustomizationTitle": {
+    "description": "Settings hub — the card that holds a family's own week, rest days, addressing words and digits."
+  },
+  "familyCustomizationIntro": "Your week, your rest days, the words your children use, and your digits. Every screen reads what you choose here.",
+  "@familyCustomizationIntro": {
+    "description": "Says what the card changes, so a parent knows it is a setting and not a summary."
+  },
+  "familyCustomizationWeekStartLabel": "Which day your week starts on",
+  "@familyCustomizationWeekStartLabel": {
+    "description": "The family's own first day of the week."
+  },
+  "familyCustomizationRestDaysLabel": "Rest days",
+  "@familyCustomizationRestDaysLabel": {
+    "description": "Which days this family rests on."
+  },
+  "familyCustomizationRestDaysHint": "At least one day — every count in the app measures its week against these.",
+  "@familyCustomizationRestDaysHint": {
+    "description": "Why an empty rest list is not offered, stated as a fact rather than a scold."
+  },
+  "familyCustomizationNumeralsLabel": "Your digits",
+  "@familyCustomizationNumeralsLabel": {
+    "description": "How this family wants numbers written."
+  },
+  "familyCustomizationNumeralsWestern": "Western digits",
+  "@familyCustomizationNumeralsWestern": {
+    "description": "The choice the app has always drawn. No digits in the value: the shape is shown by the preview line."
+  },
+  "familyCustomizationNumeralsEastern": "Eastern digits",
+  "@familyCustomizationNumeralsEastern": {
+    "description": "The choice a family may now take. No digits in the value — see the Western label's note."
+  },
+  "familyCustomizationNumeralsPreview": "This is how your numbers look: {sample}",
+  "@familyCustomizationNumeralsPreview": {
+    "description": "Live preview of the family's own digits, rendered by the app's numeral reader.",
+    "placeholders": {
+      "sample": {
+        "type": "String"
+      }
+    }
+  },
+  "familyCustomizationWordsLabel": "What your children call their family",
+  "@familyCustomizationWordsLabel": {
+    "description": "The four addressing words this family chooses."
+  },
+  "familyCustomizationWordsHint": "One short word for each role. Leave a field empty to return it to the app's own word.",
+  "@familyCustomizationWordsHint": {
+    "description": "Explains both the limit and how to undo a word, in one line."
+  },
+  "familyCustomizationWordFather": "What children call their father",
+  "@familyCustomizationWordFather": {
+    "description": "Label for the father's addressing word."
+  },
+  "familyCustomizationWordMother": "What children call their mother",
+  "@familyCustomizationWordMother": {
+    "description": "Label for the mother's addressing word."
+  },
+  "familyCustomizationWordGuardian": "What children call their other guardian",
+  "@familyCustomizationWordGuardian": {
+    "description": "Label for the added guardian's addressing word."
+  },
+  "familyCustomizationWordChild": "How a child's card is addressed",
+  "@familyCustomizationWordChild": {
+    "description": "Label for the word a child's row is shown with."
+  },
+  "familyCustomizationDefaultNote": "Nothing has been changed yet — this is where every family starts.",
+  "@familyCustomizationDefaultNote": {
+    "description": "Shown when the family has no stored profile, so a default is never read as a decision."
+  },
+  "familyCustomizationSave": "Save your family's character",
+  "@familyCustomizationSave": {
+    "description": "The card's only write action."
+  },
+  "familyCustomizationSavedNote": "Your choice is saved, and it is what the screens read now.",
+  "@familyCustomizationSavedNote": {
+    "description": "Confirmation that the change reached the family's record."
+  },
+  "familyCustomizationRefreshCta": "Read it again",
+  "@familyCustomizationRefreshCta": {
+    "description": "Retry when there was nothing to show."
+  },
+  "familyCustomizationNoServerNote": "No family is connected on this device, so nobody was asked about your character.",
+  "@familyCustomizationNoServerNote": {
+    "description": "Honest state: nothing was read because there was nobody to ask."
+  },
+  "familyCustomizationUnreachableNote": "Nobody answered. What you see is the last thing we read, not a confirmation from now.",
+  "@familyCustomizationUnreachableNote": {
+    "description": "Honest state: the connection did not answer."
+  },
+  "familyCustomizationAccessDeniedNote": "Your account does not open this family's character from here.",
+  "@familyCustomizationAccessDeniedNote": {
+    "description": "The family said this account may not read its profile."
+  },
+  "familyCustomizationUnreadableNote": "An answer arrived that we could not read, and we did not guess at one.",
+  "@familyCustomizationUnreadableNote": {
+    "description": "A malformed reply is reported as a defect, never as an empty profile."
+  },
+  "familyCustomizationStaleNote": "Someone in your family changed this after you opened it. We brought back their version — check it, then save if you still want to.",
+  "@familyCustomizationStaleNote": {
+    "description": "A version conflict, stated as what happened and what to do next."
+  },
+  "familyCustomizationNotPrimaryNote": "Only the family's first guardian changes this. What you see here is a read.",
+  "@familyCustomizationNotPrimaryNote": {
+    "description": "The write was refused because the profile is read by every system in the app."
+  },
+  "familyCustomizationNoRestDayNote": "A week is never left without a rest day.",
+  "@familyCustomizationNoRestDayNote": {
+    "description": "The floor, said the same way whether it came from the tap or from the record."
+  },
+  "familyCustomizationWordRefusedNote": "One short word, with no digits and no odd marks in it.",
+  "@familyCustomizationWordRefusedNote": {
+    "description": "The addressing word a family typed was refused."
+  },
+  "familyCustomizationRefusedNote": "The app would not take that change.",
+  "@familyCustomizationRefusedNote": {
+    "description": "A refusal with no reason this build can name — said plainly, never dressed up."
   }
 }

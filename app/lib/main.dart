@@ -60,6 +60,7 @@ import 'package:family_os/features/n02_day/location_ux_bridge.dart';
 import 'package:family_os/features/n03_screen_time/child_apps_local_persistence.dart';
 import 'package:family_os/features/n07_privacy/audit_log_local_persistence.dart';
 import 'package:family_os/features/n12_devices/device_ledger_server_authority.dart';
+import 'package:family_os/features/n12_devices/family_customization_server_authority.dart';
 import 'package:family_os/features/n12_devices/mother_permission_level_identity_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_remote_repository.dart';
 import 'package:family_os/features/n12_devices/family_members_repository.dart';
@@ -73,6 +74,7 @@ import 'package:family_os/foundation_gate/children_roster_api_client.dart';
 import 'package:family_os/foundation_gate/family_capability_api_client.dart';
 import 'package:family_os/foundation_gate/family_creation_api_client.dart';
 import 'package:family_os/foundation_gate/family_command_api_client.dart';
+import 'package:family_os/foundation_gate/family_customization_api_client.dart';
 import 'package:family_os/foundation_gate/family_device_api_client.dart';
 import 'package:family_os/foundation_gate/family_location_api_client.dart';
 import 'package:family_os/foundation_gate/family_discovery_api_client.dart';
@@ -238,6 +240,22 @@ Future<void> main() async {
     } else {
       DeviceLedgerAuthority.bind(null);
     }
+    // A family's week, rest days, addressing words and digits are a row on the spine, not a
+    // preference this handset keeps. Bound here so the settings screen reads what this family
+    // actually decided; a build with no server says nobody was asked, instead of drawing a week
+    // this build invented and a family has to trust.
+    final customizationApi = familyEntryRuntime.customizationApi;
+    if (customizationApi != null) {
+      FamilyCustomizationAuthority.bind(
+        FamilyCustomizationAuthority(
+          api: customizationApi,
+          idToken: familyEntryRuntime.currentIdToken,
+          familyId: () => familyEntryRuntime.selectedFamilyId,
+        ),
+      );
+    } else {
+      FamilyCustomizationAuthority.bind(null);
+    }
     final webFilterApi = familyEntryRuntime.webFilterApi;
     if (webFilterApi != null) {
       bindWebFilterServerAuthority(
@@ -352,6 +370,7 @@ Future<void> main() async {
   } else {
     bindFamilyChatServerAuthority(null);
     DeviceLedgerAuthority.bind(null);
+    FamilyCustomizationAuthority.bind(null);
   }
   runApp(
     FamilyOsApp(
@@ -493,6 +512,10 @@ Future<MainAppFoundationRuntime?> _tryCreateMainAppFoundationRuntime() async {
         transport: PackageFoundationGateHttpTransport(),
       ),
       commandApi: FamilyCommandApiClient(
+        configuration: configuration,
+        transport: PackageFoundationGateHttpTransport(),
+      ),
+      customizationApi: FamilyCustomizationApiClient(
         configuration: configuration,
         transport: PackageFoundationGateHttpTransport(),
       ),

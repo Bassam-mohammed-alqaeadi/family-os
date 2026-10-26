@@ -13698,4 +13698,103 @@ class AppLocalizationsAr extends AppLocalizations {
   String deviceLedgerOrdersShown(int shown, int total) {
     return 'يظهر $shown من $total، الأحدث أولاً';
   }
+
+  @override
+  String get familyCustomizationTitle => 'طابع عائلتك';
+
+  @override
+  String get familyCustomizationIntro =>
+      'أسبوعكم، أيام راحتكم، كلمات أبنائكم، وأرقامكم. ما تختارونه هنا تقرأه الشاشات كلها.';
+
+  @override
+  String get familyCustomizationWeekStartLabel => 'بأي يوم يبدأ أسبوعكم';
+
+  @override
+  String get familyCustomizationRestDaysLabel => 'أيام الراحة';
+
+  @override
+  String get familyCustomizationRestDaysHint =>
+      'يوم واحد على الأقل — كل حسابٍ في التطبيق يقيس أسبوعه عليها.';
+
+  @override
+  String get familyCustomizationNumeralsLabel => 'أرقامكم';
+
+  @override
+  String get familyCustomizationNumeralsWestern => 'أرقام لاتينية';
+
+  @override
+  String get familyCustomizationNumeralsEastern => 'أرقام شرقية';
+
+  @override
+  String familyCustomizationNumeralsPreview(String sample) {
+    return 'هكذا تبدو أرقامكم: $sample';
+  }
+
+  @override
+  String get familyCustomizationWordsLabel => 'كيف ينادي أبناؤكم أهلهم';
+
+  @override
+  String get familyCustomizationWordsHint =>
+      'كلمة واحدة قصيرة لكل دور. اتركوا الحقل فارغاً ليعود كما كان في التطبيق.';
+
+  @override
+  String get familyCustomizationWordFather => 'كلمة الأبناء لأبيهم';
+
+  @override
+  String get familyCustomizationWordMother => 'كلمة الأبناء لأمهم';
+
+  @override
+  String get familyCustomizationWordGuardian => 'كلمة الأبناء لوصيّهم';
+
+  @override
+  String get familyCustomizationWordChild => 'كيف تُنادى بطاقات الأبناء';
+
+  @override
+  String get familyCustomizationDefaultNote =>
+      'لم تُغيّروا شيئاً بعد — هذا ما يبدأ به التطبيق لكل عائلة.';
+
+  @override
+  String get familyCustomizationSave => 'احفظوا طابع العائلة';
+
+  @override
+  String get familyCustomizationSavedNote =>
+      'حُفظ اختياركم، وهو ما تقرأه الشاشات الآن.';
+
+  @override
+  String get familyCustomizationRefreshCta => 'أعيدوا القراءة';
+
+  @override
+  String get familyCustomizationNoServerNote =>
+      'لا عائلة متصلة على هذا الجهاز، فلم نسأل أحداً عن طابعكم.';
+
+  @override
+  String get familyCustomizationUnreachableNote =>
+      'لم يُجب أحد. ما ترونه آخرُ ما قرأناه، وليس تأكيداً من الآن.';
+
+  @override
+  String get familyCustomizationAccessDeniedNote =>
+      'حسابك لا يطّلع على طابع هذه العائلة من هنا.';
+
+  @override
+  String get familyCustomizationUnreadableNote =>
+      'جاءنا جوابٌ لم نفهمه، ولم نخمّن بدله.';
+
+  @override
+  String get familyCustomizationStaleNote =>
+      'غيّر أحدكم الطابع بعد أن فتحتموه. أعدنا لكم أحدث ما عند العائلة — راجعوه ثم احفظوا إن شئتم.';
+
+  @override
+  String get familyCustomizationNotPrimaryNote =>
+      'تعديل الطابع لصاحب العائلة أولاً؛ ما ترونه هنا قراءةٌ فقط.';
+
+  @override
+  String get familyCustomizationNoRestDayNote =>
+      'لا يُترك أسبوعٌ بلا يوم راحة.';
+
+  @override
+  String get familyCustomizationWordRefusedNote =>
+      'كلمة واحدة قصيرة، من غير أرقام ولا رموز غريبة.';
+
+  @override
+  String get familyCustomizationRefusedNote => 'رفض التطبيق هذا التعديل.';
 }

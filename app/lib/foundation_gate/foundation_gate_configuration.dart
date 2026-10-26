@@ -950,4 +950,20 @@ class FoundationGateConfiguration {
       query: params.isEmpty ? null : params.join('&'),
     );
   }
+
+
+  /// The family's own account of how this app should behave for it: which day the week opens
+  /// with, which days rest, what the children call their guardians, and how its numbers are
+  /// written. Read with GET, changed with PATCH - and nothing else, because every one of those
+  /// four is a fact the server already holds for this family alone.
+  Uri familyCustomizationUri(String familyId) {
+    if (!isFoundationGateUuid(familyId)) {
+      throw ArgumentError.value(
+        familyId,
+        'familyId',
+        'A server-returned UUID family identifier is required.',
+      );
+    }
+    return stagingApiOrigin.replace(path: '/v1/families/$familyId/customization');
+  }
 }

@@ -13933,4 +13933,107 @@ class AppLocalizationsEn extends AppLocalizations {
   String deviceLedgerOrdersShown(int shown, int total) {
     return 'Showing $shown of $total, newest first';
   }
+
+  @override
+  String get familyCustomizationTitle => 'Your family\'s character';
+
+  @override
+  String get familyCustomizationIntro =>
+      'Your week, your rest days, the words your children use, and your digits. Every screen reads what you choose here.';
+
+  @override
+  String get familyCustomizationWeekStartLabel =>
+      'Which day your week starts on';
+
+  @override
+  String get familyCustomizationRestDaysLabel => 'Rest days';
+
+  @override
+  String get familyCustomizationRestDaysHint =>
+      'At least one day — every count in the app measures its week against these.';
+
+  @override
+  String get familyCustomizationNumeralsLabel => 'Your digits';
+
+  @override
+  String get familyCustomizationNumeralsWestern => 'Western digits';
+
+  @override
+  String get familyCustomizationNumeralsEastern => 'Eastern digits';
+
+  @override
+  String familyCustomizationNumeralsPreview(String sample) {
+    return 'This is how your numbers look: $sample';
+  }
+
+  @override
+  String get familyCustomizationWordsLabel =>
+      'What your children call their family';
+
+  @override
+  String get familyCustomizationWordsHint =>
+      'One short word for each role. Leave a field empty to return it to the app\'s own word.';
+
+  @override
+  String get familyCustomizationWordFather => 'What children call their father';
+
+  @override
+  String get familyCustomizationWordMother => 'What children call their mother';
+
+  @override
+  String get familyCustomizationWordGuardian =>
+      'What children call their other guardian';
+
+  @override
+  String get familyCustomizationWordChild => 'How a child\'s card is addressed';
+
+  @override
+  String get familyCustomizationDefaultNote =>
+      'Nothing has been changed yet — this is where every family starts.';
+
+  @override
+  String get familyCustomizationSave => 'Save your family\'s character';
+
+  @override
+  String get familyCustomizationSavedNote =>
+      'Your choice is saved, and it is what the screens read now.';
+
+  @override
+  String get familyCustomizationRefreshCta => 'Read it again';
+
+  @override
+  String get familyCustomizationNoServerNote =>
+      'No family is connected on this device, so nobody was asked about your character.';
+
+  @override
+  String get familyCustomizationUnreachableNote =>
+      'Nobody answered. What you see is the last thing we read, not a confirmation from now.';
+
+  @override
+  String get familyCustomizationAccessDeniedNote =>
+      'Your account does not open this family\'s character from here.';
+
+  @override
+  String get familyCustomizationUnreadableNote =>
+      'An answer arrived that we could not read, and we did not guess at one.';
+
+  @override
+  String get familyCustomizationStaleNote =>
+      'Someone in your family changed this after you opened it. We brought back their version — check it, then save if you still want to.';
+
+  @override
+  String get familyCustomizationNotPrimaryNote =>
+      'Only the family\'s first guardian changes this. What you see here is a read.';
+
+  @override
+  String get familyCustomizationNoRestDayNote =>
+      'A week is never left without a rest day.';
+
+  @override
+  String get familyCustomizationWordRefusedNote =>
+      'One short word, with no digits and no odd marks in it.';
+
+  @override
+  String get familyCustomizationRefusedNote =>
+      'The app would not take that change.';
 }

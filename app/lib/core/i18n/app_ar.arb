@@ -17570,5 +17570,122 @@
         "type": "int"
       }
     }
+  },
+  "familyCustomizationTitle": "طابع عائلتك",
+  "@familyCustomizationTitle": {
+    "description": "Settings hub — the card that holds a family's own week, rest days, addressing words and digits."
+  },
+  "familyCustomizationIntro": "أسبوعكم، أيام راحتكم، كلمات أبنائكم، وأرقامكم. ما تختارونه هنا تقرأه الشاشات كلها.",
+  "@familyCustomizationIntro": {
+    "description": "Says what the card changes, so a parent knows it is a setting and not a summary."
+  },
+  "familyCustomizationWeekStartLabel": "بأي يوم يبدأ أسبوعكم",
+  "@familyCustomizationWeekStartLabel": {
+    "description": "The family's own first day of the week."
+  },
+  "familyCustomizationRestDaysLabel": "أيام الراحة",
+  "@familyCustomizationRestDaysLabel": {
+    "description": "Which days this family rests on."
+  },
+  "familyCustomizationRestDaysHint": "يوم واحد على الأقل — كل حسابٍ في التطبيق يقيس أسبوعه عليها.",
+  "@familyCustomizationRestDaysHint": {
+    "description": "Why an empty rest list is not offered, stated as a fact rather than a scold."
+  },
+  "familyCustomizationNumeralsLabel": "أرقامكم",
+  "@familyCustomizationNumeralsLabel": {
+    "description": "How this family wants numbers written."
+  },
+  "familyCustomizationNumeralsWestern": "أرقام لاتينية",
+  "@familyCustomizationNumeralsWestern": {
+    "description": "The choice the app has always drawn. No digits in the value: the shape is shown by the preview line."
+  },
+  "familyCustomizationNumeralsEastern": "أرقام شرقية",
+  "@familyCustomizationNumeralsEastern": {
+    "description": "The choice a family may now take. No digits in the value — see the Western label's note."
+  },
+  "familyCustomizationNumeralsPreview": "هكذا تبدو أرقامكم: {sample}",
+  "@familyCustomizationNumeralsPreview": {
+    "description": "Live preview of the family's own digits, rendered by the app's numeral reader.",
+    "placeholders": {
+      "sample": {
+        "type": "String"
+      }
+    }
+  },
+  "familyCustomizationWordsLabel": "كيف ينادي أبناؤكم أهلهم",
+  "@familyCustomizationWordsLabel": {
+    "description": "The four addressing words this family chooses."
+  },
+  "familyCustomizationWordsHint": "كلمة واحدة قصيرة لكل دور. اتركوا الحقل فارغاً ليعود كما كان في التطبيق.",
+  "@familyCustomizationWordsHint": {
+    "description": "Explains both the limit and how to undo a word, in one line."
+  },
+  "familyCustomizationWordFather": "كلمة الأبناء لأبيهم",
+  "@familyCustomizationWordFather": {
+    "description": "Label for the father's addressing word."
+  },
+  "familyCustomizationWordMother": "كلمة الأبناء لأمهم",
+  "@familyCustomizationWordMother": {
+    "description": "Label for the mother's addressing word."
+  },
+  "familyCustomizationWordGuardian": "كلمة الأبناء لوصيّهم",
+  "@familyCustomizationWordGuardian": {
+    "description": "Label for the added guardian's addressing word."
+  },
+  "familyCustomizationWordChild": "كيف تُنادى بطاقات الأبناء",
+  "@familyCustomizationWordChild": {
+    "description": "Label for the word a child's row is shown with."
+  },
+  "familyCustomizationDefaultNote": "لم تُغيّروا شيئاً بعد — هذا ما يبدأ به التطبيق لكل عائلة.",
+  "@familyCustomizationDefaultNote": {
+    "description": "Shown when the family has no stored profile, so a default is never read as a decision."
+  },
+  "familyCustomizationSave": "احفظوا طابع العائلة",
+  "@familyCustomizationSave": {
+    "description": "The card's only write action."
+  },
+  "familyCustomizationSavedNote": "حُفظ اختياركم، وهو ما تقرأه الشاشات الآن.",
+  "@familyCustomizationSavedNote": {
+    "description": "Confirmation that the change reached the family's record."
+  },
+  "familyCustomizationRefreshCta": "أعيدوا القراءة",
+  "@familyCustomizationRefreshCta": {
+    "description": "Retry when there was nothing to show."
+  },
+  "familyCustomizationNoServerNote": "لا عائلة متصلة على هذا الجهاز، فلم نسأل أحداً عن طابعكم.",
+  "@familyCustomizationNoServerNote": {
+    "description": "Honest state: nothing was read because there was nobody to ask."
+  },
+  "familyCustomizationUnreachableNote": "لم يُجب أحد. ما ترونه آخرُ ما قرأناه، وليس تأكيداً من الآن.",
+  "@familyCustomizationUnreachableNote": {
+    "description": "Honest state: the connection did not answer."
+  },
+  "familyCustomizationAccessDeniedNote": "حسابك لا يطّلع على طابع هذه العائلة من هنا.",
+  "@familyCustomizationAccessDeniedNote": {
+    "description": "The family said this account may not read its profile."
+  },
+  "familyCustomizationUnreadableNote": "جاءنا جوابٌ لم نفهمه، ولم نخمّن بدله.",
+  "@familyCustomizationUnreadableNote": {
+    "description": "A malformed reply is reported as a defect, never as an empty profile."
+  },
+  "familyCustomizationStaleNote": "غيّر أحدكم الطابع بعد أن فتحتموه. أعدنا لكم أحدث ما عند العائلة — راجعوه ثم احفظوا إن شئتم.",
+  "@familyCustomizationStaleNote": {
+    "description": "A version conflict, stated as what happened and what to do next."
+  },
+  "familyCustomizationNotPrimaryNote": "تعديل الطابع لصاحب العائلة أولاً؛ ما ترونه هنا قراءةٌ فقط.",
+  "@familyCustomizationNotPrimaryNote": {
+    "description": "The write was refused because the profile is read by every system in the app."
+  },
+  "familyCustomizationNoRestDayNote": "لا يُترك أسبوعٌ بلا يوم راحة.",
+  "@familyCustomizationNoRestDayNote": {
+    "description": "The floor, said the same way whether it came from the tap or from the record."
+  },
+  "familyCustomizationWordRefusedNote": "كلمة واحدة قصيرة، من غير أرقام ولا رموز غريبة.",
+  "@familyCustomizationWordRefusedNote": {
+    "description": "The addressing word a family typed was refused."
+  },
+  "familyCustomizationRefusedNote": "رفض التطبيق هذا التعديل.",
+  "@familyCustomizationRefusedNote": {
+    "description": "A refusal with no reason this build can name — said plainly, never dressed up."
   }
 }

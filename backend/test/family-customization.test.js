@@ -119,6 +119,8 @@ test('a family that never wrote a profile is reported as the default view, not a
     guardianLabels: {},
     updatedAt: null,
     updatedByMembershipId: null,
+    updatedAt: null,
+    updatedByMembershipId: null,
     source: 'default',
   });
   assert.equal(profile.version, FAMILY_CUSTOMIZATION_DEFAULTS.version);
