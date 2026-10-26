@@ -459,6 +459,11 @@ class _FamilyCustomizationSectionState extends State<FamilyCustomizationSection>
                         maxLength: 24,
                         maxLines: 1,
                         enabled: !_busy,
+                        // Typing must rebuild THIS widget: the save button's state is decided
+                        // here, not inside the field, so without this the card would sit on a
+                        // stale answer and a parent would tap a dead button wondering why nothing
+                        // was kept.
+                        onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
                           labelText: _wordLabel(l10n, entry.key),
                           counterText: '',

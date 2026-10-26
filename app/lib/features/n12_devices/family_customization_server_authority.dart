@@ -152,7 +152,7 @@ final class FamilyCustomizationAuthority {
       return FamilyCustomizationAnswer.ready(profile);
     } on FoundationGateApiException catch (error) {
       return FamilyCustomizationAnswer.unavailable(
-        _statusFor(error.failure),
+        _statusForWrite(error.failure),
         _refusalFor(error),
       );
     } on Object {
@@ -195,6 +195,20 @@ final class FamilyCustomizationAuthority {
         FamilyNumeralSystem.western => AppNumeralSystem.western,
         FamilyNumeralSystem.eastern => AppNumeralSystem.eastern,
       };
+
+  /// What a refused write means on screen.
+  ///
+  /// The same status code is a different sentence depending on which way the door was opened: a 403
+  /// on a read is "you cannot see this", while a 403 on a write is "you may not change this" — a
+  /// refusal a guardian can act on (ask the family's first guardian) rather than a loss of sight.
+  /// The device ledger splits its two the same way, for the same reason.
+  static FamilyCustomizationStatus _statusForWrite(
+    FoundationGateApiFailure failure,
+  ) => switch (failure) {
+    FoundationGateApiFailure.accessDenied => FamilyCustomizationStatus
+        .refused,
+    _ => _statusFor(failure),
+  };
 
   static FamilyCustomizationStatus _statusFor(
     FoundationGateApiFailure failure,
