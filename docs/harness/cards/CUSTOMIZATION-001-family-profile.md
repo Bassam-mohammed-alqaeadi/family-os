@@ -15,7 +15,7 @@
 | **مسارات الخادم** | `GET/PATCH /v1/families/{familyId}/customization` |
 | **الهجرة** | `135_family_customization_profile.sql` (بصمتها `d8ac5120899c4885c491c325ad0221d6c460baf18920b5f8f3164c1fac7c5f0f` — أُعيد حسابها يوم أُضيف `numerals`) |
 | **الملفات المملوكة** | `backend/db/migrations/135_family_customization_profile.sql` · `backend/src/family-customization.js` · `backend/src/validation.js` (`familyCustomizationInput`) · `backend/src/app.js` (المساران + خيار `familyCustomization`) · `backend/src/notification-dispatcher.js` (تصنيف `family.customization_updated` audit-only) · `backend/openapi/foundation.v1.json` (١١٤ مساراً · ٢٣٣ مخططاً) · `backend/src/schema-manifest.js` · الاختبارات الثلاثة أدناه |
-| **الحالة** | 🟡 مُنجَزٌ محلياً حتى العمود ٤ — العقد والخادم والعميل والشاشة والرحلة مكتوبة ومخضَّرة على الجهاز؛ يبقى CI (الحكم في Dart وفي PostgreSQL الحقيقي) وسطرُ الهاتف |
+| **الحالة** | 🟡 مكتملٌ حتى العمود ٤ **في CI**: العقد والخادم والعميل والشاشة والرحلات خضراء على خادم PostgreSQL 16 حقيقي وعلى محلِّل Flutter؛ يبقى العمود ٥ — سطرٌ مؤرَّخ على هاتف المالك، لا سطرٌ في كود |
 
 ## ٢) مشكلة المستخدم
 
@@ -48,9 +48,9 @@ PostgreSQL نفسها.
 | العمود | الحالة | الدليل |
 |---|---|---|
 | ١) العقد | ✅ | `backend/openapi/foundation.v1.json` + `docs/contracts/family_customization_profile.md` + `openapi-contract.test.js` (١٤/١٤) |
-| ٢) العميل | ✅ محلياً | `app/lib/foundation_gate/family_customization_api_client.dart` — قراءة/كتابة، مفردات مغلقة، ورفضٌ يحفظ `serverCode`. **بانتظار CI** |
-| ٣) شاشة موصولة | ✅ محلياً | بطاقة في `settings_hub_screen.dart` + ربطٌ في `main.dart` عبر `MainAppFoundationRuntime.customizationApi`؛ بلا ربطٍ يقول «لم يُسأل أحد» |
-| ٤) اختبار رحلة | ✅ محلياً (خادمي مُجرَّب) | ١٠ + ٦ + ٣ خادمية خضراء هنا؛ و١٢ رحلة شاشة + ١١ عميلاً + ١١ سلطةً **في CI** (لا Flutter SDK في هذه المساحة) |
+| ٢) العميل | ✅ CI أخضر | `app/lib/foundation_gate/family_customization_api_client.dart` — قراءة/كتابة، مفردات مغلقة، ورفضٌ يحفظ `serverCode`. **بانتظار CI** |
+| ٣) شاشة موصولة | ✅ CI أخضر | بطاقة في `settings_hub_screen.dart` + ربطٌ في `main.dart` عبر `MainAppFoundationRuntime.customizationApi`؛ بلا ربطٍ يقول «لم يُسأل أحد» |
+| ٤) اختبار رحلة | ✅ CI أخضر | ١٠ + ٦ + ٣ خادمية خضراء هنا؛ و١٢ رحلة شاشة + ١١ عميلاً + ١١ سلطةً **في CI** (لا Flutter SDK في هذه المساحة) |
 | ٥) على الهاتف | ⬜ | لا سطر في `docs/safety_phase/PHONE_CHECKS.md` |
 
 النظام «حقيقي» عند ٥/٥ فقط. هذه البطاقة تُبقي الأعمدة الثلاثة الباقية مرئيّة، لا مخفية.
@@ -66,7 +66,7 @@ PostgreSQL نفسها.
 | `npm test` | ✅ **٤٧٩ ناجحاً · ٠ فاشلًا · ٧٨ تخطٍّ** (78 كلها بوابة PostgreSQL الحقيقية، تجري في CI) |
 | `backendPassMinimum` | ٤٥٥ ← **٤٧٩** |
 | `check_migration_range.sh` | «الترقيم آمن ومتّسلسل» — التالية كانت ١٣٥ فأُخذت، والتالية ١٣٦ |
-| CI (PR #45) | **لا حكم نهائي بعد، وهذا هو الفرق الذي تهمشنا عليه**: `Foundation API contract tests` ✅ · `Flutter CI` على `06e1f96` ✅ · `Harness Guard` ✅ · `Git Guard` ✅ · `Android Native CI` ✅ · `Android Build` ✅ — والمحلِّل والاختبارات تُقرأ كلها على دفعاتٍ تالٍة، فكل حكمٍ تحتها مقروءٌ من سجلٍّ لا من ادّعاء. `06e1f96`: `Flutter CI` **فشل** بـ88 خطأ تحليل — سببٌ واحد: ملفّا اختبار استوردا العمود الفقري المزوَّر بـ`package:family_os/…` وهو في `test/` لا في `lib/`، فانهار كلُّ رمزٍ بعده. صُحِّح إلى استيرادٍ نسبي كما تفعل اختبارات س٠. `5817286`: **المحلِّل نظيف، و٢٣٤٦ اختباراً ناجحاً، و٢ فاشلان** — (١) السلطة تعيد `accessDenied` لكتابةٍ رفضها 403 وكان الواجب `refused` مع سبب مسمّى (403 القراءة «لا ترى»، و403 الكتابة «لا يملك» — جملتان مختلفتان؛ فُصلت المساران كما في دفتر القدرات)، (٢) زرُّ الحفظ لم يكن يُعاد تقريره أثناء الكتابة في الحقل لأنَّ `_isDirty` يُحسب في الأب لا في الحقل — أُضيف `onChanged` فيعيد البناء مع كل حرف، لا مع كل ضغطةٍ على زرٍّ ميت. أما `Real PostgreSQL migrations and integration` ف**تعذَّر تشغيله** على الدفعين: «Docker pull failed with exit code 1» في `Initialize containers` (بنيةٌ لا كود — والقوانين الستة على PostgreSQL حقيقي تجري في وظيفة العقد الخضراء عبر PGlite). **يبقى الحكم الكامل على PostgreSQL 16 خادماً مُعلَّقاً، لا أخضر.**
+| CI (PR #45) | **أخضر للحلقات الأربع، والباقي هاتفٌ لا كود.** `5817286`: المحلِّل نظيف · **٢٣٤٦ اختباراً ناجحاً و٢ فاشلان** — (١) كتابةٌ مرفوضة بـ403 وصلت `accessDenied` بدل `refused` المسبَّب، (٢) زرُّ الحفظ لم يكن يعيد تقرير حالته أثناء الكتابة في الحقل. صُحِّح الاثنان في `29d0518`، فأصبح `Flutter CI` أخضر على دفعته (push) **«0 failing test(s)»** وأخضر كذلك على `0fd193e` (pull_request) — أي أنَّ اختبارات هذا النظام الـ٣٤ (عميلاً وسلطةً وشاشةً) خضراء عند ٢٫٠ بالنص المضاعف. **بوابة PostgreSQL**: ثلاث دفعات متوالية ماتت في `Initialize containers` بـ«Docker pull failed with exit code 1» — حاويةُ خدمةٍ لا تُعاد ولا تُسجَّل ولا تُبرَّر؛ لذلك صارت الخادم تُقلَّع في **خطوة** (`0fd193e`): ثلاث محاولات على المرآة ثم ثلاث على مصدرها الآخر، و`pg_isready` بدل خيار الصحة، وطبعةُ المحرك مطبوعة، وخطوةُ تنظيفٍ `if: always()`. النتيجة على `0fd193e`: **`Real PostgreSQL migrations and integration = success`** — أي أنَّ الهجرات ٠٠١–١٣٥ طُبِّقت على خادم PostgreSQL 16 حقيقي في CI — مع `Foundation API contract tests = success`. لم يُخفَّض سقفٌ ولم تُعطَّل بوابة؛ الحُكم الوحيد المتبقِّي هو العمود ٥.
 
 ## ٦) فحص الهاتف المطلوب (لا يُختَم النظام بدونه)
 
